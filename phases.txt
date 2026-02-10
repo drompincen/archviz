@@ -74,24 +74,17 @@
         /* --- Main Layout --- */
         main { display: flex; flex: 1; height: calc(100vh - 50px); overflow: hidden; }
 
-        /* Left Pane Container (Editor + Notes) */
-        #left-sidebar {
-            width: 30%; min-width: 300px;
+        /* 1. LEFT: Editor Pane */
+        #editor-pane {
+            width: 25%; min-width: 300px;
             display: flex; flex-direction: column;
             border-right: 1px solid var(--border-color);
             background: var(--panel-bg);
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease;
             z-index: 50;
+            overflow: hidden;
         }
-        #left-sidebar.hidden { display: none; }
-
-        /* JSON Editor Section */
-        #editor-section {
-            flex: 2; /* Takes up 2/3 of sidebar */
-            display: flex;
-            flex-direction: column;
-            border-bottom: 1px solid var(--border-color);
-        }
+        #editor-pane.hidden { width: 0; min-width: 0; border: none; }
 
         .editor-toolbar { padding: 10px; background: #252526; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
 
@@ -107,61 +100,8 @@
         }
         textarea.invalid { border-left: 4px solid var(--error-color); }
 
-        /* Notebook Section */
-        #notebook-section {
-            flex: 1; /* Takes up 1/3 of sidebar */
-            display: flex;
-            flex-direction: column;
-            background: #fdf6e3; /* Notebook yellow */
-            border-top: 1px solid #d4c4a8;
-            position: relative;
-        }
-
-        .notebook-header {
-            background: #eee8d5;
-            color: #586e75;
-            padding: 5px 15px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            border-bottom: 1px solid #d4c4a8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        textarea#notebook-input {
-            flex: 1;
-            width: 100%;
-            border: none;
-            padding: 15px 25px; /* Left padding for red line */
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
-            line-height: 24px; /* Line height must match background size */
-            background-color: #fdf6e3;
-            color: #444;
-            resize: none;
-            outline: none;
-            box-sizing: border-box;
-
-            /* Notebook Paper Lines */
-            background-image: linear-gradient(#d4c4a8 1px, transparent 1px);
-            background-size: 100% 24px; /* Matches line-height */
-            background-attachment: local;
-        }
-
-        /* Red vertical margin line */
-        #notebook-section::before {
-            content: '';
-            position: absolute;
-            top: 28px; bottom: 0; left: 20px;
-            width: 1px;
-            background: #ff9999;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-
-        /* Right Pane: Container for Canvas + Log */
-        #right-pane-container {
+        /* 2. MIDDLE: Canvas + Log */
+        #center-stage {
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -169,7 +109,7 @@
             overflow: hidden;
         }
 
-        /* 1. Preview Canvas */
+        /* Preview Canvas */
         #preview-canvas {
             flex: 1; /* Takes remaining space */
             position: relative;
@@ -180,7 +120,7 @@
             min-height: 200px;
         }
 
-        /* 2. Resizer Handle */
+        /* Resizer Handle */
         #pane-resizer {
             height: 8px;
             background: #2d2d2d;
@@ -197,11 +137,11 @@
         }
         #pane-resizer:hover { background: #3e3e42; }
 
-        /* 3. Log Pane */
+        /* Log Pane */
         #log-pane {
-            /* --- CONFIGURATION: DEFAULT HEIGHT --- */
-            height: 280px; /* <--- CHANGE THIS to adjust default height */
-            /* ------------------------------------- */
+            /* --- CONFIGURATION: DEFAULT LOG HEIGHT --- */
+            height: 180px;
+            /* ----------------------------------------- */
 
             background: #1e1e1e;
             color: #ccc;
@@ -213,12 +153,64 @@
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
         }
 
+        /* 3. RIGHT: Notes Notebook */
+        #notes-pane {
+            width: 20%; min-width: 250px;
+            display: flex; flex-direction: column;
+            background: #fdf6e3;
+            border-left: 1px solid #3e3e42;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 50;
+        }
+        #notes-pane.hidden { width: 0; min-width: 0; border: none; }
+
+        .notebook-header {
+            background: #eee8d5;
+            color: #586e75;
+            padding: 10px 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border-bottom: 1px solid #d4c4a8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* Notebook Text Area */
+        textarea#notebook-display {
+            flex: 1; width: 100%; border: none;
+            padding: 15px 25px 15px 35px; /* Left padding for red line */
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 24px;
+            background-color: #fdf6e3;
+            color: #444;
+            resize: none; outline: none; box-sizing: border-box;
+
+            /* Paper Lines */
+            background-image: linear-gradient(#d4c4a8 1px, transparent 1px);
+            background-size: 100% 24px;
+            background-attachment: local;
+        }
+
+        /* Red Margin Line */
+        #notes-pane::before {
+            content: '';
+            position: absolute;
+            top: 40px; bottom: 0; left: 25px;
+            width: 2px;
+            background: #ff9999;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* --- Log Entries --- */
         .log-entry {
             padding: 6px 15px;
             border-bottom: 1px solid #2d2d2d;
-            display: flex;
-            gap: 10px;
-            align-items: baseline;
+            display: flex; gap: 10px; align-items: baseline;
             animation: fadeIn 0.3s ease;
         }
         .log-entry:hover { background: #2a2d2e; }
@@ -248,8 +240,7 @@
 
         .node {
             position: absolute; display: flex; flex-direction: column;
-            justify-content: flex-start; /* Align top so content grows down */
-            align-items: center; text-align: center;
+            justify-content: flex-start; align-items: center; text-align: center;
             border: 2px solid #555; border-radius: 6px; background: #2d2d2d;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: default;
             user-select: none; padding: 8px; box-sizing: border-box; z-index: 10;
@@ -260,21 +251,12 @@
         body.is-editing .node:active { cursor: grabbing; border-color: var(--highlight); }
 
         .node-content-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-            width: 100%;
-            pointer-events: none; /* Let clicks pass to node */
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            flex: 1; width: 100%; pointer-events: none;
         }
 
         .node-icon { width: 24px; height: 24px; margin-bottom: 4px; fill: currentColor; opacity: 0.9; }
-
-        .node-label {
-            font-weight: 600; font-size: 0.8rem; letter-spacing: 0.5px; line-height: 1.2;
-            white-space: pre-line;
-        }
+        .node-label { font-weight: 600; font-size: 0.8rem; letter-spacing: 0.5px; line-height: 1.2; white-space: pre-line; }
 
         /* Status Icon (Node-level) */
         .status-icon {
@@ -286,26 +268,20 @@
         .status-ready { background-color: #2ecc71; color: #fff; }
         .status-wip { background-color: #f39c12; color: #fff; }
 
-        /* Step Badge Container inside Node */
+        /* Step Badge */
         .step-badges-container {
             display: flex; gap: 3px; justify-content: center; flex-wrap: wrap;
             width: 100%; margin-top: auto; padding-top: 4px; min-height: 18px;
         }
 
-        /* The actual step number circle */
         .step-badge {
-            width: 16px; height: 16px;
-            border-radius: 50%;
-            font-size: 0.7rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 16px; height: 16px; border-radius: 50%;
+            font-size: 0.7rem; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* New Styles for Step Status */
         .step-badge.badge-ready { background: #004e8a; color: white; }
         .step-badge.badge-wip { background: #f1c40f; color: #222; }
         .step-badge.badge-default { background: var(--highlight); color: #1e1e1e; }
@@ -349,31 +325,25 @@
                 <input type="checkbox" id="chk-edit-mode"> Enable Editing
             </label>
             <label class="toggle-label">
-                <input type="checkbox" id="chk-show-editor"> Show Editor
+                <input type="checkbox" id="chk-show-editor"> Show JSON
+            </label>
+            <label class="toggle-label">
+                <input type="checkbox" id="chk-show-notes" checked> Show Notes
             </label>
         </div>
     </div>
 </header>
 
 <main>
-    <div id="left-sidebar" class="hidden">
-
-        <div id="editor-section">
-            <div class="editor-toolbar">
-                <button id="btn-update">Update Diagram</button>
-                <span id="error-msg"></span>
-            </div>
-            <textarea id="json-input" spellcheck="false" placeholder="Paste valid JSON here..."></textarea>
+    <div id="editor-pane" class="hidden">
+        <div class="editor-toolbar">
+            <button id="btn-update">Update Diagram</button>
+            <span id="error-msg"></span>
         </div>
-
-        <div id="notebook-section">
-            <div class="notebook-header">Project Notes</div>
-            <textarea id="notebook-input" spellcheck="false" placeholder="Type your notes here..."></textarea>
-        </div>
-
+        <textarea id="json-input" spellcheck="false" placeholder="Paste valid JSON here..."></textarea>
     </div>
 
-    <div id="right-pane-container">
+    <div id="center-stage">
 
         <div id="preview-canvas">
             <div id="phase-display"></div>
@@ -388,6 +358,14 @@
             <div class="log-entry" style="color:#666; font-style:italic;">Ready...</div>
         </div>
 
+    </div>
+
+    <div id="notes-pane">
+        <div class="notebook-header">
+            <span>Project Notes</span>
+            <span style="opacity:0.6; font-size:0.75rem;">(Read Only)</span>
+        </div>
+        <textarea id="notebook-display" readonly spellcheck="false"></textarea>
     </div>
 </main>
 
@@ -404,6 +382,7 @@
     // The single source of truth for the initial load
     const editorString = `{
     "title": "Phase 1: Introducing AI Agents",
+    "notes": "Project: Legacy Migration\\\\nAuthor: Architecture Team\\\\n\\\\nObjectives:\\\\n1. Decouple User from Monolith\\\\n2. Introduce AI Agent for Triage\\\\n3. Establish Redis caching layer\\\\n\\\\nStatus: In Development",
     // Nodes define the boxes
     "nodes": [
         { "id": "u", "type": "user", "tag": "external", "label": "Customer", "x": 60, "y": 250, "w": 100, "h": 70 },
@@ -448,7 +427,9 @@
         svgLayer: document.getElementById('connections-layer'),
         particle: document.getElementById('particle'),
         title: document.getElementById('phase-display'),
-        leftSidebar: document.getElementById('left-sidebar'),
+        editorPane: document.getElementById('editor-pane'),
+        notesPane: document.getElementById('notes-pane'),
+        notebook: document.getElementById('notebook-display'),
         logPane: document.getElementById('log-pane'),
         btnPlay: document.getElementById('btn-play'),
         btnNext: document.getElementById('btn-next'),
@@ -457,6 +438,7 @@
         inpDelay: document.getElementById('inp-delay'),
         chkEditMode: document.getElementById('chk-edit-mode'),
         chkShowEditor: document.getElementById('chk-show-editor'),
+        chkShowNotes: document.getElementById('chk-show-notes'),
         resizer: document.getElementById('pane-resizer')
     };
 
@@ -467,7 +449,9 @@
     let nodeMap = {};
 
     function init() {
+        // 1. Populate Editor
         dom.input.value = editorString;
+        // 2. Render from editor content (which includes comments)
         render();
         clearLog();
     }
@@ -480,16 +464,20 @@
     // --- Render ---
     function render() {
         try {
+            // Parse editor content on the fly
             const cleanJson = stripJsonComments(dom.input.value);
             graph = JSON.parse(cleanJson);
 
+            // Success UI
             dom.input.classList.remove('invalid');
             dom.errorMsg.classList.remove('visible');
             dom.errorMsg.innerText = "";
             dom.btnUpdate.innerText = "Update Diagram";
 
+            // Drawing
             nodeMap = {};
             dom.title.innerText = graph.title || "";
+            dom.notebook.value = graph.notes || ""; // Update Notebook
             dom.container.innerHTML = '';
 
             (graph.nodes || []).forEach(n => {
@@ -504,6 +492,7 @@
 
                 const iconSvg = ICONS[n.type] || ICONS.default;
 
+                // Status Icon Logic (Node level)
                 let statusHtml = '';
                 if(n.status === 'ready') {
                     statusHtml = `<div class="status-icon status-ready" title="Ready">✔</div>`;
@@ -520,6 +509,7 @@
                     <div class="step-badges-container" id="badges-${n.id}"></div>
                 `;
 
+                // Safe text setting
                 el.querySelector('.node-label').textContent = n.label || "";
 
                 el.addEventListener('mousedown', handleDragStart);
@@ -564,8 +554,13 @@
     });
 
     dom.chkShowEditor.addEventListener('change', (e) => {
-        if(e.target.checked) dom.leftSidebar.classList.remove('hidden');
-        else dom.leftSidebar.classList.add('hidden');
+        if(e.target.checked) dom.editorPane.classList.remove('hidden');
+        else dom.editorPane.classList.add('hidden');
+    });
+
+    dom.chkShowNotes.addEventListener('change', (e) => {
+        if(e.target.checked) dom.notesPane.classList.remove('hidden');
+        else dom.notesPane.classList.add('hidden');
     });
 
     // --- Resizer Logic ---
@@ -579,7 +574,7 @@
 
     function handleResize(e) {
         if (!isResizing) return;
-        const containerRect = document.getElementById('right-pane-container').getBoundingClientRect();
+        const containerRect = document.getElementById('center-stage').getBoundingClientRect();
         const newHeight = containerRect.bottom - e.clientY;
         if (newHeight > 50 && newHeight < containerRect.height - 100) {
             dom.logPane.style.height = `${newHeight}px`;
@@ -621,7 +616,7 @@
             if(nodeItem) {
                 nodeItem.x = parseInt(dragTarget.style.left);
                 nodeItem.y = parseInt(dragTarget.style.top);
-                // Updating via drag removes comments as we regenerate JSON
+                // Note: Updating via drag removes comments as we regenerate JSON
                 dom.input.value = JSON.stringify(graph, null, 4);
             }
         }
