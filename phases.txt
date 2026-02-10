@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phases: Architecture Animator</title>
+    <title>Phases: Robust Editor</title>
     <style>
         :root {
             /* Dark Theme Variables */
@@ -12,8 +12,9 @@
             --panel-bg: #252526;
             --border-color: #3e3e42;
             --text-main: #d4d4d4;
-            --accent-color: #007acc;
+            --accent-color: #007acc; 
             --highlight: #17a2b8;
+            --error-color: #f14c4c;
 
             /* Node Tag Colors */
             --tag-legacy-bg: #4a1818; --tag-legacy-border: #e74c3c;
@@ -84,12 +85,25 @@
         }
         #editor-pane.hidden { display: none; }
 
-        .editor-toolbar { padding: 10px; background: #252526; border-bottom: 1px solid #333; display: flex; justify-content: flex-end; }
+        .editor-toolbar { padding: 10px; background: #252526; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        
+        #error-msg {
+            color: var(--error-color);
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+            display: none;
+        }
+        #error-msg.visible { display: block; animation: flash 0.5s; }
+
         textarea {
             flex: 1; width: 100%; border: none; padding: 20px;
             font-family: 'Consolas', monospace; font-size: 13px; line-height: 1.5;
             background: #1e1e1e; color: #dcdcaa; resize: none; outline: none; box-sizing: border-box;
         }
+        textarea.invalid { border-left: 4px solid var(--error-color); }
 
         /* Right Pane: Container for Canvas + Log */
         #right-pane-container {
@@ -154,6 +168,7 @@
         .log-time { color: #666; margin-left: auto; font-size: 0.8em; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes flash { 0% { opacity: 0.2; } 100% { opacity: 1; } }
 
         /* Phase Title */
         #phase-display {
@@ -176,7 +191,7 @@
             user-select: none; padding: 8px; box-sizing: border-box; z-index: 10;
             transition: border-color 0.2s;
         }
-
+        
         body.is-editing .node { cursor: grab; }
         body.is-editing .node:active { cursor: grabbing; border-color: var(--highlight); }
 
@@ -187,10 +202,16 @@
             justify-content: center;
             flex: 1;
             width: 100%;
+            pointer-events: none; /* Let clicks pass to node */
         }
 
         .node-icon { width: 24px; height: 24px; margin-bottom: 4px; fill: currentColor; opacity: 0.9; }
-        .node-label { font-weight: 600; font-size: 0.8rem; letter-spacing: 0.5px; line-height: 1.2; }
+        
+        /* Handles \n in JSON strings safely */
+        .node-label { 
+            font-weight: 600; font-size: 0.8rem; letter-spacing: 0.5px; line-height: 1.2; 
+            white-space: pre-line; /* Key for handling newline chars */
+        }
 
         /* Step Badge Container inside Node */
         .step-badges-container {
@@ -199,12 +220,11 @@
             justify-content: center;
             flex-wrap: wrap;
             width: 100%;
-            margin-top: auto; /* Push to bottom */
+            margin-top: auto;
             padding-top: 4px;
-            min-height: 18px; /* Reserve space */
+            min-height: 18px;
         }
 
-        /* The actual step number circle */
         .step-badge {
             width: 16px; height: 16px;
             background: var(--highlight);
@@ -242,7 +262,7 @@
 
 <header>
     <div class="brand">Phases</div>
-
+    
     <div style="display:flex;">
         <div class="controls-group">
             <button id="btn-play">▶ Play</button>
@@ -268,12 +288,13 @@
     <div id="editor-pane" class="hidden">
         <div class="editor-toolbar">
             <button id="btn-update">Update Diagram</button>
+            <span id="error-msg"></span>
         </div>
-        <textarea id="json-input" spellcheck="false"></textarea>
+        <textarea id="json-input" spellcheck="false" placeholder="Paste valid JSON here..."></textarea>
     </div>
 
     <div id="right-pane-container">
-
+        
         <div id="preview-canvas">
             <div id="phase-display"></div>
             <svg class="connections-layer" id="connections-layer"></svg>
@@ -305,11 +326,11 @@
         "nodes": [
             { "id": "u", "type": "user", "tag": "external", "label": "Customer", "x": 60, "y": 250, "w": 100, "h": 70 },
             { "id": "fe", "type": "service", "tag": "core", "label": "Frontend", "x": 250, "y": 250, "w": 120, "h": 80 },
-            { "id": "mono", "type": "service", "tag": "legacy", "label": "Legacy Monolith", "x": 500, "y": 380, "w": 140, "h": 90 },
-            { "id": "agent", "type": "agent", "tag": "agent", "label": "Triage Agent", "x": 500, "y": 120, "w": 110, "h": 70 },
-            { "id": "new_svc", "type": "service", "tag": "new", "label": "Order Service", "x": 750, "y": 120, "w": 120, "h": 80 },
+            { "id": "mono", "type": "service", "tag": "legacy", "label": "Legacy\nMonolith", "x": 500, "y": 380, "w": 140, "h": 90 },
+            { "id": "agent", "type": "agent", "tag": "agent", "label": "Triage\nAgent", "x": 500, "y": 120, "w": 110, "h": 70 },
+            { "id": "new_svc", "type": "service", "tag": "new", "label": "Order\nService", "x": 750, "y": 120, "w": 120, "h": 80 },
             { "id": "db_main", "type": "database", "tag": "legacy", "label": "Main DB", "x": 750, "y": 380, "w": 100, "h": 70 },
-            { "id": "db_cache", "type": "database", "tag": "new", "label": "Redis Cache", "x": 950, "y": 120, "w": 100, "h": 70 }
+            { "id": "db_cache", "type": "database", "tag": "new", "label": "Redis\nCache", "x": 950, "y": 120, "w": 100, "h": 70 }
         ],
         "connections": [
             { "from": "u", "to": "fe" },
@@ -332,13 +353,14 @@
     // --- State ---
     const dom = {
         input: document.getElementById('json-input'),
+        errorMsg: document.getElementById('error-msg'),
         container: document.getElementById('nodes-container'),
         svgLayer: document.getElementById('connections-layer'),
         particle: document.getElementById('particle'),
         title: document.getElementById('phase-display'),
         editorPane: document.getElementById('editor-pane'),
         logPane: document.getElementById('log-pane'),
-
+        
         // Controls
         btnPlay: document.getElementById('btn-play'),
         btnNext: document.getElementById('btn-next'),
@@ -362,39 +384,48 @@
         clearLog();
     }
 
-    // --- Render ---
+    // --- Render with Error Handling ---
     function render() {
         try {
             const raw = JSON.parse(dom.input.value);
             graph = raw;
-            nodeMap = {};
+            
+            // Success State
+            dom.input.classList.remove('invalid');
+            dom.errorMsg.classList.remove('visible');
+            dom.errorMsg.innerText = "";
+            dom.btnUpdate.innerText = "Update Diagram";
 
+            nodeMap = {};
             dom.title.innerText = graph.title || "";
             dom.container.innerHTML = '';
-
+            
             (graph.nodes || []).forEach(n => {
                 const el = document.createElement('div');
                 el.className = `node type-${n.type || 'default'} tag-${n.tag || 'core'}`;
                 el.id = `node-${n.id}`;
-
+                
                 // Geometry
                 el.style.left = `${n.x}px`;
                 el.style.top = `${n.y}px`;
-                // Use specified width/height or default
                 el.style.width = n.w ? `${n.w}px` : '100px';
-                el.style.height = n.h ? `${n.h}px` : 'auto';
-
+                el.style.height = n.h ? `${n.h}px` : 'auto'; 
+                
                 const iconSvg = ICONS[n.type] || ICONS.default;
-
-                // Add label + container for step badges
+                
+                // Safe Label Rendering (handles entities)
+                // We use textContent for label to prevent HTML injection, 
+                // but style has white-space: pre-line so \n works.
                 el.innerHTML = `
                     <div class="node-content-wrapper">
                         <svg class="node-icon" viewBox="0 0 24 24">${iconSvg}</svg>
-                        <div class="node-label">${n.label}</div>
+                        <div class="node-label"></div>
                     </div>
                     <div class="step-badges-container" id="badges-${n.id}"></div>
                 `;
-
+                
+                el.querySelector('.node-label').textContent = n.label || "";
+                
                 el.addEventListener('mousedown', handleDragStart);
                 dom.container.appendChild(el);
                 nodeMap[n.id] = { ...n, el };
@@ -404,8 +435,12 @@
             resetAnimation(true);
 
         } catch (e) {
-            console.error(e);
-            alert("JSON Error: " + e.message);
+            // Error State
+            console.warn("JSON Parse Error:", e);
+            dom.input.classList.add('invalid');
+            dom.errorMsg.innerText = "Invalid JSON: " + e.message;
+            dom.errorMsg.classList.add('visible');
+            dom.btnUpdate.innerText = "⚠ Fix JSON Error";
         }
     }
 
@@ -491,6 +526,7 @@
             if(nodeItem) {
                 nodeItem.x = parseInt(dragTarget.style.left);
                 nodeItem.y = parseInt(dragTarget.style.top);
+                // SAFE UPDATE: JSON.stringify handles escaping correctly
                 dom.input.value = JSON.stringify(graph, null, 4);
             }
         }
@@ -525,7 +561,9 @@
         const div = document.createElement('div');
         div.className = 'log-entry';
         const timeStr = new Date().toLocaleTimeString().split(' ')[0];
-        div.innerHTML = `<span class="log-step">Step ${stepNum}</span><span class="log-text">${text}</span><span class="log-time">${timeStr}</span>`;
+        // Use textContent for safety on log text
+        div.innerHTML = `<span class="log-step">Step ${stepNum}</span><span class="log-text"></span><span class="log-time">${timeStr}</span>`;
+        div.querySelector('.log-text').textContent = text;
         dom.logPane.appendChild(div);
         dom.logPane.scrollTop = dom.logPane.scrollHeight;
     }
@@ -538,7 +576,7 @@
         dom.particle.style.display = 'none';
         dom.btnNext.disabled = true;
         dom.btnPlay.innerHTML = "▶ Play";
-
+        
         if (fullReset) {
             clearLog();
             clearBadges();
@@ -551,13 +589,10 @@
             isPlaying = false;
             dom.btnPlay.innerHTML = "▶ Resume";
         } else {
-            // Auto-reset if starting from beginning
             if (stepIndex === 0) {
                 clearLog();
                 clearBadges();
             }
-
-            // Replay
             if (stepIndex >= (graph.sequence || []).length) {
                 stepIndex = 0;
                 clearLog();
@@ -608,20 +643,16 @@
         p.style.transition = 'none';
         p.style.left = (x1 - 6) + 'px';
         p.style.top = (y1 - 6) + 'px';
-
-        void p.offsetWidth; // Reflow
+        
+        void p.offsetWidth;
 
         p.style.transition = 'all 1s ease-in-out';
         p.style.left = (x2 - 6) + 'px';
         p.style.top = (y2 - 6) + 'px';
 
         setTimeout(() => {
-            // 1. Add Badge to Target Box
             addStepBadge(step.to, stepNum);
-
-            // 2. Add Log Entry
             appendLog(stepNum, step.text);
-
             cb();
         }, 1000);
     }
