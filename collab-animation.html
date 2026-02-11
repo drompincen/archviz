@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collab: Architecture Animator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --grid-color: rgba(255, 255, 255, 0.05);
+            --panel-bg: #252526;
+            --border-color: #3e3e42;
+            --text-main: #d4d4d4;
+            --accent-color: #007acc;
+            --highlight: #17a2b8;
+            --error-color: #f14c4c;
+
+            --tag-legacy-bg: #4a1818; --tag-legacy-border: #e74c3c; --tag-legacy-text: #ecf0f1;
+            --tag-new-bg: #144226; --tag-new-border: #2ecc71; --tag-new-text: #ecf0f1;
+            --tag-core-bg: #154360; --tag-core-border: #3498db; --tag-core-text: #ecf0f1;
+            --tag-agent-bg: #4a235a; --tag-agent-border: #9b59b6; --tag-agent-text: #ecf0f1;
+            --tag-external-bg: #34495e; --tag-external-border: #7f8c8d; --tag-external-text: #bdc3c7;
+        }
+
+        body.light-theme {
+            --bg-color: #f5f5f5;
+            --grid-color: rgba(0, 0, 0, 0.05);
+            --panel-bg: #ffffff;
+            --border-color: #ddd;
+            --text-main: #333;
+            --accent-color: #0066aa;
+            --highlight: #0d8fa0;
+            --error-color: #d32f2f;
+
+            --tag-legacy-bg: #ffebee; --tag-legacy-border: #e74c3c; --tag-legacy-text: #333;
+            --tag-new-bg: #e8f5e9; --tag-new-border: #2ecc71; --tag-new-text: #333;
+            --tag-core-bg: #e3f2fd; --tag-core-border: #3498db; --tag-core-text: #333;
+            --tag-agent-bg: #f3e5f5; --tag-agent-border: #9b59b6; --tag-agent-text: #333;
+            --tag-external-bg: #eceff1; --tag-external-border: #7f8c8d; --tag-external-text: #555;
+        }
+
+        body {
+            margin: 0; font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif;
+            background: var(--bg-color); color: var(--text-main);
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        header {
+            background: #2d2d2d; border-bottom: 1px solid var(--border-color);
+            padding: 0 20px; height: 50px; display: flex; align-items: center;
+            justify-content: space-between; z-index: 100; flex-shrink: 0;
+        }
+        body.light-theme header { background: #e8e8e8; }
+
+        .brand { font-weight: 700; font-size: 1.2rem; letter-spacing: 1px; color: #fff; text-transform: uppercase; }
+        .brand span { color: var(--highlight); }
+        body.light-theme .brand { color: #333; }
+
+        .controls-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .divider { width: 1px; height: 24px; background: #555; margin: 0 6px; }
+
+        button {
+            background: var(--accent-color); border: 1px solid rgba(255,255,255,0.1);
+            color: white; padding: 5px 12px; border-radius: 4px; cursor: pointer;
+            font-size: 0.82rem; transition: all 0.2s; white-space: nowrap;
+        }
+        button:hover { filter: brightness(1.2); }
+        button:disabled { background: #444; color: #888; cursor: not-allowed; }
+        body.light-theme button { border-color: rgba(0,0,0,0.1); }
+        body.light-theme button:disabled { background: #ccc; color: #999; }
+
+        label.toggle-label { font-size: 0.82rem; display: flex; align-items: center; gap: 5px; color: #ccc; cursor: pointer; user-select: none; white-space: nowrap; }
+        body.light-theme label.toggle-label { color: #555; }
+        input[type="checkbox"] { cursor: pointer; accent-color: var(--accent-color); }
+        input[type="number"] { width: 40px; padding: 3px; border-radius: 3px; border: 1px solid #555; background: #333; color: white; }
+        body.light-theme input[type="number"] { background: #fff; color: #333; border-color: #ccc; }
+
+        select#json-selector {
+            padding: 4px 8px; border-radius: 4px; border: 1px solid #555;
+            background: #333; color: #ccc; font-size: 0.82rem; cursor: pointer; max-width: 180px;
+        }
+        body.light-theme select#json-selector { background: #fff; color: #333; border-color: #ccc; }
+
+        main { display: flex; flex: 1; height: calc(100vh - 50px); overflow: hidden; }
+
+        #left-sidebar {
+            width: 30%; min-width: 300px; display: flex; flex-direction: column;
+            border-right: 1px solid var(--border-color); background: var(--panel-bg);
+            transition: width 0.3s ease, min-width 0.3s ease; z-index: 50; overflow: hidden;
+        }
+        #left-sidebar.hidden { width: 0; min-width: 0; border: none; }
+
+        .editor-toolbar { padding: 8px 10px; background: #252526; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        body.light-theme .editor-toolbar { background: #f0f0f0; border-color: #ddd; }
+        #error-msg { color: var(--error-color); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; display: none; }
+        #error-msg.visible { display: block; animation: flash 0.5s; }
+
+        textarea#json-input {
+            flex: 1; width: 100%; border: none; padding: 15px;
+            font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; line-height: 1.5;
+            background: #1e1e1e; color: #dcdcaa; resize: none; outline: none; box-sizing: border-box;
+        }
+        body.light-theme textarea#json-input { background: #fff; color: #333; }
+        textarea.invalid { border-left: 4px solid var(--error-color); }
+
+        #center-stage {
+            flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden;
+        }
+
+        #canvas-wrapper {
+            flex: 1; position: relative; overflow: hidden;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(var(--grid-color) 1px, transparent 1px);
+            background-size: 25px 25px;
+        }
+
+        #preview-canvas {
+            width: 100%; height: 100%;
+            position: absolute; top:0; left:0;
+            transition: opacity 0.3s;
+            z-index: 1;
+        }
+        #preview-canvas.hidden { opacity: 0; pointer-events: none; z-index: -1; }
+
+        #sequence-view {
+            width: 100%; height: 100%;
+            position: absolute; top:0; left:0;
+            overflow: auto;
+            padding: 40px;
+            box-sizing: border-box;
+            opacity: 0; pointer-events: none; z-index: -1;
+            transition: opacity 0.3s;
+            background: var(--bg-color);
+        }
+        #sequence-view.visible { opacity: 1; pointer-events: auto; z-index: 10; }
+
+        .seq-lifeline { stroke: #555; stroke-width: 1; stroke-dasharray: 5,5; }
+        body.light-theme .seq-lifeline { stroke: #bbb; }
+        .seq-head-rect { stroke-width: 2; rx: 6; }
+        .seq-head-text { font-size: 12px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
+        .seq-arrow { stroke: #d4d4d4; stroke-width: 2; marker-end: url(#arrowhead); }
+        body.light-theme .seq-arrow { stroke: #555; }
+        .seq-arrow-label { font-size: 11px; fill: #aaa; text-anchor: middle; }
+        body.light-theme .seq-arrow-label { fill: #666; }
+        .seq-status-bg { stroke: #2d2d2d; stroke-width: 1px; }
+        .seq-status-text { font-size: 10px; font-weight: bold; fill: #fff; text-anchor: middle; dominant-baseline: middle; }
+        .status-ready-svg { fill: #2ecc71; }
+        .status-wip-svg { fill: #f39c12; }
+
+        .seq-node.tag-legacy .seq-head-rect { fill: var(--tag-legacy-bg); stroke: var(--tag-legacy-border); }
+        .seq-node.tag-legacy .seq-head-text { fill: var(--tag-legacy-text); }
+        .seq-node.tag-new .seq-head-rect { fill: var(--tag-new-bg); stroke: var(--tag-new-border); }
+        .seq-node.tag-new .seq-head-text { fill: var(--tag-new-text); }
+        .seq-node.tag-core .seq-head-rect { fill: var(--tag-core-bg); stroke: var(--tag-core-border); }
+        .seq-node.tag-core .seq-head-text { fill: var(--tag-core-text); }
+        .seq-node.tag-agent .seq-head-rect { fill: var(--tag-agent-bg); stroke: var(--tag-agent-border); }
+        .seq-node.tag-agent .seq-head-text { fill: var(--tag-agent-text); }
+        .seq-node.tag-external .seq-head-rect { fill: var(--tag-external-bg); stroke: var(--tag-external-border); stroke-dasharray: 4,2; }
+        .seq-node.tag-external .seq-head-text { fill: var(--tag-external-text); }
+
+        #notebook-widget {
+            position: absolute; top: 20px; right: 20px; width: 500px; max-height: 500px;
+            background: #fdf6e3; border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 100; display: flex; flex-direction: column;
+            border: 1px solid #d4c4a8;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        #notebook-widget.hidden { display: none; }
+
+        .notebook-header {
+            background: #eee8d5; color: #586e75; padding: 8px 15px;
+            font-size: 0.8rem; font-weight: bold; border-bottom: 1px solid #d4c4a8;
+            text-transform: uppercase; letter-spacing: 1px; border-radius: 4px 4px 0 0;
+            display: flex; justify-content: space-between;
+        }
+
+        .notebook-area {
+            flex: 1; width: 100%; border: none;
+            padding: 5px 25px 5px 35px;
+            font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 14px; font-weight: 600; color: #222; line-height: 28px;
+            background-color: #fdf6e3; resize: none; outline: none; box-sizing: border-box;
+            border-radius: 0 0 4px 4px;
+            background-image: linear-gradient(transparent 27px, #d4c4a8 1px);
+            background-size: 100% 28px; background-attachment: local;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            min-height: 200px;
+            overflow-y: auto;
+        }
+        #notebook-widget::before {
+            content: ''; position: absolute; top: 35px; bottom: 10px; left: 25px;
+            width: 2px; background: #ff9999; pointer-events: none; opacity: 0.6; z-index: 101;
+        }
+
+        #pane-resizer {
+            height: 10px; background: #252526; border-top: 1px solid #3e3e42;
+            cursor: ns-resize; display: flex; justify-content: center; align-items: center;
+            z-index: 200; flex-shrink: 0;
+        }
+        body.light-theme #pane-resizer { background: #e8e8e8; border-color: #ccc; }
+        #pane-resizer:hover { background: #3e3e42; }
+        #pane-resizer::after { content: ''; width: 40px; height: 3px; background: #666; border-radius: 2px; }
+
+        #log-pane {
+            height: 200px; background: #1e1e1e; color: #ccc;
+            overflow-y: auto; display: flex; flex-direction: column;
+            font-family: 'Consolas', monospace; font-size: 13px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+        body.light-theme #log-pane { background: #fafafa; color: #333; }
+
+        #phase-display {
+            position: absolute; top: 10px; left: 20px;
+            font-size: 1.2rem; font-weight: 300; color: rgba(255,255,255,0.7);
+            text-transform: uppercase; letter-spacing: 2px; pointer-events: none;
+            z-index: 5; border-left: 3px solid var(--accent-color); padding-left: 10px;
+        }
+        body.light-theme #phase-display { color: rgba(0,0,0,0.5); }
+
+        svg.connections-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        path.connector { fill: none; stroke: #666; stroke-width: 2; stroke-dasharray: 6,4; opacity: 0.6; }
+        body.light-theme path.connector { stroke: #aaa; }
+
+        .node {
+            position: absolute; display: flex; flex-direction: column;
+            align-items: center; text-align: center;
+            border: 2px solid #555; border-radius: 6px; background: #2d2d2d;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: default;
+            user-select: none; padding: 8px; box-sizing: border-box; z-index: 10;
+            transition: border-color 0.2s;
+        }
+        body.light-theme .node { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        body.is-editing .node { cursor: grab; }
+        body.is-editing .node:active { cursor: grabbing; border-color: var(--highlight); }
+
+        .node-content-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; pointer-events: none; }
+        .node-icon { width: 24px; height: 24px; margin-bottom: 4px; fill: currentColor; opacity: 0.9; }
+        .node-label { font-weight: 600; font-size: 0.8rem; line-height: 1.2; white-space: pre-line; }
+
+        .status-icon {
+            position: absolute; top: -10px; right: -10px;
+            width: 20px; height: 20px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            z-index: 20; border: 2px solid #2d2d2d;
+        }
+        .status-ready { background-color: #2ecc71; color: #fff; }
+        .status-wip { background-color: #f39c12; color: #fff; }
+
+        .step-badges-container { display: flex; gap: 3px; justify-content: center; flex-wrap: wrap; width: 100%; margin-top: auto; padding-top: 4px; min-height: 18px; }
+        .step-badge {
+            width: 16px; height: 16px; border-radius: 50%; font-size: 0.7rem; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .step-badge.badge-ready { background: #004e8a; color: white; }
+        .step-badge.badge-wip { background: #f1c40f; color: #222; }
+        .step-badge.badge-default { background: var(--highlight); color: #1e1e1e; }
+
+        .message-particle {
+            position: absolute; width: 12px; height: 12px; background: #00ffcc;
+            border-radius: 50%; z-index: 30; box-shadow: 0 0 10px #00ffcc; display: none; pointer-events: none;
+        }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+        .node.tag-legacy { background: var(--tag-legacy-bg); border-color: var(--tag-legacy-border); color: var(--tag-legacy-text); }
+        .node.tag-new { background: var(--tag-new-bg); border-color: var(--tag-new-border); color: var(--tag-new-text); }
+        .node.tag-core { background: var(--tag-core-bg); border-color: var(--tag-core-border); color: var(--tag-core-text); }
+        .node.tag-agent { background: var(--tag-agent-bg); border-color: var(--tag-agent-border); color: var(--tag-agent-text); }
+        .node.tag-external { background: var(--tag-external-bg); border-color: var(--tag-external-border); color: var(--tag-external-text); border-style: dashed; }
+        .node.type-database { border-radius: 0 0 12px 12px; border-top-width: 4px; }
+
+        .log-entry { padding: 6px 15px; border-bottom: 1px solid #2d2d2d; display: flex; gap: 10px; align-items: baseline; animation: fadeIn 0.3s ease; }
+        body.light-theme .log-entry { border-color: #eee; }
+        .log-entry:hover { background: #2a2d2e; }
+        body.light-theme .log-entry:hover { background: #f0f0f0; }
+        .log-step { color: #888; font-weight: bold; min-width: 50px; }
+        .log-tag { font-weight: bold; margin-right: 5px; font-size: 0.85rem; white-space: nowrap; }
+        .log-tag.tag-ready { color: #2ecc71; }
+        .log-tag.tag-wip { color: #f39c12; }
+        .log-text { color: #d4d4d4; }
+        body.light-theme .log-text { color: #333; }
+        .log-time { color: #666; margin-left: auto; font-size: 0.8em; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes flash { 0%,50%{opacity:0} 25%,75%,100%{opacity:1} }
+
+        body.resizing { cursor: ns-resize !important; user-select: none; }
+
+        #pdf-modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 10000;
+            justify-content: center; align-items: center;
+        }
+        #pdf-modal-overlay.visible { display: flex; }
+        #pdf-modal {
+            background: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 24px; min-width: 320px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        #pdf-modal h3 { margin-top: 0; color: var(--text-main); }
+        #pdf-modal label { display: block; margin: 10px 0; color: var(--text-main); cursor: pointer; font-size: 0.9rem; }
+        #pdf-modal .pdf-actions { margin-top: 18px; display: flex; gap: 10px; justify-content: flex-end; }
+
+        #export-render-area {
+            position: fixed; top: -99999px; left: -99999px; z-index: -1;
+            background: var(--bg-color); width: 1200px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand"><span>Collab</span> Animator</div>
+
+    <div style="display:flex; flex-wrap:wrap; gap: 6px; align-items:center;">
+        <div class="controls-group">
+            <select id="json-selector" title="Load a sample JSON">
+                <option value="__default__">-- Built-in Demo --</option>
+            </select>
+            <button id="btn-play">&#9654; Play</button>
+            <button id="btn-next" disabled>Next &#9193;</button>
+            <button id="btn-ff" title="Fast Forward to end">&#9197; FF</button>
+            <label class="toggle-label"><input type="checkbox" id="chk-pause"> Pause/Step</label>
+            <label class="toggle-label">Delay: <input type="number" id="inp-delay" value="1.5" step="0.5" min="0.5">s</label>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="controls-group">
+            <label class="toggle-label" style="color:var(--highlight); border:1px solid #333; padding:2px 6px; border-radius:4px;">
+                <input type="checkbox" id="chk-sequence-mode"> Sequence View
+            </label>
+            <div class="divider"></div>
+            <label class="toggle-label"><input type="checkbox" id="chk-edit-mode"> Editing</label>
+            <label class="toggle-label"><input type="checkbox" id="chk-show-editor"> JSON</label>
+            <label class="toggle-label"><input type="checkbox" id="chk-show-notes" checked> Notes</label>
+            <div class="divider"></div>
+            <label class="toggle-label"><input type="checkbox" id="chk-light-mode"> Light</label>
+            <button id="btn-export-pdf" title="Export to PDF">&#128196; PDF</button>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div id="left-sidebar" class="hidden">
+        <div class="editor-toolbar">
+            <button id="btn-update">Update Diagram</button>
+            <span id="error-msg"></span>
+        </div>
+        <textarea id="json-input" spellcheck="false" placeholder="Paste valid JSON here..."></textarea>
+    </div>
+
+    <div id="center-stage">
+
+        <div id="canvas-wrapper">
+
+            <div id="preview-canvas">
+                <div id="phase-display"></div>
+                <svg class="connections-layer" id="connections-layer"></svg>
+                <div id="nodes-container"></div>
+                <div id="particle" class="message-particle"></div>
+            </div>
+
+            <div id="sequence-view"></div>
+
+            <div id="notebook-widget">
+                <div class="notebook-header">
+                    <span>Project Notes</span>
+                    <span style="opacity:0.6; font-size:0.75rem;">(From JSON)</span>
+                </div>
+                <div id="notebook-display" class="notebook-area"></div>
+            </div>
+        </div>
+
+        <div id="pane-resizer" title="Drag to resize logs"></div>
+
+        <div id="log-pane">
+            <div class="log-entry" style="color:#666; font-style:italic;">Ready...</div>
+        </div>
+
+    </div>
+</main>
+
+<div id="pdf-modal-overlay">
+    <div id="pdf-modal">
+        <h3>Export to PDF</h3>
+        <label><input type="radio" name="pdf-view" value="collab" checked> Collaboration (Spatial) View Only</label>
+        <label><input type="radio" name="pdf-view" value="sequence"> Sequence Diagram Only</label>
+        <label><input type="radio" name="pdf-view" value="both"> Both Views (Stacked)</label>
+        <div class="pdf-actions">
+            <button id="btn-pdf-cancel">Cancel</button>
+            <button id="btn-pdf-go">Export</button>
+        </div>
+    </div>
+</div>
+
+<div id="export-render-area"></div>
+
+<script>
+    (function(){
+    "use strict";
+
+    const ICONS = {
+        user: '<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>',
+        database: '<path d="M12 2C6.48 2 2 3.34 2 5v14c0 1.66 4.48 3 10 3s10-1.34 10-3V5c0-1.66-4.48-3-10-3zm0 12c-3.53 0-6.43-.85-7.85-2.09C5.36 13.56 8.44 14.5 12 14.5s6.64-.94 7.85-2.59c-1.42 1.24-4.32 2.09-7.85 2.09z"/>',
+        service: '<path d="M12 2L2 7l10 5 10-5-10-5zm0 9l-10-5v2l10 5 10-5v-2l-10 5zm0 4.5l-10-5v2l10 5 10-5v-2l-10 5z"/>',
+        agent: '<path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1c1.1 0 2 .9 2 2v6h2v2h-2v2c0 1.1-.9 2-2 2H8c-1.1 0-2-.9-2-2v-2H4v-2h2V9c0-1.1.9-2 2-2h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M9 12a1 1 0 1 0 0-2 1 1 0 0 0 0 2m6 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>',
+        default: '<path d="M3 3h18v18H3z"/>'
+    };
+
+    const SAMPLE_JSONS = {
+        "__default__": null,
+        "Microservice Migration": {
+            title: "Phase 1: Introducing AI Agents",
+            notes: "Project: Legacy Migration\nAuthor: Architecture Team\n\nObjectives:\n1. Decouple User from Monolith\n2. Introduce AI Agent for Triage\n3. Establish Redis caching layer\n\nStatus: In Development",
+            nodes: [
+                { id: "u", type: "user", tag: "external", label: "Customer", x: 60, y: 250, w: 100, h: 70 },
+                { id: "fe", type: "service", tag: "core", label: "Frontend", x: 250, y: 250, w: 120, h: 80, status: "ready" },
+                { id: "mono", type: "service", tag: "legacy", label: "Legacy\nMonolith", x: 500, y: 380, w: 140, h: 90 },
+                { id: "agent", type: "agent", tag: "agent", label: "Triage\nAgent", x: 500, y: 120, w: 110, h: 70, status: "wip" },
+                { id: "new_svc", type: "service", tag: "new", label: "Order\nService", x: 750, y: 120, w: 120, h: 80, status: "wip" },
+                { id: "db_main", type: "database", tag: "legacy", label: "Main DB", x: 750, y: 380, w: 100, h: 70, skipSequence: true },
+                { id: "db_cache", type: "database", tag: "new", label: "Redis\nCache", x: 950, y: 120, w: 100, h: 70, status: "wip", skipSequence: true }
+            ],
+            connections: [
+                { from: "u", to: "fe" },
+                { from: "fe", to: "mono" },
+                { from: "fe", to: "agent" },
+                { from: "agent", to: "new_svc" },
+                { from: "mono", to: "db_main" },
+                { from: "new_svc", to: "db_cache" }
+            ],
+            sequence: [
+                { from: "u", to: "fe", text: "User places order", status: "ready" },
+                { from: "fe", to: "agent", text: "Agent classifies request", status: "ready" },
+                { from: "agent", to: "new_svc", text: "Route to Microservice", status: "wip" },
+                { from: "new_svc", to: "db_cache", text: "Check Inventory", status: "wip" },
+                { from: "db_cache", to: "new_svc", text: "Stock Confirmed", status: "wip" },
+                { from: "new_svc", to: "fe", text: "Order Success", status: "ready" }
+            ]
+        },
+        "Event-Driven Pipeline": {
+            title: "Event-Driven Data Pipeline",
+            notes: "Project: Real-time Analytics\nTeam: Data Engineering\n\nFlow:\n1. Events ingested via Kafka\n2. Stream processor enriches data\n3. Results stored and indexed\n\nStatus: Production Ready",
+            nodes: [
+                { id: "producer", type: "service", tag: "external", label: "Event\nProducers", x: 50, y: 200, w: 120, h: 70 },
+                { id: "kafka", type: "service", tag: "core", label: "Kafka\nBroker", x: 260, y: 200, w: 120, h: 80, status: "ready" },
+                { id: "flink", type: "agent", tag: "agent", label: "Flink\nProcessor", x: 470, y: 200, w: 130, h: 80, status: "ready" },
+                { id: "elastic", type: "database", tag: "new", label: "Elastic\nSearch", x: 680, y: 120, w: 120, h: 70, status: "ready" },
+                { id: "s3", type: "database", tag: "core", label: "S3 Data\nLake", x: 680, y: 300, w: 120, h: 70, status: "ready", skipSequence: true },
+                { id: "dashboard", type: "service", tag: "new", label: "Dashboard", x: 900, y: 200, w: 110, h: 70, status: "ready" }
+            ],
+            connections: [
+                { from: "producer", to: "kafka" },
+                { from: "kafka", to: "flink" },
+                { from: "flink", to: "elastic" },
+                { from: "flink", to: "s3" },
+                { from: "elastic", to: "dashboard" }
+            ],
+            sequence: [
+                { from: "producer", to: "kafka", text: "Publish event batch", status: "ready" },
+                { from: "kafka", to: "flink", text: "Consume & partition", status: "ready" },
+                { from: "flink", to: "elastic", text: "Index enriched record", status: "ready" },
+                { from: "flink", to: "s3", text: "Archive raw payload", status: "ready" },
+                { from: "elastic", to: "dashboard", text: "Query & visualize", status: "ready" }
+            ]
+        },
+        "AI Agent Collaboration": {
+            title: "Multi-Agent Collaboration",
+            notes: "Project: AI Agent Mesh\nTeam: AI Platform\n\nArchitecture:\n- Orchestrator routes tasks\n- Specialist agents handle domains\n- Shared memory for context\n\nStatus: Prototype",
+            nodes: [
+                { id: "user", type: "user", tag: "external", label: "Human\nOperator", x: 50, y: 220, w: 100, h: 70 },
+                { id: "orch", type: "agent", tag: "agent", label: "Orchestrator\nAgent", x: 260, y: 220, w: 130, h: 80, status: "ready" },
+                { id: "research", type: "agent", tag: "agent", label: "Research\nAgent", x: 490, y: 100, w: 120, h: 70, status: "wip" },
+                { id: "code", type: "agent", tag: "agent", label: "Code\nAgent", x: 490, y: 340, w: 120, h: 70, status: "wip" },
+                { id: "memory", type: "database", tag: "new", label: "Shared\nMemory", x: 720, y: 220, w: 110, h: 70, status: "ready", skipSequence: true },
+                { id: "api", type: "service", tag: "core", label: "External\nAPIs", x: 720, y: 80, w: 110, h: 60, status: "ready" }
+            ],
+            connections: [
+                { from: "user", to: "orch" },
+                { from: "orch", to: "research" },
+                { from: "orch", to: "code" },
+                { from: "research", to: "memory" },
+                { from: "code", to: "memory" },
+                { from: "research", to: "api" }
+            ],
+            sequence: [
+                { from: "user", to: "orch", text: "Submit complex task", status: "ready" },
+                { from: "orch", to: "research", text: "Delegate research subtask", status: "wip" },
+                { from: "research", to: "api", text: "Fetch external data", status: "ready" },
+                { from: "research", to: "memory", text: "Store findings", status: "wip" },
+                { from: "orch", to: "code", text: "Delegate coding subtask", status: "wip" },
+                { from: "code", to: "memory", text: "Read context & write code", status: "wip" },
+                { from: "code", to: "orch", text: "Return results", status: "ready" },
+                { from: "orch", to: "user", text: "Deliver final output", status: "ready" }
+            ]
+        }
+    };
+
+    const editorString = `{
+    // Collab Animation - Demo JSON
+    "title": "Simple API Flow",
+    "notes": "Project: Quick Demo\\nTeam: Dev Team\\n\\nThis is a minimal example showing\\na user calling an API that queries a database.\\n\\nStatus: Ready",
+    "nodes": [
+        { "id": "usr", "type": "user", "tag": "external", "label": "User", "x": 80, "y": 180, "w": 100, "h": 70 },
+        { "id": "api", "type": "service", "tag": "core", "label": "API\\nGateway", "x": 320, "y": 180, "w": 120, "h": 80, "status": "ready" },
+        { "id": "svc", "type": "service", "tag": "new", "label": "Order\\nService", "x": 560, "y": 180, "w": 120, "h": 80, "status": "wip" },
+        { "id": "db", "type": "database", "tag": "core", "label": "SQL DB", "x": 800, "y": 180, "w": 100, "h": 70, "skipSequence": true }
+    ],
+    "connections": [
+        { "from": "usr", "to": "api" },
+        { "from": "api", "to": "svc" },
+        { "from": "svc", "to": "db" }
+    ],
+    "sequence": [
+        { "from": "usr", "to": "api", "text": "POST /orders", "status": "ready" },
+        { "from": "api", "to": "svc", "text": "Validate & forward", "status": "ready" },
+        { "from": "svc", "to": "db", "text": "INSERT order row", "status": "wip" },
+        { "from": "db", "to": "svc", "text": "Return order ID", "status": "wip" },
+        { "from": "svc", "to": "api", "text": "200 OK + payload", "status": "ready" },
+        { "from": "api", "to": "usr", "text": "Response delivered", "status": "ready" }
+    ]
+}`;
+
+    const dom = {
+        input: document.getElementById('json-input'),
+        errorMsg: document.getElementById('error-msg'),
+        container: document.getElementById('nodes-container'),
+        svgLayer: document.getElementById('connections-layer'),
+        particle: document.getElementById('particle'),
+        title: document.getElementById('phase-display'),
+        editorPane: document.getElementById('left-sidebar'),
+        notebookWidget: document.getElementById('notebook-widget'),
+        notebook: document.getElementById('notebook-display'),
+        logPane: document.getElementById('log-pane'),
+        previewCanvas: document.getElementById('preview-canvas'),
+        sequenceView: document.getElementById('sequence-view'),
+
+        btnPlay: document.getElementById('btn-play'),
+        btnNext: document.getElementById('btn-next'),
+        btnFF: document.getElementById('btn-ff'),
+        btnUpdate: document.getElementById('btn-update'),
+        btnExportPdf: document.getElementById('btn-export-pdf'),
+        chkPause: document.getElementById('chk-pause'),
+        inpDelay: document.getElementById('inp-delay'),
+        chkEditMode: document.getElementById('chk-edit-mode'),
+        chkShowEditor: document.getElementById('chk-show-editor'),
+        chkShowNotes: document.getElementById('chk-show-notes'),
+        chkSequenceMode: document.getElementById('chk-sequence-mode'),
+        chkLightMode: document.getElementById('chk-light-mode'),
+        jsonSelector: document.getElementById('json-selector'),
+
+        resizer: document.getElementById('pane-resizer'),
+        centerStage: document.getElementById('center-stage'),
+
+        pdfOverlay: document.getElementById('pdf-modal-overlay'),
+        btnPdfCancel: document.getElementById('btn-pdf-cancel'),
+        btnPdfGo: document.getElementById('btn-pdf-go'),
+        exportArea: document.getElementById('export-render-area')
+    };
+
+    let graph = {};
+    let isPlaying = false;
+    let stepIndex = 0;
+    let timer = null;
+    let nodeMap = {};
+    let sequenceGroups = [];
+    let savedLogHeight = 200;
+
+    function populateSelector() {
+        Object.keys(SAMPLE_JSONS).forEach(function(name) {
+            if (name === "__default__") return;
+            var opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            dom.jsonSelector.appendChild(opt);
+        });
+    }
+
+    function init() {
+        populateSelector();
+        dom.input.value = editorString;
+        render();
+        clearLog();
+        loadExternalJsonList();
+    }
+
+    function loadExternalJsonList() {
+        var jsonFiles = ['microservice-migration.json', 'event-pipeline.json', 'ai-agent-collab.json'];
+        jsonFiles.forEach(function(filename) {
+            fetch('json/' + filename).then(function(r) {
+                if (r.ok) {
+                    return r.json().then(function(data) {
+                        var displayName = filename.replace('.json', '').replace(/-/g, ' ');
+                        displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1) + ' (file)';
+                        SAMPLE_JSONS[displayName] = data;
+                        var opt = document.createElement('option');
+                        opt.value = displayName;
+                        opt.textContent = displayName;
+                        dom.jsonSelector.appendChild(opt);
+                    });
+                }
+            }).catch(function() {});
+        });
+    }
+
+    dom.jsonSelector.addEventListener('change', function() {
+        var key = dom.jsonSelector.value;
+        if (key === '__default__') {
+            dom.input.value = editorString;
+        } else if (SAMPLE_JSONS[key]) {
+            dom.input.value = JSON.stringify(SAMPLE_JSONS[key], null, 4);
+        }
+        render();
+        resetAnimation(true);
+    });
+
+    function stripJsonComments(jsonStr) {
+        return jsonStr.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g, function(m, g) { return g ? "" : m; });
+    }
+
+    function render() {
+        try {
+            var cleanJson = stripJsonComments(dom.input.value);
+            graph = JSON.parse(cleanJson);
+
+            dom.input.classList.remove('invalid');
+            dom.errorMsg.classList.remove('visible');
+            dom.errorMsg.innerText = "";
+            dom.btnUpdate.innerText = "Update Diagram";
+
+            nodeMap = {};
+            dom.title.innerText = graph.title || "";
+
+            var notesText = (graph.notes || "").replace(/\\n/g, "\n");
+            dom.notebook.textContent = notesText;
+
+            dom.container.innerHTML = '';
+
+            (graph.nodes || []).forEach(function(n) {
+                var el = document.createElement('div');
+                el.className = 'node type-' + (n.type || 'default') + ' tag-' + (n.tag || 'core');
+                el.id = 'node-' + n.id;
+
+                el.style.left = n.x + 'px';
+                el.style.top = n.y + 'px';
+                el.style.width = n.w ? n.w + 'px' : '100px';
+                el.style.height = n.h ? n.h + 'px' : 'auto';
+
+                var iconSvg = ICONS[n.type] || ICONS['default'];
+
+                var statusHtml = '';
+                if (n.status === 'ready') statusHtml = '<div class="status-icon status-ready" title="Ready">\u2714</div>';
+                else if (n.status === 'wip') statusHtml = '<div class="status-icon status-wip" title="WIP">\u23F3</div>';
+
+                el.innerHTML =
+                    statusHtml +
+                    '<div class="node-content-wrapper">' +
+                        '<svg class="node-icon" viewBox="0 0 24 24">' + iconSvg + '</svg>' +
+                        '<div class="node-label"></div>' +
+                    '</div>' +
+                    '<div class="step-badges-container" id="badges-' + n.id + '"></div>';
+
+                var labelText = (n.label || "").replace(/\\n/g, "\n");
+                el.querySelector('.node-label').textContent = labelText;
+                el.addEventListener('mousedown', handleDragStart);
+                dom.container.appendChild(el);
+                nodeMap[n.id] = Object.assign({}, n, { el: el });
+            });
+
+            updateConnections();
+
+            if (dom.chkSequenceMode.checked) {
+                renderSequenceView();
+            }
+
+            resetAnimation(true);
+
+        } catch (e) {
+            dom.input.classList.add('invalid');
+            dom.errorMsg.innerText = "Error: " + e.message;
+            dom.errorMsg.classList.add('visible');
+            dom.btnUpdate.innerText = "\u26A0 Fix Syntax";
+        }
+    }
+
+    function getNodeCenter(id) {
+        var n = nodeMap[id];
+        if (!n) return null;
+        var el = n.el;
+        var x = parseInt(el.style.left) + el.offsetWidth / 2;
+        var y = parseInt(el.style.top) + el.offsetHeight / 2;
+        return { x: x, y: y };
+    }
+
+    function updateConnections() {
+        dom.svgLayer.innerHTML = '';
+        if (!graph.connections) return;
+
+        var connsByPair = {};
+        graph.connections.forEach(function(conn, idx) {
+            var key = [conn.from, conn.to].sort().join('|');
+            if (!connsByPair[key]) connsByPair[key] = [];
+            connsByPair[key].push({ conn: conn, idx: idx });
+        });
+
+        var occupiedMidpoints = [];
+
+        graph.connections.forEach(function(conn, idx) {
+            var c1 = getNodeCenter(conn.from);
+            var c2 = getNodeCenter(conn.to);
+            if (!c1 || !c2) return;
+
+            var key = [conn.from, conn.to].sort().join('|');
+            var siblings = connsByPair[key];
+            var siblingIndex = siblings.findIndex(function(s) { return s.idx === idx; });
+            var siblingCount = siblings.length;
+
+            var dx = c2.x - c1.x;
+            var dy = c2.y - c1.y;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            var nx = -dy / (dist || 1);
+            var ny = dx / (dist || 1);
+
+            var baseOffset = 0;
+            if (siblingCount > 1) {
+                baseOffset = (siblingIndex - (siblingCount - 1) / 2) * 25;
+            }
+
+            var midX = (c1.x + c2.x) / 2;
+            var midY = (c1.y + c2.y) / 2;
+
+            var avoidOffset = 0;
+            for (var i = 0; i < occupiedMidpoints.length; i++) {
+                var om = occupiedMidpoints[i];
+                var omDist = Math.sqrt(Math.pow(midX + nx * (baseOffset + avoidOffset) - om.x, 2) + Math.pow(midY + ny * (baseOffset + avoidOffset) - om.y, 2));
+                if (omDist < 30) {
+                    avoidOffset += 20;
+                    i = -1;
+                }
+            }
+
+            var totalOffset = baseOffset + avoidOffset;
+
+            var ctrlX = midX + nx * totalOffset;
+            var ctrlY = midY + ny * totalOffset;
+
+            occupiedMidpoints.push({ x: ctrlX, y: ctrlY });
+
+            var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("class", "connector");
+
+            if (Math.abs(totalOffset) < 5) {
+                path.setAttribute("d", "M" + c1.x + "," + c1.y + " L" + c2.x + "," + c2.y);
+            } else {
+                path.setAttribute("d", "M" + c1.x + "," + c1.y + " Q" + ctrlX + "," + ctrlY + " " + c2.x + "," + c2.y);
+            }
+            dom.svgLayer.appendChild(path);
+        });
+    }
+
+    function renderSequenceView() {
+        var allNodes = graph.nodes || [];
+        var visibleNodes = allNodes.filter(function(n) { return !n.skipSequence; });
+        var sequence = graph.sequence || [];
+        sequenceGroups = [];
+
+        if (visibleNodes.length === 0) {
+            dom.sequenceView.innerHTML = "<div style='padding:20px; color:#aaa;'>No visible nodes for sequence.</div>";
+            return;
+        }
+
+        var colWidth = 160;
+        var startX = 60;
+        var headerHeight = 60;
+        var rowHeight = 50;
+
+        var svgWidth = startX + (visibleNodes.length * colWidth);
+        var svgHeight = headerHeight + (sequence.length * rowHeight) + 50;
+
+        var arrowFill = document.body.classList.contains('light-theme') ? '#555' : '#d4d4d4';
+
+        var svg = '<svg width="' + svgWidth + '" height="' + svgHeight + '" xmlns="http://www.w3.org/2000/svg">' +
+            '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">' +
+            '<polygon points="0 0, 10 3.5, 0 7" fill="' + arrowFill + '" /></marker></defs>';
+
+        visibleNodes.forEach(function(node, index) {
+            var x = startX + (index * colWidth) + (colWidth / 2);
+            var tagClass = node.tag ? 'tag-' + node.tag : 'tag-core';
+            var label = (node.label || '').replace(/\\n/g, ' ');
+
+            var statusSvg = "";
+            if (node.status === 'ready') {
+                statusSvg = '<circle cx="' + (x + 60) + '" cy="10" r="8" class="seq-status-bg status-ready-svg" />' +
+                    '<text x="' + (x + 60) + '" y="10" class="seq-status-text">\u2714</text>';
+            } else if (node.status === 'wip') {
+                statusSvg = '<circle cx="' + (x + 60) + '" cy="10" r="8" class="seq-status-bg status-wip-svg" />' +
+                    '<text x="' + (x + 60) + '" y="10" class="seq-status-text">\u23F3</text>';
+            }
+
+            svg += '<g class="seq-node ' + tagClass + '">' +
+                '<rect x="' + (x - 60) + '" y="10" width="120" height="40" class="seq-head-rect" />' +
+                '<text x="' + x + '" y="35" class="seq-head-text">' + label + '</text>' +
+                statusSvg +
+                '<line x1="' + x + '" y1="50" x2="' + x + '" y2="' + svgHeight + '" class="seq-lifeline" />' +
+                '</g>';
+        });
+
+        sequence.forEach(function(step, index) {
+            var srcIndex = visibleNodes.findIndex(function(n) { return n.id === step.from; });
+            var tgtIndex = visibleNodes.findIndex(function(n) { return n.id === step.to; });
+
+            var y = headerHeight + (index * rowHeight) + 30;
+            var groupId = 'seq-step-' + index;
+            sequenceGroups[index] = groupId;
+
+            if (srcIndex !== -1 && tgtIndex !== -1) {
+                var x1 = startX + (srcIndex * colWidth) + (colWidth / 2);
+                var x2 = startX + (tgtIndex * colWidth) + (colWidth / 2);
+                var labelX = (x1 + x2) / 2;
+                var labelText = '[' + (index + 1) + '] ' + step.text;
+
+                svg += '<g id="' + groupId + '" style="opacity: 0; transition: opacity 0.5s ease-in-out;">' +
+                    '<line x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '" class="seq-arrow" />' +
+                    '<text x="' + labelX + '" y="' + (y - 6) + '" class="seq-arrow-label">' + labelText + '</text>' +
+                    '</g>';
+            } else {
+                sequenceGroups[index] = null;
+            }
+        });
+
+        svg += '</svg>';
+        dom.sequenceView.innerHTML = svg;
+    }
+
+    dom.chkEditMode.addEventListener('change', function(e) {
+        document.body.classList.toggle('is-editing', e.target.checked);
+    });
+
+    dom.chkShowEditor.addEventListener('change', function(e) {
+        if (e.target.checked) dom.editorPane.classList.remove('hidden');
+        else dom.editorPane.classList.add('hidden');
+    });
+
+    dom.chkShowNotes.addEventListener('change', function(e) {
+        if (e.target.checked) dom.notebookWidget.classList.remove('hidden');
+        else dom.notebookWidget.classList.add('hidden');
+    });
+
+    dom.chkSequenceMode.addEventListener('change', function(e) {
+        if (e.target.checked) {
+            dom.previewCanvas.classList.add('hidden');
+            dom.sequenceView.classList.add('visible');
+            renderSequenceView();
+            dom.btnPlay.disabled = false;
+            dom.btnNext.disabled = true;
+        } else {
+            dom.previewCanvas.classList.remove('hidden');
+            dom.sequenceView.classList.remove('visible');
+        }
+    });
+
+    dom.chkLightMode.addEventListener('change', function(e) {
+        document.body.classList.toggle('light-theme', e.target.checked);
+        if (dom.chkSequenceMode.checked) renderSequenceView();
+    });
+
+    var isResizing = false;
+    dom.resizer.addEventListener('mousedown', function() {
+        isResizing = true;
+        document.body.classList.add('resizing');
+        document.addEventListener('mousemove', handleResize);
+        document.addEventListener('mouseup', stopResize);
+    });
+
+    function handleResize(e) {
+        if (!isResizing) return;
+        var containerRect = dom.centerStage.getBoundingClientRect();
+        var newHeight = containerRect.bottom - e.clientY;
+        if (newHeight > 20 && newHeight < containerRect.height * 0.8) {
+            dom.logPane.style.height = newHeight + 'px';
+            savedLogHeight = newHeight;
+        }
+    }
+
+    function stopResize() {
+        isResizing = false;
+        document.body.classList.remove('resizing');
+        document.removeEventListener('mousemove', handleResize);
+        document.removeEventListener('mouseup', stopResize);
+    }
+
+    var dragTarget = null, dragOffset = { x: 0, y: 0 };
+    function handleDragStart(e) {
+        if (!dom.chkEditMode.checked || isPlaying || dom.chkSequenceMode.checked) return;
+        dragTarget = e.currentTarget;
+        var r = dragTarget.getBoundingClientRect();
+        dragOffset.x = e.clientX - r.left;
+        dragOffset.y = e.clientY - r.top;
+        document.addEventListener('mousemove', handleDragMove);
+        document.addEventListener('mouseup', handleDragEnd);
+    }
+    function handleDragMove(e) {
+        if (!dragTarget) return;
+        var cRect = document.getElementById('preview-canvas').getBoundingClientRect();
+        var nx = e.clientX - cRect.left - dragOffset.x;
+        var ny = e.clientY - cRect.top - dragOffset.y;
+        nx = Math.round(nx / 10) * 10;
+        ny = Math.round(ny / 10) * 10;
+        dragTarget.style.left = nx + 'px';
+        dragTarget.style.top = ny + 'px';
+        updateConnections();
+    }
+    function handleDragEnd() {
+        if (dragTarget) {
+            var id = dragTarget.id.replace('node-', '');
+            var nodeItem = graph.nodes.find(function(n) { return n.id === id; });
+            if (nodeItem) {
+                nodeItem.x = parseInt(dragTarget.style.left);
+                nodeItem.y = parseInt(dragTarget.style.top);
+                dom.input.value = JSON.stringify(graph, null, 4);
+            }
+        }
+        dragTarget = null;
+        document.removeEventListener('mousemove', handleDragMove);
+        document.removeEventListener('mouseup', handleDragEnd);
+    }
+
+    function clearLog() {
+        dom.logPane.innerHTML = '<div class="log-entry" style="color:#666; font-style:italic;">Ready...</div>';
+    }
+
+    function clearBadges() {
+        document.querySelectorAll('.step-badge').forEach(function(el) { el.remove(); });
+    }
+
+    function addStepBadge(nodeId, stepNum, status) {
+        var container = document.getElementById('badges-' + nodeId);
+        if (container) {
+            var badge = document.createElement('div');
+            badge.className = 'step-badge';
+            if (status === 'wip') badge.classList.add('badge-wip');
+            else if (status === 'ready') badge.classList.add('badge-ready');
+            else badge.classList.add('badge-default');
+            badge.innerText = stepNum;
+            container.appendChild(badge);
+        }
+    }
+
+    function appendLog(stepNum, text, status) {
+        if (dom.logPane.children[0] && dom.logPane.children[0].innerText.includes("Ready")) {
+            dom.logPane.innerHTML = '';
+        }
+        var div = document.createElement('div');
+        div.className = 'log-entry';
+        var timeStr = new Date().toLocaleTimeString().split(' ')[0];
+
+        var tagHtml = '';
+        if (status === 'wip') tagHtml = '<span class="log-tag tag-wip">[WIP]</span>';
+        else if (status === 'ready') tagHtml = '<span class="log-tag tag-ready">[READY]</span>';
+
+        div.innerHTML = '<span class="log-step">Step ' + stepNum + '</span>' + tagHtml + '<span class="log-text"></span><span class="log-time">' + timeStr + '</span>';
+        div.querySelector('.log-text').textContent = text;
+        dom.logPane.appendChild(div);
+        dom.logPane.scrollTop = dom.logPane.scrollHeight;
+    }
+
+    function resetAnimation(fullReset) {
+        clearTimeout(timer);
+        isPlaying = false;
+        stepIndex = 0;
+        dom.particle.style.display = 'none';
+        dom.btnNext.disabled = true;
+        dom.btnPlay.innerHTML = "&#9654; Play";
+
+        if (fullReset) {
+            clearLog();
+            clearBadges();
+            document.querySelectorAll('g[id^="seq-step-"]').forEach(function(g) { g.style.opacity = 0; });
+        }
+    }
+
+    function fastForward() {
+        clearTimeout(timer);
+        isPlaying = false;
+        dom.particle.style.display = 'none';
+
+        var seq = graph.sequence || [];
+
+        clearLog();
+        clearBadges();
+
+        seq.forEach(function(step, i) {
+            addStepBadge(step.to, i + 1, step.status);
+            appendLog(i + 1, step.text, step.status);
+        });
+
+        document.querySelectorAll('g[id^="seq-step-"]').forEach(function(g) { g.style.opacity = 1; });
+
+        stepIndex = seq.length;
+        dom.btnPlay.innerHTML = "&#8634; Replay";
+        dom.btnNext.disabled = true;
+    }
+
+    function togglePlay() {
+        if (isPlaying) {
+            clearTimeout(timer);
+            isPlaying = false;
+            dom.btnPlay.innerHTML = "&#9654; Resume";
+        } else {
+            if (stepIndex === 0 || stepIndex >= (graph.sequence || []).length) {
+                stepIndex = 0;
+                clearLog();
+                clearBadges();
+                document.querySelectorAll('g[id^="seq-step-"]').forEach(function(g) { g.style.opacity = 0; });
+            }
+            isPlaying = true;
+            dom.btnPlay.innerHTML = "&#9208; Pause";
+            runSequence();
+        }
+    }
+
+    function runSequence() {
+        if (!isPlaying) return;
+        var seq = graph.sequence || [];
+        if (stepIndex >= seq.length) {
+            isPlaying = false;
+            dom.btnPlay.innerHTML = "&#8634; Replay";
+            return;
+        }
+
+        var step = seq[stepIndex];
+        animateStep(step, stepIndex + 1, function() {
+            stepIndex++;
+            if (dom.chkPause.checked) {
+                isPlaying = false;
+                dom.btnPlay.innerHTML = "&#9654; Resume";
+                dom.btnNext.disabled = false;
+            } else {
+                var delay = parseFloat(dom.inpDelay.value) * 1000;
+                timer = setTimeout(runSequence, delay);
+            }
+        });
+    }
+
+    function animateStep(step, stepNum, cb) {
+        var isSequenceMode = dom.chkSequenceMode.checked;
+
+        if (isSequenceMode) {
+            var groupId = sequenceGroups[stepNum - 1];
+            if (groupId) {
+                var el = document.getElementById(groupId);
+                if (el) el.style.opacity = 1;
+                appendLog(stepNum, step.text, step.status);
+            } else {
+                appendLog(stepNum, step.text + " (Hidden in Seq)", step.status);
+            }
+            setTimeout(cb, 500);
+        } else {
+            var n1 = nodeMap[step.from];
+            var n2 = nodeMap[step.to];
+            if (!n1 || !n2) { cb(); return; }
+
+            var p = dom.particle;
+            var x1 = parseInt(n1.el.style.left) + n1.el.offsetWidth / 2;
+            var y1 = parseInt(n1.el.style.top) + n1.el.offsetHeight / 2;
+            var x2 = parseInt(n2.el.style.left) + n2.el.offsetWidth / 2;
+            var y2 = parseInt(n2.el.style.top) + n2.el.offsetHeight / 2;
+
+            p.style.display = 'block';
+            p.style.transition = 'none';
+            p.style.left = (x1 - 6) + 'px';
+            p.style.top = (y1 - 6) + 'px';
+            void p.offsetWidth;
+            p.style.transition = 'all 1s ease-in-out';
+            p.style.left = (x2 - 6) + 'px';
+            p.style.top = (y2 - 6) + 'px';
+
+            setTimeout(function() {
+                addStepBadge(step.to, stepNum, step.status);
+                appendLog(stepNum, step.text, step.status);
+                cb();
+            }, 1000);
+        }
+    }
+
+    dom.btnUpdate.onclick = function() { render(); resetAnimation(true); };
+    dom.btnPlay.onclick = togglePlay;
+    dom.btnFF.onclick = fastForward;
+    dom.btnNext.onclick = function() {
+        dom.btnNext.disabled = true;
+        togglePlay();
+    };
+
+    dom.btnExportPdf.onclick = function() {
+        dom.pdfOverlay.classList.add('visible');
+    };
+
+    dom.btnPdfCancel.onclick = function() {
+        dom.pdfOverlay.classList.remove('visible');
+    };
+
+    dom.btnPdfGo.onclick = function() {
+        dom.pdfOverlay.classList.remove('visible');
+        var choice = document.querySelector('input[name="pdf-view"]:checked').value;
+        exportToPDF(choice);
+    };
+
+    function exportToPDF(viewChoice) {
+        fastForward();
+
+        var renderArea = dom.exportArea;
+        renderArea.style.top = '0px';
+        renderArea.style.left = '0px';
+        renderArea.style.position = 'fixed';
+        renderArea.style.zIndex = '99999';
+        renderArea.style.background = getComputedStyle(document.body).getPropertyValue('--bg-color').trim();
+        renderArea.innerHTML = '';
+
+        var titleEl = document.createElement('h2');
+        titleEl.style.cssText = 'color:' + getComputedStyle(document.body).getPropertyValue('--text-main').trim() + ';padding:20px 20px 10px;margin:0;font-family:Segoe UI,sans-serif;';
+        titleEl.textContent = graph.title || 'Architecture Diagram';
+        renderArea.appendChild(titleEl);
+
+        var promises = [];
+
+        if (viewChoice === 'collab' || viewChoice === 'both') {
+            promises.push(captureCollabView());
+        }
+
+        if (viewChoice === 'sequence' || viewChoice === 'both') {
+            promises.push(captureSequenceView());
+        }
+
+        promises.push(captureNotebookView());
+        promises.push(captureLogsView());
+
+        Promise.all(promises).then(function(canvases) {
+            var totalHeight = 60;
+            canvases.forEach(function(c) { totalHeight += c.height + 20; });
+
+            var pdf = new jspdf.jsPDF({
+                orientation: totalHeight > 1200 ? 'portrait' : 'landscape',
+                unit: 'px',
+                format: [1200, totalHeight]
+            });
+
+            var bgColor = getComputedStyle(document.body).getPropertyValue('--bg-color').trim();
+            pdf.setFillColor(bgColor);
+            pdf.rect(0, 0, 1200, totalHeight, 'F');
+
+            var textColor = document.body.classList.contains('light-theme') ? '#333333' : '#d4d4d4';
+            pdf.setTextColor(textColor);
+            pdf.setFontSize(18);
+            pdf.text(graph.title || 'Architecture Diagram', 20, 35);
+
+            var yPos = 60;
+            canvases.forEach(function(canvas) {
+                var imgData = canvas.toDataURL('image/png');
+                var ratio = Math.min(1160 / canvas.width, 1);
+                var w = canvas.width * ratio;
+                var h = canvas.height * ratio;
+                pdf.addImage(imgData, 'PNG', 20, yPos, w, h);
+                yPos += h + 20;
+            });
+
+            pdf.save((graph.title || 'diagram') + '.pdf');
+
+            renderArea.innerHTML = '';
+            renderArea.style.top = '-99999px';
+            renderArea.style.left = '-99999px';
+            renderArea.style.zIndex = '-1';
+        });
+    }
+
+    function captureCollabView() {
+        return new Promise(function(resolve) {
+            var clone = dom.previewCanvas.cloneNode(true);
+            clone.style.position = 'relative';
+            clone.style.width = '1160px';
+            clone.style.height = '600px';
+            clone.style.overflow = 'hidden';
+            clone.classList.remove('hidden');
+
+            var label = document.createElement('div');
+            label.style.cssText = 'padding:8px 15px;font-size:14px;font-weight:bold;color:' + getComputedStyle(document.body).getPropertyValue('--text-main').trim() + ';font-family:Segoe UI,sans-serif;';
+            label.textContent = 'Collaboration View (Spatial)';
+            dom.exportArea.appendChild(label);
+            dom.exportArea.appendChild(clone);
+
+            setTimeout(function() {
+                html2canvas(clone, { backgroundColor: null, scale: 2, useCORS: true }).then(function(canvas) {
+                    resolve(canvas);
+                });
+            }, 300);
+        });
+    }
+
+    function captureSequenceView() {
+        return new Promise(function(resolve) {
+            var wasVisible = dom.sequenceView.classList.contains('visible');
+            if (!wasVisible) renderSequenceView();
+
+            document.querySelectorAll('g[id^="seq-step-"]').forEach(function(g) { g.style.opacity = 1; });
+
+            var clone = dom.sequenceView.cloneNode(true);
+            clone.style.position = 'relative';
+            clone.style.width = '1160px';
+            clone.style.minHeight = '400px';
+            clone.style.overflow = 'visible';
+            clone.style.opacity = '1';
+            clone.style.pointerEvents = 'auto';
+            clone.style.background = getComputedStyle(document.body).getPropertyValue('--bg-color').trim();
+
+            var label = document.createElement('div');
+            label.style.cssText = 'padding:8px 15px;font-size:14px;font-weight:bold;color:' + getComputedStyle(document.body).getPropertyValue('--text-main').trim() + ';font-family:Segoe UI,sans-serif;margin-top:10px;';
+            label.textContent = 'Sequence Diagram';
+            dom.exportArea.appendChild(label);
+            dom.exportArea.appendChild(clone);
+
+            setTimeout(function() {
+                html2canvas(clone, { backgroundColor: null, scale: 2, useCORS: true }).then(function(canvas) {
+                    resolve(canvas);
+                });
+            }, 300);
+        });
+    }
+
+    function captureNotebookView() {
+        return new Promise(function(resolve) {
+            var notes = graph.notes || '';
+            if (!notes) {
+                var placeholder = document.createElement('canvas');
+                placeholder.width = 1;
+                placeholder.height = 1;
+                resolve(placeholder);
+                return;
+            }
+
+            var container = document.createElement('div');
+            container.style.cssText = 'width:600px;background:#fdf6e3;border:1px solid #d4c4a8;border-radius:4px;font-family:Segoe UI,Helvetica Neue,Helvetica,Arial,sans-serif;font-size:14px;color:#222;';
+
+            var header = document.createElement('div');
+            header.style.cssText = 'background:#eee8d5;color:#586e75;padding:8px 15px;font-size:0.8rem;font-weight:bold;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #d4c4a8;border-radius:4px 4px 0 0;';
+            header.textContent = 'Project Notes';
+            container.appendChild(header);
+
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:10px 25px 10px 35px;line-height:28px;font-weight:600;white-space:pre-wrap;word-wrap:break-word;background-image:linear-gradient(transparent 27px,#d4c4a8 1px);background-size:100% 28px;';
+            body.textContent = notes.replace(/\\n/g, '\n');
+            container.appendChild(body);
+
+            var label = document.createElement('div');
+            label.style.cssText = 'padding:8px 15px;font-size:14px;font-weight:bold;color:' + getComputedStyle(document.body).getPropertyValue('--text-main').trim() + ';font-family:Segoe UI,sans-serif;margin-top:10px;';
+            label.textContent = 'Notebook';
+            dom.exportArea.appendChild(label);
+            dom.exportArea.appendChild(container);
+
+            setTimeout(function() {
+                html2canvas(container, { backgroundColor: null, scale: 2, useCORS: true }).then(function(canvas) {
+                    resolve(canvas);
+                });
+            }, 300);
+        });
+    }
+
+    function captureLogsView() {
+        return new Promise(function(resolve) {
+            var container = document.createElement('div');
+            container.style.cssText = 'width:1160px;background:' + getComputedStyle(document.body).getPropertyValue('--bg-color').trim() + ';padding:0;font-family:Consolas,monospace;font-size:13px;';
+
+            var label = document.createElement('div');
+            label.style.cssText = 'padding:8px 15px;font-size:14px;font-weight:bold;color:' + getComputedStyle(document.body).getPropertyValue('--text-main').trim() + ';font-family:Segoe UI,sans-serif;margin-top:10px;';
+            label.textContent = 'Steps / Log';
+            dom.exportArea.appendChild(label);
+
+            var entries = dom.logPane.querySelectorAll('.log-entry');
+            entries.forEach(function(entry) {
+                var clone = entry.cloneNode(true);
+                clone.style.animation = 'none';
+                container.appendChild(clone);
+            });
+
+            if (entries.length === 0) {
+                var empty = document.createElement('div');
+                empty.style.cssText = 'padding:10px 15px;color:#666;font-style:italic;';
+                empty.textContent = 'No steps recorded.';
+                container.appendChild(empty);
+            }
+
+            dom.exportArea.appendChild(container);
+
+            setTimeout(function() {
+                html2canvas(container, { backgroundColor: null, scale: 2, useCORS: true }).then(function(canvas) {
+                    resolve(canvas);
+                });
+            }, 300);
+        });
+    }
+
+    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F12') { e.preventDefault(); return false; }
+        if (e.ctrlKey && e.key === 'u') { e.preventDefault(); return false; }
+        if (e.ctrlKey && e.shiftKey && e.key === 'I') { e.preventDefault(); return false; }
+    });
+
+    init();
+
+    })();
+</script>
+</body>
+</html>
