@@ -591,9 +591,31 @@
         return jsonStr.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g, function(m, g) { return g ? "" : m; });
     }
 
+    function normalizeMultilineStrings(str) {
+        var out = '';
+        var inStr = false;
+        var esc = false;
+        for (var i = 0; i < str.length; i++) {
+            var ch = str[i];
+            if (inStr) {
+                if (esc) { out += ch; esc = false; continue; }
+                if (ch === '\\') { out += ch; esc = true; continue; }
+                if (ch === '"') { out += ch; inStr = false; continue; }
+                if (ch === '\r') { if (str[i+1] === '\n') { i++; } out += '\\n'; while (i+1 < str.length && (str[i+1] === ' ' || str[i+1] === '\t')) { i++; } continue; }
+                if (ch === '\n') { out += '\\n'; while (i+1 < str.length && (str[i+1] === ' ' || str[i+1] === '\t')) { i++; } continue; }
+                out += ch;
+            } else {
+                if (ch === '"') { out += ch; inStr = true; esc = false; continue; }
+                out += ch;
+            }
+        }
+        return out;
+    }
+
     function render() {
         try {
             var cleanJson = stripJsonComments(dom.input.value);
+            cleanJson = normalizeMultilineStrings(cleanJson);
             graph = JSON.parse(cleanJson);
 
             dom.input.classList.remove('invalid');
@@ -665,28 +687,31 @@
         return { x: x, y: y };
     }
 
+    function deduplicateConnections(connections) {
+        var seen = {};
+        var result = [];
+        connections.forEach(function(conn) {
+            var key = [conn.from, conn.to].sort().join('|');
+            if (!seen[key]) {
+                seen[key] = true;
+                result.push(conn);
+            }
+        });
+        return result;
+    }
+
     function updateConnections() {
         dom.svgLayer.innerHTML = '';
         if (!graph.connections) return;
 
-        var connsByPair = {};
-        graph.connections.forEach(function(conn, idx) {
-            var key = [conn.from, conn.to].sort().join('|');
-            if (!connsByPair[key]) connsByPair[key] = [];
-            connsByPair[key].push({ conn: conn, idx: idx });
-        });
+        var dedupedConns = deduplicateConnections(graph.connections);
 
         var occupiedMidpoints = [];
 
-        graph.connections.forEach(function(conn, idx) {
+        dedupedConns.forEach(function(conn) {
             var c1 = getNodeCenter(conn.from);
             var c2 = getNodeCenter(conn.to);
             if (!c1 || !c2) return;
-
-            var key = [conn.from, conn.to].sort().join('|');
-            var siblings = connsByPair[key];
-            var siblingIndex = siblings.findIndex(function(s) { return s.idx === idx; });
-            var siblingCount = siblings.length;
 
             var dx = c2.x - c1.x;
             var dy = c2.y - c1.y;
@@ -694,35 +719,28 @@
             var nx = -dy / (dist || 1);
             var ny = dx / (dist || 1);
 
-            var baseOffset = 0;
-            if (siblingCount > 1) {
-                baseOffset = (siblingIndex - (siblingCount - 1) / 2) * 25;
-            }
-
             var midX = (c1.x + c2.x) / 2;
             var midY = (c1.y + c2.y) / 2;
 
             var avoidOffset = 0;
             for (var i = 0; i < occupiedMidpoints.length; i++) {
                 var om = occupiedMidpoints[i];
-                var omDist = Math.sqrt(Math.pow(midX + nx * (baseOffset + avoidOffset) - om.x, 2) + Math.pow(midY + ny * (baseOffset + avoidOffset) - om.y, 2));
+                var omDist = Math.sqrt(Math.pow(midX + nx * avoidOffset - om.x, 2) + Math.pow(midY + ny * avoidOffset - om.y, 2));
                 if (omDist < 30) {
                     avoidOffset += 20;
                     i = -1;
                 }
             }
 
-            var totalOffset = baseOffset + avoidOffset;
-
-            var ctrlX = midX + nx * totalOffset;
-            var ctrlY = midY + ny * totalOffset;
+            var ctrlX = midX + nx * avoidOffset;
+            var ctrlY = midY + ny * avoidOffset;
 
             occupiedMidpoints.push({ x: ctrlX, y: ctrlY });
 
             var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("class", "connector");
 
-            if (Math.abs(totalOffset) < 5) {
+            if (Math.abs(avoidOffset) < 5) {
                 path.setAttribute("d", "M" + c1.x + "," + c1.y + " L" + c2.x + "," + c2.y);
             } else {
                 path.setAttribute("d", "M" + c1.x + "," + c1.y + " Q" + ctrlX + "," + ctrlY + " " + c2.x + "," + c2.y);
