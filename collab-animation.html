@@ -414,94 +414,7 @@
         default: '<path d="M3 3h18v18H3z"/>'
     };
 
-    const SAMPLE_JSONS = {
-        "__default__": null,
-        "Microservice Migration": {
-            title: "Phase 1: Introducing AI Agents",
-            notes: "Project: Legacy Migration\nAuthor: Architecture Team\n\nObjectives:\n1. Decouple User from Monolith\n2. Introduce AI Agent for Triage\n3. Establish Redis caching layer\n\nStatus: In Development",
-            nodes: [
-                { id: "u", type: "user", tag: "external", label: "Customer", x: 60, y: 250, w: 100, h: 70 },
-                { id: "fe", type: "service", tag: "core", label: "Frontend", x: 250, y: 250, w: 120, h: 80, status: "ready" },
-                { id: "mono", type: "service", tag: "legacy", label: "Legacy\nMonolith", x: 500, y: 380, w: 140, h: 90 },
-                { id: "agent", type: "agent", tag: "agent", label: "Triage\nAgent", x: 500, y: 120, w: 110, h: 70, status: "wip" },
-                { id: "new_svc", type: "service", tag: "new", label: "Order\nService", x: 750, y: 120, w: 120, h: 80, status: "wip" },
-                { id: "db_main", type: "database", tag: "legacy", label: "Main DB", x: 750, y: 380, w: 100, h: 70, skipSequence: true },
-                { id: "db_cache", type: "database", tag: "new", label: "Redis\nCache", x: 950, y: 120, w: 100, h: 70, status: "wip", skipSequence: true }
-            ],
-            connections: [
-                { from: "u", to: "fe" },
-                { from: "fe", to: "mono" },
-                { from: "fe", to: "agent" },
-                { from: "agent", to: "new_svc" },
-                { from: "mono", to: "db_main" },
-                { from: "new_svc", to: "db_cache" }
-            ],
-            sequence: [
-                { from: "u", to: "fe", text: "User places order", status: "ready" },
-                { from: "fe", to: "agent", text: "Agent classifies request", status: "ready" },
-                { from: "agent", to: "new_svc", text: "Route to Microservice", status: "wip" },
-                { from: "new_svc", to: "db_cache", text: "Check Inventory", status: "wip" },
-                { from: "db_cache", to: "new_svc", text: "Stock Confirmed", status: "wip" },
-                { from: "new_svc", to: "fe", text: "Order Success", status: "ready" }
-            ]
-        },
-        "Event-Driven Pipeline": {
-            title: "Event-Driven Data Pipeline",
-            notes: "Project: Real-time Analytics\nTeam: Data Engineering\n\nFlow:\n1. Events ingested via Kafka\n2. Stream processor enriches data\n3. Results stored and indexed\n\nStatus: Production Ready",
-            nodes: [
-                { id: "producer", type: "service", tag: "external", label: "Event\nProducers", x: 50, y: 200, w: 120, h: 70 },
-                { id: "kafka", type: "service", tag: "core", label: "Kafka\nBroker", x: 260, y: 200, w: 120, h: 80, status: "ready" },
-                { id: "flink", type: "agent", tag: "agent", label: "Flink\nProcessor", x: 470, y: 200, w: 130, h: 80, status: "ready" },
-                { id: "elastic", type: "database", tag: "new", label: "Elastic\nSearch", x: 680, y: 120, w: 120, h: 70, status: "ready" },
-                { id: "s3", type: "database", tag: "core", label: "S3 Data\nLake", x: 680, y: 300, w: 120, h: 70, status: "ready", skipSequence: true },
-                { id: "dashboard", type: "service", tag: "new", label: "Dashboard", x: 900, y: 200, w: 110, h: 70, status: "ready" }
-            ],
-            connections: [
-                { from: "producer", to: "kafka" },
-                { from: "kafka", to: "flink" },
-                { from: "flink", to: "elastic" },
-                { from: "flink", to: "s3" },
-                { from: "elastic", to: "dashboard" }
-            ],
-            sequence: [
-                { from: "producer", to: "kafka", text: "Publish event batch", status: "ready" },
-                { from: "kafka", to: "flink", text: "Consume & partition", status: "ready" },
-                { from: "flink", to: "elastic", text: "Index enriched record", status: "ready" },
-                { from: "flink", to: "s3", text: "Archive raw payload", status: "ready" },
-                { from: "elastic", to: "dashboard", text: "Query & visualize", status: "ready" }
-            ]
-        },
-        "AI Agent Collaboration": {
-            title: "Multi-Agent Collaboration",
-            notes: "Project: AI Agent Mesh\nTeam: AI Platform\n\nArchitecture:\n- Orchestrator routes tasks\n- Specialist agents handle domains\n- Shared memory for context\n\nStatus: Prototype",
-            nodes: [
-                { id: "user", type: "user", tag: "external", label: "Human\nOperator", x: 50, y: 220, w: 100, h: 70 },
-                { id: "orch", type: "agent", tag: "agent", label: "Orchestrator\nAgent", x: 260, y: 220, w: 130, h: 80, status: "ready" },
-                { id: "research", type: "agent", tag: "agent", label: "Research\nAgent", x: 490, y: 100, w: 120, h: 70, status: "wip" },
-                { id: "code", type: "agent", tag: "agent", label: "Code\nAgent", x: 490, y: 340, w: 120, h: 70, status: "wip" },
-                { id: "memory", type: "database", tag: "new", label: "Shared\nMemory", x: 720, y: 220, w: 110, h: 70, status: "ready", skipSequence: true },
-                { id: "api", type: "service", tag: "core", label: "External\nAPIs", x: 720, y: 80, w: 110, h: 60, status: "ready" }
-            ],
-            connections: [
-                { from: "user", to: "orch" },
-                { from: "orch", to: "research" },
-                { from: "orch", to: "code" },
-                { from: "research", to: "memory" },
-                { from: "code", to: "memory" },
-                { from: "research", to: "api" }
-            ],
-            sequence: [
-                { from: "user", to: "orch", text: "Submit complex task", status: "ready" },
-                { from: "orch", to: "research", text: "Delegate research subtask", status: "wip" },
-                { from: "research", to: "api", text: "Fetch external data", status: "ready" },
-                { from: "research", to: "memory", text: "Store findings", status: "wip" },
-                { from: "orch", to: "code", text: "Delegate coding subtask", status: "wip" },
-                { from: "code", to: "memory", text: "Read context & write code", status: "wip" },
-                { from: "code", to: "orch", text: "Return results", status: "ready" },
-                { from: "orch", to: "user", text: "Deliver final output", status: "ready" }
-            ]
-        }
-    };
+    const SAMPLE_JSONS = {};
 
     const editorString = `{
     // Collab Animation - Demo JSON
@@ -573,40 +486,75 @@
     let sequenceGroups = [];
     let savedLogHeight = 200;
 
-    function populateSelector() {
-        Object.keys(SAMPLE_JSONS).forEach(function(name) {
-            if (name === "__default__") return;
-            var opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            dom.jsonSelector.appendChild(opt);
-        });
-    }
-
     function init() {
-        populateSelector();
         dom.input.value = editorString;
         render();
         clearLog();
-        loadExternalJsonList();
+        discoverJsonFiles();
+        handleCollabParam();
     }
 
-    function loadExternalJsonList() {
-        var jsonFiles = ['microservice-migration.json', 'event-pipeline.json', 'ai-agent-collab.json'];
-        jsonFiles.forEach(function(filename) {
-            fetch('json/' + filename).then(function(r) {
-                if (r.ok) {
-                    return r.json().then(function(data) {
-                        var displayName = filename.replace('.json', '').replace(/-/g, ' ');
-                        displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1) + ' (file)';
-                        SAMPLE_JSONS[displayName] = data;
-                        var opt = document.createElement('option');
-                        opt.value = displayName;
-                        opt.textContent = displayName;
-                        dom.jsonSelector.appendChild(opt);
-                    });
+    function discoverJsonFiles() {
+        fetch('json/').then(function(r) {
+            if (!r.ok) return;
+            return r.text();
+        }).then(function(html) {
+            if (!html) return;
+            var matches = html.match(/[\w\-]+\.json/g);
+            if (!matches) return;
+            var unique = matches.filter(function(v, i, a) { return a.indexOf(v) === i; });
+            unique.forEach(function(filename) {
+                addJsonFileOption(filename);
+            });
+        }).catch(function() {});
+    }
+
+    function addJsonFileOption(filename) {
+        for (var i = 0; i < dom.jsonSelector.options.length; i++) {
+            if (dom.jsonSelector.options[i].value === filename) return;
+        }
+        fetch('json/' + filename).then(function(r) {
+            if (!r.ok) return;
+            return r.json().then(function(data) {
+                var displayName = (data.title || filename.replace('.json', '').replace(/[-_]/g, ' '));
+                SAMPLE_JSONS[filename] = data;
+                for (var j = 0; j < dom.jsonSelector.options.length; j++) {
+                    if (dom.jsonSelector.options[j].value === filename) return;
                 }
-            }).catch(function() {});
+                var opt = document.createElement('option');
+                opt.value = filename;
+                opt.textContent = displayName;
+                dom.jsonSelector.appendChild(opt);
+            });
+        }).catch(function() {});
+    }
+
+    function handleCollabParam() {
+        var params = new URLSearchParams(window.location.search);
+        var collabFile = params.get('collab');
+        if (!collabFile) return;
+        fetch('json/' + collabFile).then(function(r) {
+            if (!r.ok) throw new Error('File not found: ' + collabFile);
+            return r.json();
+        }).then(function(data) {
+            SAMPLE_JSONS[collabFile] = data;
+            var displayName = data.title || collabFile.replace('.json', '').replace(/[-_]/g, ' ');
+            var exists = false;
+            for (var i = 0; i < dom.jsonSelector.options.length; i++) {
+                if (dom.jsonSelector.options[i].value === collabFile) { exists = true; break; }
+            }
+            if (!exists) {
+                var opt = document.createElement('option');
+                opt.value = collabFile;
+                opt.textContent = displayName;
+                dom.jsonSelector.appendChild(opt);
+            }
+            dom.jsonSelector.value = collabFile;
+            dom.input.value = JSON.stringify(data, null, 4);
+            render();
+            resetAnimation(true);
+        }).catch(function(err) {
+            console.warn('Could not load ?collab=' + collabFile + ':', err.message);
         });
     }
 
@@ -614,11 +562,29 @@
         var key = dom.jsonSelector.value;
         if (key === '__default__') {
             dom.input.value = editorString;
-        } else if (SAMPLE_JSONS[key]) {
-            dom.input.value = JSON.stringify(SAMPLE_JSONS[key], null, 4);
+            render();
+            resetAnimation(true);
+            return;
         }
-        render();
-        resetAnimation(true);
+        if (SAMPLE_JSONS[key]) {
+            dom.input.value = JSON.stringify(SAMPLE_JSONS[key], null, 4);
+            render();
+            resetAnimation(true);
+            return;
+        }
+        fetch('json/' + key).then(function(r) {
+            if (!r.ok) throw new Error('File not found');
+            return r.json();
+        }).then(function(data) {
+            SAMPLE_JSONS[key] = data;
+            dom.input.value = JSON.stringify(data, null, 4);
+            render();
+            resetAnimation(true);
+        }).catch(function() {
+            dom.input.value = editorString;
+            render();
+            resetAnimation(true);
+        });
     });
 
     function stripJsonComments(jsonStr) {
