@@ -1138,6 +1138,7 @@
             promises.push(captureSequenceView());
         }
 
+        promises.push(captureNotebookView());
         promises.push(captureLogsView());
 
         Promise.all(promises).then(function(canvases) {
@@ -1225,6 +1226,44 @@
 
             setTimeout(function() {
                 html2canvas(clone, { backgroundColor: null, scale: 2, useCORS: true }).then(function(canvas) {
+                    resolve(canvas);
+                });
+            }, 300);
+        });
+    }
+
+    function captureNotebookView() {
+        return new Promise(function(resolve) {
+            var notes = graph.notes || '';
+            if (!notes) {
+                var placeholder = document.createElement('canvas');
+                placeholder.width = 1;
+                placeholder.height = 1;
+                resolve(placeholder);
+                return;
+            }
+
+            var container = document.createElement('div');
+            container.style.cssText = 'width:600px;background:#fdf6e3;border:1px solid #d4c4a8;border-radius:4px;font-family:Segoe UI,Helvetica Neue,Helvetica,Arial,sans-serif;font-size:14px;color:#222;';
+
+            var header = document.createElement('div');
+            header.style.cssText = 'background:#eee8d5;color:#586e75;padding:8px 15px;font-size:0.8rem;font-weight:bold;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #d4c4a8;border-radius:4px 4px 0 0;';
+            header.textContent = 'Project Notes';
+            container.appendChild(header);
+
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:10px 25px 10px 35px;line-height:28px;font-weight:600;white-space:pre-wrap;word-wrap:break-word;background-image:linear-gradient(transparent 27px,#d4c4a8 1px);background-size:100% 28px;';
+            body.textContent = notes.replace(/\\n/g, '\n');
+            container.appendChild(body);
+
+            var label = document.createElement('div');
+            label.style.cssText = 'padding:8px 15px;font-size:14px;font-weight:bold;color:' + getComputedStyle(document.body).getPropertyValue('--text-main').trim() + ';font-family:Segoe UI,sans-serif;margin-top:10px;';
+            label.textContent = 'Notebook';
+            dom.exportArea.appendChild(label);
+            dom.exportArea.appendChild(container);
+
+            setTimeout(function() {
+                html2canvas(container, { backgroundColor: null, scale: 2, useCORS: true }).then(function(canvas) {
                     resolve(canvas);
                 });
             }, 300);
