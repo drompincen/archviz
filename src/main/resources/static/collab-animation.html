@@ -50,7 +50,7 @@
         header {
             background: #2d2d2d; border-bottom: 1px solid var(--border-color);
             padding: 0 20px; height: 50px; display: flex; align-items: center;
-            justify-content: space-between; z-index: 100; flex-shrink: 0;
+            justify-content: space-between; z-index: 10002; flex-shrink: 0;
         }
         body.light-theme header { background: #e8e8e8; }
 
@@ -307,6 +307,66 @@
         #pdf-modal label { display: block; margin: 10px 0; color: var(--text-main); cursor: pointer; font-size: 0.9rem; }
         #pdf-modal .pdf-actions { margin-top: 18px; display: flex; gap: 10px; justify-content: flex-end; }
 
+        #save-modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 10000;
+            justify-content: center; align-items: center;
+        }
+        #save-modal-overlay.visible { display: flex; }
+        #save-modal {
+            background: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 24px; min-width: 380px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        #save-modal h3 { margin-top: 0; color: var(--text-main); }
+        body.light-theme #save-modal input,
+        body.light-theme #save-modal textarea { background: #fff; color: #333; border-color: #ccc; }
+
+        .options-wrapper {
+            position: relative;
+        }
+        #btn-options {
+            background: #3e3e42; border: 1px solid #555; color: #ccc;
+            padding: 5px 12px; border-radius: 4px; cursor: pointer;
+            font-size: 0.82rem; white-space: nowrap;
+        }
+        #btn-options:hover { background: #505058; }
+        body.light-theme #btn-options { background: #e0e0e0; border-color: #ccc; color: #333; }
+        body.light-theme #btn-options:hover { background: #d0d0d0; }
+
+        #options-dropdown {
+            display: none; position: absolute; top: 100%; right: 0; margin-top: 6px;
+            background: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 8px 0; min-width: 260px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 10001;
+        }
+        #options-dropdown.open { display: block; }
+
+        .opt-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 16px; cursor: pointer; font-size: 0.85rem;
+            color: var(--text-main); transition: background 0.15s; white-space: nowrap;
+        }
+        .opt-item:hover { background: rgba(255,255,255,0.06); }
+        body.light-theme .opt-item:hover { background: rgba(0,0,0,0.05); }
+        .opt-item .opt-icon { width: 20px; text-align: center; opacity: 0.7; }
+        .opt-item .opt-label { flex: 1; }
+        .opt-item .opt-shortcut { font-size: 0.75rem; color: #888; }
+
+        .opt-divider {
+            height: 1px; background: var(--border-color); margin: 6px 12px;
+        }
+
+        .opt-item.opt-toggle { cursor: pointer; }
+        .opt-item.opt-toggle input[type="checkbox"] { margin: 0; }
+
+        .opt-item .opt-delay-input {
+            width: 45px; padding: 2px 4px; border-radius: 3px;
+            border: 1px solid #555; background: #333; color: white;
+            font-size: 0.82rem; text-align: center;
+        }
+        body.light-theme .opt-item .opt-delay-input { background: #fff; color: #333; border-color: #ccc; }
+
         #export-render-area {
             position: fixed; top: -99999px; left: -99999px; z-index: -1;
             background: var(--bg-color); width: 1200px;
@@ -320,14 +380,12 @@
 
     <div style="display:flex; flex-wrap:wrap; gap: 6px; align-items:center;">
         <div class="controls-group">
-            <select id="json-selector" title="Load a sample JSON">
+            <select id="json-selector" title="Load a diagram">
                 <option value="__default__">-- Built-in Demo --</option>
             </select>
             <button id="btn-play">&#9654; Play</button>
             <button id="btn-next" disabled>Next &#9193;</button>
             <button id="btn-ff" title="Fast Forward to end">&#9197; FF</button>
-            <label class="toggle-label"><input type="checkbox" id="chk-pause"> Pause/Step</label>
-            <label class="toggle-label">Delay: <input type="number" id="inp-delay" value="1.5" step="0.5" min="0.5">s</label>
         </div>
 
         <div class="divider"></div>
@@ -336,13 +394,28 @@
             <label class="toggle-label" style="color:var(--highlight); border:1px solid #333; padding:2px 6px; border-radius:4px;">
                 <input type="checkbox" id="chk-sequence-mode"> Sequence View
             </label>
-            <div class="divider"></div>
-            <label class="toggle-label"><input type="checkbox" id="chk-edit-mode"> Editing</label>
-            <label class="toggle-label"><input type="checkbox" id="chk-show-editor"> JSON</label>
-            <label class="toggle-label"><input type="checkbox" id="chk-show-notes" checked> Notes</label>
-            <div class="divider"></div>
-            <label class="toggle-label"><input type="checkbox" id="chk-light-mode"> Light</label>
-            <button id="btn-export-pdf" title="Export to PDF">&#128196; PDF</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="options-wrapper">
+            <button id="btn-options">&#9881; Options &#9662;</button>
+            <div id="options-dropdown">
+                <div class="opt-item" id="opt-save"><span class="opt-icon">&#128190;</span><span class="opt-label">Save Diagram</span></div>
+                <div class="opt-item" id="opt-upload"><span class="opt-icon">&#128228;</span><span class="opt-label">Upload JSON</span></div>
+                <div class="opt-item" id="opt-download"><span class="opt-icon">&#128229;</span><span class="opt-label">Download JSON</span></div>
+                <div class="opt-item" id="opt-export-pdf"><span class="opt-icon">&#128196;</span><span class="opt-label">Export PDF</span></div>
+                <div class="opt-item" id="opt-download-spec"><span class="opt-icon">&#128203;</span><span class="opt-label">Download JSON Spec</span></div>
+                <div class="opt-divider"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#9193;</span><span class="opt-label">Pause/Step</span><input type="checkbox" id="chk-pause"></div>
+                <div class="opt-item"><span class="opt-icon">&#9201;</span><span class="opt-label">Delay</span><input type="number" id="inp-delay" value="1.5" step="0.5" min="0.5" class="opt-delay-input">s</div>
+                <div class="opt-divider"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#9998;</span><span class="opt-label">Edit Mode</span><input type="checkbox" id="chk-edit-mode"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">{}</span><span class="opt-label">JSON Editor</span><input type="checkbox" id="chk-show-editor"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#128221;</span><span class="opt-label">Notes</span><input type="checkbox" id="chk-show-notes" checked></div>
+                <div class="opt-divider"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#9728;</span><span class="opt-label">Light Theme</span><input type="checkbox" id="chk-light-mode"></div>
+            </div>
         </div>
     </div>
 </header>
@@ -396,6 +469,25 @@
         <div class="pdf-actions">
             <button id="btn-pdf-cancel">Cancel</button>
             <button id="btn-pdf-go">Export</button>
+        </div>
+    </div>
+</div>
+
+<div id="save-modal-overlay">
+    <div id="save-modal">
+        <h3 id="save-modal-title">Save Diagram</h3>
+        <label style="display:block;margin:10px 0;color:var(--text-main);font-size:0.9rem;">Title:
+            <input type="text" id="save-title" style="width:100%;padding:5px;border-radius:4px;border:1px solid #555;background:#333;color:#ccc;box-sizing:border-box;margin-top:4px;">
+        </label>
+        <label style="display:block;margin:10px 0;color:var(--text-main);font-size:0.9rem;">Description:
+            <textarea id="save-description" rows="2" style="width:100%;padding:5px;border-radius:4px;border:1px solid #555;background:#333;color:#ccc;box-sizing:border-box;margin-top:4px;resize:vertical;"></textarea>
+        </label>
+        <label style="display:block;margin:10px 0;color:var(--text-main);font-size:0.9rem;">Tags (comma-separated):
+            <input type="text" id="save-tags" style="width:100%;padding:5px;border-radius:4px;border:1px solid #555;background:#333;color:#ccc;box-sizing:border-box;margin-top:4px;" placeholder="e.g. dram, latency, agent">
+        </label>
+        <div class="pdf-actions">
+            <button id="btn-save-cancel">Cancel</button>
+            <button id="btn-save-confirm">Save</button>
         </div>
     </div>
 </div>
@@ -459,7 +551,7 @@
         btnNext: document.getElementById('btn-next'),
         btnFF: document.getElementById('btn-ff'),
         btnUpdate: document.getElementById('btn-update'),
-        btnExportPdf: document.getElementById('btn-export-pdf'),
+        btnExportPdf: document.getElementById('opt-export-pdf'),
         chkPause: document.getElementById('chk-pause'),
         inpDelay: document.getElementById('inp-delay'),
         chkEditMode: document.getElementById('chk-edit-mode'),
@@ -475,7 +567,16 @@
         pdfOverlay: document.getElementById('pdf-modal-overlay'),
         btnPdfCancel: document.getElementById('btn-pdf-cancel'),
         btnPdfGo: document.getElementById('btn-pdf-go'),
-        exportArea: document.getElementById('export-render-area')
+        exportArea: document.getElementById('export-render-area'),
+
+        btnOptions: document.getElementById('btn-options'),
+        optionsDropdown: document.getElementById('options-dropdown'),
+        optSave: document.getElementById('opt-save'),
+        optUpload: document.getElementById('opt-upload'),
+        optDownload: document.getElementById('opt-download'),
+        optExportPdf: document.getElementById('opt-export-pdf'),
+        optDownloadSpec: document.getElementById('opt-download-spec'),
+        saveOverlay: document.getElementById('save-modal-overlay')
     };
 
     let graph = {};
@@ -485,6 +586,8 @@
     let nodeMap = {};
     let sequenceGroups = [];
     let savedLogHeight = 200;
+    let currentDiagramMeta = null;
+    var DIAGRAM_META = {};
 
     function init() {
         dom.input.value = editorString;
@@ -495,6 +598,20 @@
     }
 
     function discoverJsonFiles() {
+        fetch('/api/diagrams').then(function(r) {
+            if (!r.ok) throw new Error('API unavailable');
+            return r.json();
+        }).then(function(diagrams) {
+            if (!diagrams) return;
+            diagrams.forEach(function(d) {
+                addApiDiagramOption(d);
+            });
+        }).catch(function() {
+            fallbackDiscoverJsonFiles();
+        });
+    }
+
+    function fallbackDiscoverJsonFiles() {
         fetch('json/').then(function(r) {
             if (!r.ok) return;
             return r.text();
@@ -504,12 +621,12 @@
             if (!matches) return;
             var unique = matches.filter(function(v, i, a) { return a.indexOf(v) === i; });
             unique.forEach(function(filename) {
-                addJsonFileOption(filename);
+                addJsonFileOptionLegacy(filename);
             });
         }).catch(function() {});
     }
 
-    function addJsonFileOption(filename) {
+    function addJsonFileOptionLegacy(filename) {
         for (var i = 0; i < dom.jsonSelector.options.length; i++) {
             if (dom.jsonSelector.options[i].value === filename) return;
         }
@@ -527,6 +644,33 @@
                 dom.jsonSelector.appendChild(opt);
             });
         }).catch(function() {});
+    }
+
+    function addApiDiagramOption(diagram) {
+        for (var i = 0; i < dom.jsonSelector.options.length; i++) {
+            if (dom.jsonSelector.options[i].value === diagram.id) return;
+        }
+        var opt = document.createElement('option');
+        opt.value = diagram.id;
+        var displayName = diagram.title || diagram.id;
+        if (diagram.source === 'db' && diagram.tags && diagram.tags.length > 0) {
+            displayName = diagram.title + ' \u2022 ' + diagram.tags[0];
+        }
+        opt.textContent = displayName;
+        opt.dataset.source = diagram.source;
+        opt.dataset.diagramId = diagram.id;
+        dom.jsonSelector.appendChild(opt);
+    }
+
+    function refreshDiagramDropdown(selectId) {
+        while (dom.jsonSelector.options.length > 1) {
+            dom.jsonSelector.remove(1);
+        }
+        fetch('/api/diagrams').then(function(r) { return r.json(); })
+            .then(function(diagrams) {
+                diagrams.forEach(function(d) { addApiDiagramOption(d); });
+                if (selectId) dom.jsonSelector.value = selectId;
+            }).catch(function() {});
     }
 
     function handleCollabParam() {
@@ -562,26 +706,42 @@
         var key = dom.jsonSelector.value;
         if (key === '__default__') {
             dom.input.value = editorString;
+            currentDiagramMeta = null;
             render();
             resetAnimation(true);
             return;
         }
         if (SAMPLE_JSONS[key]) {
             dom.input.value = JSON.stringify(SAMPLE_JSONS[key], null, 4);
+            currentDiagramMeta = DIAGRAM_META[key] || null;
             render();
             resetAnimation(true);
             return;
         }
-        fetch('json/' + key).then(function(r) {
-            if (!r.ok) throw new Error('File not found');
+        fetch('/api/diagrams/' + key).then(function(r) {
+            if (!r.ok) throw new Error('Not found');
             return r.json();
-        }).then(function(data) {
-            SAMPLE_JSONS[key] = data;
-            dom.input.value = JSON.stringify(data, null, 4);
+        }).then(function(diagram) {
+            currentDiagramMeta = {
+                id: diagram.id,
+                title: diagram.title,
+                description: diagram.description,
+                tags: diagram.tags,
+                source: diagram.source,
+                version: diagram.version
+            };
+            var flowData = diagram.flow;
+            if (flowData && !flowData.title) {
+                flowData.title = diagram.title;
+            }
+            DIAGRAM_META[key] = currentDiagramMeta;
+            SAMPLE_JSONS[key] = flowData;
+            dom.input.value = JSON.stringify(flowData, null, 4);
             render();
             resetAnimation(true);
         }).catch(function() {
             dom.input.value = editorString;
+            currentDiagramMeta = null;
             render();
             resetAnimation(true);
         });
@@ -1083,6 +1243,7 @@
     };
 
     dom.btnExportPdf.onclick = function() {
+        dom.optionsDropdown.classList.remove('open');
         dom.pdfOverlay.classList.add('visible');
     };
 
@@ -1286,6 +1447,176 @@
                 });
             }, 300);
         });
+    }
+
+    // --- Options Dropdown Toggle ---
+    dom.btnOptions.onclick = function(e) {
+        e.stopPropagation();
+        dom.optionsDropdown.classList.toggle('open');
+    };
+    document.addEventListener('click', function(e) {
+        if (!dom.optionsDropdown.contains(e.target) && e.target !== dom.btnOptions) {
+            dom.optionsDropdown.classList.remove('open');
+        }
+    });
+    // Toggle checkboxes when clicking their parent opt-item row
+    dom.optionsDropdown.querySelectorAll('.opt-toggle').forEach(function(row) {
+        row.addEventListener('click', function(e) {
+            if (e.target.tagName === 'INPUT') return;
+            var cb = row.querySelector('input[type="checkbox"]');
+            if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); }
+        });
+    });
+
+    // --- Upload JSON ---
+    dom.optUpload.onclick = function() {
+        dom.optionsDropdown.classList.remove('open');
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,application/json';
+        input.onchange = function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    var data = JSON.parse(ev.target.result);
+                    if (!data.nodes || !Array.isArray(data.nodes)) {
+                        alert('Invalid diagram JSON: must contain a "nodes" array.');
+                        return;
+                    }
+                    dom.input.value = JSON.stringify(data, null, 4);
+                    currentDiagramMeta = { source: 'editor' };
+                    render();
+                    resetAnimation(true);
+                    document.getElementById('save-title').value = data.title || file.name.replace('.json', '');
+                    document.getElementById('save-description').value = '';
+                    document.getElementById('save-tags').value = '';
+                    document.getElementById('save-modal-title').textContent = 'Save Uploaded Diagram';
+                    dom.saveOverlay.classList.add('visible');
+                } catch (ex) {
+                    alert('Invalid JSON file: ' + ex.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    };
+
+    // --- Save to Repository ---
+    dom.optSave.onclick = function() {
+        dom.optionsDropdown.classList.remove('open');
+        var title = graph.title || '';
+        document.getElementById('save-title').value = title;
+        document.getElementById('save-description').value =
+            (currentDiagramMeta && currentDiagramMeta.description) || '';
+        document.getElementById('save-tags').value =
+            (currentDiagramMeta && currentDiagramMeta.tags) ? currentDiagramMeta.tags.join(', ') : '';
+        document.getElementById('save-modal-title').textContent =
+            (currentDiagramMeta && currentDiagramMeta.id && currentDiagramMeta.source === 'db')
+                ? 'Update Diagram' : 'Save New Diagram';
+        dom.saveOverlay.classList.add('visible');
+    };
+
+    document.getElementById('btn-save-cancel').onclick = function() {
+        dom.saveOverlay.classList.remove('visible');
+    };
+
+    document.getElementById('btn-save-confirm').onclick = function() {
+        var title = document.getElementById('save-title').value.trim();
+        var description = document.getElementById('save-description').value.trim();
+        var tagsStr = document.getElementById('save-tags').value.trim();
+        var tags = tagsStr ? tagsStr.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [];
+
+        var cleanJson = stripJsonComments(dom.input.value);
+        cleanJson = normalizeMultilineStrings(cleanJson);
+        var flowData;
+        try {
+            flowData = JSON.parse(cleanJson);
+        } catch (e) {
+            alert('Fix JSON errors before saving.');
+            return;
+        }
+
+        var isUpdate = currentDiagramMeta && currentDiagramMeta.id && currentDiagramMeta.source === 'db';
+        var url = isUpdate ? '/api/diagrams/' + currentDiagramMeta.id : '/api/diagrams';
+        var method = isUpdate ? 'PUT' : 'POST';
+
+        var body = {
+            title: title || flowData.title || 'Untitled',
+            description: description,
+            tags: tags,
+            flow: flowData
+        };
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        }).then(function(r) {
+            if (!r.ok) throw new Error('Save failed: ' + r.status);
+            return r.json();
+        }).then(function(saved) {
+            currentDiagramMeta = {
+                id: saved.id,
+                title: saved.title,
+                description: saved.description,
+                tags: saved.tags,
+                source: 'db',
+                version: saved.version
+            };
+            refreshDiagramDropdown(saved.id);
+            dom.saveOverlay.classList.remove('visible');
+        }).catch(function(err) {
+            alert(err.message);
+        });
+    };
+
+    // --- Download JSON Spec ---
+    dom.optDownloadSpec.onclick = function() {
+        dom.optionsDropdown.classList.remove('open');
+        var a = document.createElement('a');
+        a.href = '/json_spec.txt';
+        a.download = 'json_spec.txt';
+        a.click();
+    };
+
+    // --- Download JSON ---
+    dom.optDownload.onclick = function() {
+        dom.optionsDropdown.classList.remove('open');
+        if (currentDiagramMeta && currentDiagramMeta.id) {
+            fetch('/api/diagrams/' + currentDiagramMeta.id)
+                .then(function(r) { return r.json(); })
+                .then(function(diagram) {
+                    downloadJson(diagram, diagram.title || 'diagram');
+                }).catch(function() {
+                    downloadEditorJson();
+                });
+        } else {
+            downloadEditorJson();
+        }
+    };
+
+    function downloadEditorJson() {
+        var exportData;
+        try {
+            var cleanJson = stripJsonComments(dom.input.value);
+            cleanJson = normalizeMultilineStrings(cleanJson);
+            exportData = JSON.parse(cleanJson);
+        } catch (e) {
+            exportData = { error: 'Invalid JSON in editor' };
+        }
+        downloadJson(exportData, exportData.title || 'diagram');
+    }
+
+    function downloadJson(data, filename) {
+        var blob = new Blob([JSON.stringify(data, null, 4)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename.replace(/[^a-z0-9_-]/gi, '-').toLowerCase() + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
     }
 
     document.addEventListener('contextmenu', function(e) { e.preventDefault(); });

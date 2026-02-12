@@ -1,0 +1,51 @@
+This guide details the JSON specification used to configure the Phases architecture animator. The JSON is divided into four main sections: Metadata, Nodes, Connections, and Sequence.1. Root ObjectThe root of the JSON object controls the global settings of the diagram.JSON{
+  "title": "Phase 1: Legacy Migration",
+  "nodes": [ ... ],
+  "connections": [ ... ],
+  "sequence": [ ... ]
+}
+title (String): The text displayed at the top-left of the canvas (e.g., "Phase 1: Architecture").2. The nodes ArrayThis array defines the boxes (components) on the canvas. Each object represents one component.JSON{
+  "id": "user_1",
+  "type": "user",
+  "tag": "external",
+  "label": "Mobile App User",
+  "x": 50,
+  "y": 100,
+  "w": 120,
+  "h": 80
+}
+PropertyTypeDescriptionidStringRequired. A unique identifier for the node (e.g., "db-1", "frontend"). This is used by Connections and Sequence to reference this box.labelStringThe text displayed inside the box.xNumberThe horizontal position (pixels) from the left edge.yNumberThe vertical position (pixels) from the top edge.wNumberThe width of the box in pixels.hNumberThe height of the box in pixels.typeStringDetermines the Icon shown inside the box.tagStringDetermines the Color Scheme (border/background).Supported Values for type (Icons)"user": A person icon."database": A cylinder/database icon."service": A stack/server icon."agent": A robot/AI head icon."default": A generic box icon.Supported Values for tag (Colors)"legacy": Red/Pink. Used for old systems you are deprecating."new": Green. Used for new architecture or target state."core": Blue. Used for standard infrastructure."agent": Purple. Used for AI Agents or LLMs."external": Gray (Dashed). Used for users or third-party systems.3. The connections ArrayThis array draws the static dashed lines between boxes. These lines represent network connectivity or data flow paths.JSON{
+  "from": "user_1",
+  "to": "frontend"
+}
+from (String): The id of the source node.to (String): The id of the destination node.4. The sequence ArrayThis array defines the animation steps. The "Play" button iterates through this list in order.JSON{
+  "from": "frontend",
+  "to": "backend",
+  "text": "API Call: Get User Profile"
+}
+from (String): The id of the node where the red dot starts.to (String): The id of the node where the red dot ends.Note: When the dot arrives here, a step number badge (e.g., ①) is added to this box.text (String): The description of this step. This text is logged in the bottom pane and displayed briefly as a popup.Minimal ExampleHere is a copy-pasteable example of a user talking to a database.JSON{
+    "title": "Simple Query Flow",
+    "nodes": [
+        { 
+            "id": "usr", 
+            "type": "user", 
+            "tag": "external", 
+            "label": "User", 
+            "x": 50, "y": 100, "w": 100, "h": 70 
+        },
+        { 
+            "id": "db", 
+            "type": "database", 
+            "tag": "core", 
+            "label": "SQL DB", 
+            "x": 300, "y": 100, "w": 100, "h": 70 
+        }
+    ],
+    "connections": [
+        { "from": "usr", "to": "db" }
+    ],
+    "sequence": [
+        { "from": "usr", "to": "db", "text": "Select * from Users" },
+        { "from": "db", "to": "usr", "text": "Return Data" }
+    ]
+}
