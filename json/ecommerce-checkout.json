@@ -1,0 +1,32 @@
+{
+    "title": "E-Commerce Checkout Flow",
+    "notes": "Project: Storefront Platform\nTeam: Commerce Engineering\n\nFlow:\n1. User adds items to cart\n2. Payment processed via gateway\n3. Order created & inventory updated\n4. Notification sent to user\n\nStatus: Production",
+    "nodes": [
+        { "id": "shopper", "type": "user", "tag": "external", "label": "Shopper", "x": 50, "y": 220, "w": 100, "h": 70 },
+        { "id": "web", "type": "service", "tag": "core", "label": "Web\nStorefront", "x": 230, "y": 220, "w": 120, "h": 80, "status": "ready" },
+        { "id": "cart", "type": "service", "tag": "core", "label": "Cart\nService", "x": 430, "y": 120, "w": 120, "h": 70, "status": "ready" },
+        { "id": "payment", "type": "service", "tag": "external", "label": "Payment\nGateway", "x": 430, "y": 320, "w": 120, "h": 70 },
+        { "id": "order", "type": "service", "tag": "new", "label": "Order\nService", "x": 650, "y": 220, "w": 120, "h": 80, "status": "ready" },
+        { "id": "inventory", "type": "database", "tag": "core", "label": "Inventory\nDB", "x": 860, "y": 120, "w": 110, "h": 70, "status": "ready", "skipSequence": true },
+        { "id": "notify", "type": "agent", "tag": "agent", "label": "Notification\nAgent", "x": 860, "y": 320, "w": 120, "h": 70, "status": "wip" }
+    ],
+    "connections": [
+        { "from": "shopper", "to": "web" },
+        { "from": "web", "to": "cart" },
+        { "from": "web", "to": "payment" },
+        { "from": "cart", "to": "order" },
+        { "from": "payment", "to": "order" },
+        { "from": "order", "to": "inventory" },
+        { "from": "order", "to": "notify" }
+    ],
+    "sequence": [
+        { "from": "shopper", "to": "web", "text": "Browse & add to cart", "status": "ready" },
+        { "from": "web", "to": "cart", "text": "Validate cart items", "status": "ready" },
+        { "from": "web", "to": "payment", "text": "Submit payment details", "status": "ready" },
+        { "from": "payment", "to": "order", "text": "Payment authorized", "status": "ready" },
+        { "from": "cart", "to": "order", "text": "Create order record", "status": "ready" },
+        { "from": "order", "to": "inventory", "text": "Decrement stock", "status": "ready" },
+        { "from": "order", "to": "notify", "text": "Trigger confirmation", "status": "wip" },
+        { "from": "notify", "to": "shopper", "text": "Email receipt sent", "status": "wip" }
+    ]
+}

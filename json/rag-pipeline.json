@@ -1,0 +1,31 @@
+{
+    "title": "RAG Pipeline Architecture",
+    "notes": "Project: AI Knowledge Assistant\nTeam: ML Platform\n\nArchitecture:\n- Documents ingested & chunked\n- Embeddings stored in vector DB\n- User queries retrieve context\n- LLM generates grounded answers\n\nStatus: Beta",
+    "nodes": [
+        { "id": "user", "type": "user", "tag": "external", "label": "User", "x": 50, "y": 220, "w": 100, "h": 70 },
+        { "id": "app", "type": "service", "tag": "core", "label": "Chat\nInterface", "x": 240, "y": 220, "w": 120, "h": 80, "status": "ready" },
+        { "id": "embed", "type": "agent", "tag": "agent", "label": "Embedding\nModel", "x": 460, "y": 100, "w": 120, "h": 70, "status": "ready" },
+        { "id": "vectordb", "type": "database", "tag": "new", "label": "Vector\nDB", "x": 680, "y": 100, "w": 110, "h": 70, "status": "wip" },
+        { "id": "retriever", "type": "agent", "tag": "agent", "label": "Retriever\nAgent", "x": 460, "y": 340, "w": 120, "h": 70, "status": "wip" },
+        { "id": "llm", "type": "agent", "tag": "agent", "label": "LLM\nGenerator", "x": 680, "y": 280, "w": 120, "h": 80, "status": "ready" },
+        { "id": "docs", "type": "database", "tag": "core", "label": "Document\nStore", "x": 680, "y": 420, "w": 110, "h": 70, "status": "ready", "skipSequence": true }
+    ],
+    "connections": [
+        { "from": "user", "to": "app" },
+        { "from": "app", "to": "embed" },
+        { "from": "embed", "to": "vectordb" },
+        { "from": "app", "to": "retriever" },
+        { "from": "retriever", "to": "vectordb" },
+        { "from": "retriever", "to": "llm" },
+        { "from": "retriever", "to": "docs" }
+    ],
+    "sequence": [
+        { "from": "user", "to": "app", "text": "Ask a question", "status": "ready" },
+        { "from": "app", "to": "embed", "text": "Encode query to embedding", "status": "ready" },
+        { "from": "embed", "to": "vectordb", "text": "Similarity search (top-k)", "status": "wip" },
+        { "from": "vectordb", "to": "retriever", "text": "Return relevant chunks", "status": "wip" },
+        { "from": "retriever", "to": "llm", "text": "Send query + context", "status": "ready" },
+        { "from": "llm", "to": "app", "text": "Generate grounded answer", "status": "ready" },
+        { "from": "app", "to": "user", "text": "Display response with sources", "status": "ready" }
+    ]
+}

@@ -1,0 +1,30 @@
+{
+    "title": "Multi-Agent Collaboration",
+    "notes": "Project: AI Agent Mesh\nTeam: AI Platform\n\nArchitecture:\n- Orchestrator routes tasks\n- Specialist agents handle domains\n- Shared memory for context\n\nStatus: Prototype",
+    "nodes": [
+        { "id": "user", "type": "user", "tag": "external", "label": "Human\nOperator", "x": 50, "y": 220, "w": 100, "h": 70 },
+        { "id": "orch", "type": "agent", "tag": "agent", "label": "Orchestrator\nAgent", "x": 260, "y": 220, "w": 130, "h": 80, "status": "ready" },
+        { "id": "research", "type": "agent", "tag": "agent", "label": "Research\nAgent", "x": 490, "y": 100, "w": 120, "h": 70, "status": "wip" },
+        { "id": "code", "type": "agent", "tag": "agent", "label": "Code\nAgent", "x": 490, "y": 340, "w": 120, "h": 70, "status": "wip" },
+        { "id": "memory", "type": "database", "tag": "new", "label": "Shared\nMemory", "x": 720, "y": 220, "w": 110, "h": 70, "status": "ready", "skipSequence": true },
+        { "id": "api", "type": "service", "tag": "core", "label": "External\nAPIs", "x": 720, "y": 80, "w": 110, "h": 60, "status": "ready" }
+    ],
+    "connections": [
+        { "from": "user", "to": "orch" },
+        { "from": "orch", "to": "research" },
+        { "from": "orch", "to": "code" },
+        { "from": "research", "to": "memory" },
+        { "from": "code", "to": "memory" },
+        { "from": "research", "to": "api" }
+    ],
+    "sequence": [
+        { "from": "user", "to": "orch", "text": "Submit complex task", "status": "ready" },
+        { "from": "orch", "to": "research", "text": "Delegate research subtask", "status": "wip" },
+        { "from": "research", "to": "api", "text": "Fetch external data", "status": "ready" },
+        { "from": "research", "to": "memory", "text": "Store findings", "status": "wip" },
+        { "from": "orch", "to": "code", "text": "Delegate coding subtask", "status": "wip" },
+        { "from": "code", "to": "memory", "text": "Read context & write code", "status": "wip" },
+        { "from": "code", "to": "orch", "text": "Return results", "status": "ready" },
+        { "from": "orch", "to": "user", "text": "Deliver final output", "status": "ready" }
+    ]
+}

@@ -1,0 +1,29 @@
+{
+    "title": "Phase 1: Introducing AI Agents",
+    "notes": "Project: Legacy Migration\nAuthor: Architecture Team\n\nObjectives:\n1. Decouple User from Monolith\n2. Introduce AI Agent for Triage\n3. Establish Redis caching layer\n\nStatus: In Development",
+    "nodes": [
+        { "id": "u", "type": "user", "tag": "external", "label": "Customer", "x": 60, "y": 250, "w": 100, "h": 70 },
+        { "id": "fe", "type": "service", "tag": "core", "label": "Frontend", "x": 250, "y": 250, "w": 120, "h": 80, "status": "ready" },
+        { "id": "mono", "type": "service", "tag": "legacy", "label": "Legacy\nMonolith", "x": 500, "y": 380, "w": 140, "h": 90 },
+        { "id": "agent", "type": "agent", "tag": "agent", "label": "Triage\nAgent", "x": 500, "y": 120, "w": 110, "h": 70, "status": "wip" },
+        { "id": "new_svc", "type": "service", "tag": "new", "label": "Order\nService", "x": 750, "y": 120, "w": 120, "h": 80, "status": "wip" },
+        { "id": "db_main", "type": "database", "tag": "legacy", "label": "Main DB", "x": 750, "y": 380, "w": 100, "h": 70, "skipSequence": true },
+        { "id": "db_cache", "type": "database", "tag": "new", "label": "Redis\nCache", "x": 950, "y": 120, "w": 100, "h": 70, "status": "wip", "skipSequence": true }
+    ],
+    "connections": [
+        { "from": "u", "to": "fe" },
+        { "from": "fe", "to": "mono" },
+        { "from": "fe", "to": "agent" },
+        { "from": "agent", "to": "new_svc" },
+        { "from": "mono", "to": "db_main" },
+        { "from": "new_svc", "to": "db_cache" }
+    ],
+    "sequence": [
+        { "from": "u", "to": "fe", "text": "User places order", "status": "ready" },
+        { "from": "fe", "to": "agent", "text": "Agent classifies request", "status": "ready" },
+        { "from": "agent", "to": "new_svc", "text": "Route to Microservice", "status": "wip" },
+        { "from": "new_svc", "to": "db_cache", "text": "Check Inventory", "status": "wip" },
+        { "from": "db_cache", "to": "new_svc", "text": "Stock Confirmed", "status": "wip" },
+        { "from": "new_svc", "to": "fe", "text": "Order Success", "status": "ready" }
+    ]
+}
