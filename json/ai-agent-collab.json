@@ -20,11 +20,11 @@
     "sequence": [
         { "from": "user", "to": "orch", "text": "Submit complex task", "status": "ready" },
         { "from": "orch", "to": "research", "text": "Delegate research subtask", "status": "wip" },
-        { "from": "research", "to": "api", "text": "Fetch external data", "status": "ready" },
+        { "from": "research", "to": "api", "text": "Fetch external data", "status": "ready", "popUp": { "type": "alert", "msg": "API rate limit approaching threshold (80%)" } },
         { "from": "research", "to": "memory", "text": "Store findings", "status": "wip" },
         { "from": "orch", "to": "code", "text": "Delegate coding subtask", "status": "wip" },
         { "from": "code", "to": "memory", "text": "Read context & write code", "status": "wip" },
         { "from": "code", "to": "orch", "text": "Return results", "status": "ready" },
-        { "from": "orch", "to": "user", "text": "Deliver final output", "status": "ready" }
+        { "from": "orch", "to": "user", "text": "Deliver final output", "status": "ready", "popUp": { "type": "amplify", "msg": "All subtasks completed successfully" } }
     ]
 }

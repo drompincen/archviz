@@ -23,10 +23,10 @@
         { "from": "shopper", "to": "web", "text": "Browse & add to cart", "status": "ready" },
         { "from": "web", "to": "cart", "text": "Validate cart items", "status": "ready" },
         { "from": "web", "to": "payment", "text": "Submit payment details", "status": "ready" },
-        { "from": "payment", "to": "order", "text": "Payment authorized", "status": "ready" },
+        { "from": "payment", "to": "order", "text": "Payment authorized", "status": "ready", "popUp": { "type": "issue", "msg": "Payment gateway timeout — retry required" } },
         { "from": "cart", "to": "order", "text": "Create order record", "status": "ready" },
         { "from": "order", "to": "inventory", "text": "Decrement stock", "status": "ready" },
         { "from": "order", "to": "notify", "text": "Trigger confirmation", "status": "wip" },
-        { "from": "notify", "to": "shopper", "text": "Email receipt sent", "status": "wip" }
+        { "from": "notify", "to": "shopper", "text": "Email receipt sent", "status": "wip", "popUp": { "type": "amplify", "msg": "Order confirmed and receipt delivered" } }
     ]
 }

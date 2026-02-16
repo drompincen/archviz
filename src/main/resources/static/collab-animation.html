@@ -50,7 +50,7 @@
         header {
             background: #2d2d2d; border-bottom: 1px solid var(--border-color);
             padding: 0 20px; height: 50px; display: flex; align-items: center;
-            justify-content: space-between; z-index: 100; flex-shrink: 0;
+            justify-content: space-between; z-index: 10002; flex-shrink: 0;
         }
         body.light-theme header { background: #e8e8e8; }
 
@@ -290,6 +290,51 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes flash { 0%,50%{opacity:0} 25%,75%,100%{opacity:1} }
 
+        .popup-toast {
+            position: absolute; z-index: 50;
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px; border-radius: 8px; max-width: 280px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+            font-family: 'Segoe UI', sans-serif; font-size: 0.82rem;
+            pointer-events: auto; cursor: default;
+            white-space: normal; word-wrap: break-word;
+            opacity: 0; transition: opacity 0.35s ease-out;
+        }
+        .popup-toast.visible { opacity: 1; }
+        .popup-toast::after {
+            content: ''; position: absolute; bottom: -6px;
+            left: 50%; transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 7px solid transparent; border-right: 7px solid transparent;
+            border-top: 7px solid var(--popup-border-color, #555);
+        }
+        .popup-toast .popup-icon { flex-shrink: 0; width: 28px; height: 28px; }
+        .popup-toast .popup-msg { flex: 1; line-height: 1.4; }
+
+        .popup-toast.popup-alert {
+            background: #3d3200; border: 1px solid #f0ad4e; color: #ffe0a0; --popup-border-color: #f0ad4e;
+        }
+        body.light-theme .popup-toast.popup-alert {
+            background: #fff8e1; border-color: #f0ad4e; color: #6d4c00; --popup-border-color: #f0ad4e;
+        }
+        .popup-toast.popup-issue {
+            background: #3d0a0a; border: 1px solid #e74c3c; color: #ffb0b0; --popup-border-color: #e74c3c;
+        }
+        body.light-theme .popup-toast.popup-issue {
+            background: #ffebee; border-color: #e74c3c; color: #6d0000; --popup-border-color: #e74c3c;
+        }
+        .popup-toast.popup-amplify {
+            background: #0a3d1a; border: 1px solid #2ecc71; color: #a0ffc0; --popup-border-color: #2ecc71;
+        }
+        body.light-theme .popup-toast.popup-amplify {
+            background: #e8f5e9; border-color: #2ecc71; color: #1b5e20; --popup-border-color: #2ecc71;
+        }
+
+        .log-popup-icon { display: inline-flex; align-items: center; margin-left: 6px; vertical-align: middle; }
+        .log-popup-icon svg { width: 14px; height: 14px; vertical-align: middle; }
+        .log-popup-msg { font-size: 0.82rem; color: #aaa; margin-left: 4px; font-style: italic; }
+        body.light-theme .log-popup-msg { color: #777; }
+
         body.resizing { cursor: ns-resize !important; user-select: none; }
 
         #pdf-modal-overlay {
@@ -307,6 +352,66 @@
         #pdf-modal label { display: block; margin: 10px 0; color: var(--text-main); cursor: pointer; font-size: 0.9rem; }
         #pdf-modal .pdf-actions { margin-top: 18px; display: flex; gap: 10px; justify-content: flex-end; }
 
+        #save-modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 10000;
+            justify-content: center; align-items: center;
+        }
+        #save-modal-overlay.visible { display: flex; }
+        #save-modal {
+            background: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 24px; min-width: 380px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        #save-modal h3 { margin-top: 0; color: var(--text-main); }
+        body.light-theme #save-modal input,
+        body.light-theme #save-modal textarea { background: #fff; color: #333; border-color: #ccc; }
+
+        .options-wrapper {
+            position: relative;
+        }
+        #btn-options {
+            background: #3e3e42; border: 1px solid #555; color: #ccc;
+            padding: 5px 12px; border-radius: 4px; cursor: pointer;
+            font-size: 0.82rem; white-space: nowrap;
+        }
+        #btn-options:hover { background: #505058; }
+        body.light-theme #btn-options { background: #e0e0e0; border-color: #ccc; color: #333; }
+        body.light-theme #btn-options:hover { background: #d0d0d0; }
+
+        #options-dropdown {
+            display: none; position: absolute; top: 100%; right: 0; margin-top: 6px;
+            background: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 8px 0; min-width: 260px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 10001;
+        }
+        #options-dropdown.open { display: block; }
+
+        .opt-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 16px; cursor: pointer; font-size: 0.85rem;
+            color: var(--text-main); transition: background 0.15s; white-space: nowrap;
+        }
+        .opt-item:hover { background: rgba(255,255,255,0.06); }
+        body.light-theme .opt-item:hover { background: rgba(0,0,0,0.05); }
+        .opt-item .opt-icon { width: 20px; text-align: center; opacity: 0.7; }
+        .opt-item .opt-label { flex: 1; }
+        .opt-item .opt-shortcut { font-size: 0.75rem; color: #888; }
+
+        .opt-divider {
+            height: 1px; background: var(--border-color); margin: 6px 12px;
+        }
+
+        .opt-item.opt-toggle { cursor: pointer; }
+        .opt-item.opt-toggle input[type="checkbox"] { margin: 0; }
+
+        .opt-item .opt-delay-input {
+            width: 45px; padding: 2px 4px; border-radius: 3px;
+            border: 1px solid #555; background: #333; color: white;
+            font-size: 0.82rem; text-align: center;
+        }
+        body.light-theme .opt-item .opt-delay-input { background: #fff; color: #333; border-color: #ccc; }
+
         #export-render-area {
             position: fixed; top: -99999px; left: -99999px; z-index: -1;
             background: var(--bg-color); width: 1200px;
@@ -320,14 +425,12 @@
 
     <div style="display:flex; flex-wrap:wrap; gap: 6px; align-items:center;">
         <div class="controls-group">
-            <select id="json-selector" title="Load a sample JSON">
+            <select id="json-selector" title="Load a diagram">
                 <option value="__default__">-- Built-in Demo --</option>
             </select>
             <button id="btn-play">&#9654; Play</button>
             <button id="btn-next" disabled>Next &#9193;</button>
             <button id="btn-ff" title="Fast Forward to end">&#9197; FF</button>
-            <label class="toggle-label"><input type="checkbox" id="chk-pause"> Pause/Step</label>
-            <label class="toggle-label">Delay: <input type="number" id="inp-delay" value="1.5" step="0.5" min="0.5">s</label>
         </div>
 
         <div class="divider"></div>
@@ -336,13 +439,28 @@
             <label class="toggle-label" style="color:var(--highlight); border:1px solid #333; padding:2px 6px; border-radius:4px;">
                 <input type="checkbox" id="chk-sequence-mode"> Sequence View
             </label>
-            <div class="divider"></div>
-            <label class="toggle-label"><input type="checkbox" id="chk-edit-mode"> Editing</label>
-            <label class="toggle-label"><input type="checkbox" id="chk-show-editor"> JSON</label>
-            <label class="toggle-label"><input type="checkbox" id="chk-show-notes" checked> Notes</label>
-            <div class="divider"></div>
-            <label class="toggle-label"><input type="checkbox" id="chk-light-mode"> Light</label>
-            <button id="btn-export-pdf" title="Export to PDF">&#128196; PDF</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="options-wrapper">
+            <button id="btn-options">&#9881; Options &#9662;</button>
+            <div id="options-dropdown">
+                <div class="opt-item" id="opt-save"><span class="opt-icon">&#128190;</span><span class="opt-label">Save Diagram</span></div>
+                <div class="opt-item" id="opt-upload"><span class="opt-icon">&#128228;</span><span class="opt-label">Upload JSON</span></div>
+                <div class="opt-item" id="opt-download"><span class="opt-icon">&#128229;</span><span class="opt-label">Download JSON</span></div>
+                <div class="opt-item" id="opt-export-pdf"><span class="opt-icon">&#128196;</span><span class="opt-label">Export PDF</span></div>
+                <div class="opt-item" id="opt-download-spec"><span class="opt-icon">&#128203;</span><span class="opt-label">Download JSON Spec</span></div>
+                <div class="opt-divider"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#9193;</span><span class="opt-label">Pause/Step</span><input type="checkbox" id="chk-pause"></div>
+                <div class="opt-item"><span class="opt-icon">&#9201;</span><span class="opt-label">Delay</span><input type="number" id="inp-delay" value="1.5" step="0.5" min="0.5" class="opt-delay-input">s</div>
+                <div class="opt-divider"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#9998;</span><span class="opt-label">Edit Mode</span><input type="checkbox" id="chk-edit-mode"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">{}</span><span class="opt-label">JSON Editor</span><input type="checkbox" id="chk-show-editor"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#128221;</span><span class="opt-label">Notes</span><input type="checkbox" id="chk-show-notes" checked></div>
+                <div class="opt-divider"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#9728;</span><span class="opt-label">Light Theme</span><input type="checkbox" id="chk-light-mode"></div>
+            </div>
         </div>
     </div>
 </header>
@@ -396,6 +514,25 @@
         <div class="pdf-actions">
             <button id="btn-pdf-cancel">Cancel</button>
             <button id="btn-pdf-go">Export</button>
+        </div>
+    </div>
+</div>
+
+<div id="save-modal-overlay">
+    <div id="save-modal">
+        <h3 id="save-modal-title">Save Diagram</h3>
+        <label style="display:block;margin:10px 0;color:var(--text-main);font-size:0.9rem;">Title:
+            <input type="text" id="save-title" style="width:100%;padding:5px;border-radius:4px;border:1px solid #555;background:#333;color:#ccc;box-sizing:border-box;margin-top:4px;">
+        </label>
+        <label style="display:block;margin:10px 0;color:var(--text-main);font-size:0.9rem;">Description:
+            <textarea id="save-description" rows="2" style="width:100%;padding:5px;border-radius:4px;border:1px solid #555;background:#333;color:#ccc;box-sizing:border-box;margin-top:4px;resize:vertical;"></textarea>
+        </label>
+        <label style="display:block;margin:10px 0;color:var(--text-main);font-size:0.9rem;">Tags (comma-separated):
+            <input type="text" id="save-tags" style="width:100%;padding:5px;border-radius:4px;border:1px solid #555;background:#333;color:#ccc;box-sizing:border-box;margin-top:4px;" placeholder="e.g. dram, latency, agent">
+        </label>
+        <div class="pdf-actions">
+            <button id="btn-save-cancel">Cancel</button>
+            <button id="btn-save-confirm">Save</button>
         </div>
     </div>
 </div>
@@ -459,7 +596,7 @@
         btnNext: document.getElementById('btn-next'),
         btnFF: document.getElementById('btn-ff'),
         btnUpdate: document.getElementById('btn-update'),
-        btnExportPdf: document.getElementById('btn-export-pdf'),
+        btnExportPdf: document.getElementById('opt-export-pdf'),
         chkPause: document.getElementById('chk-pause'),
         inpDelay: document.getElementById('inp-delay'),
         chkEditMode: document.getElementById('chk-edit-mode'),
@@ -475,7 +612,16 @@
         pdfOverlay: document.getElementById('pdf-modal-overlay'),
         btnPdfCancel: document.getElementById('btn-pdf-cancel'),
         btnPdfGo: document.getElementById('btn-pdf-go'),
-        exportArea: document.getElementById('export-render-area')
+        exportArea: document.getElementById('export-render-area'),
+
+        btnOptions: document.getElementById('btn-options'),
+        optionsDropdown: document.getElementById('options-dropdown'),
+        optSave: document.getElementById('opt-save'),
+        optUpload: document.getElementById('opt-upload'),
+        optDownload: document.getElementById('opt-download'),
+        optExportPdf: document.getElementById('opt-export-pdf'),
+        optDownloadSpec: document.getElementById('opt-download-spec'),
+        saveOverlay: document.getElementById('save-modal-overlay')
     };
 
     let graph = {};
@@ -485,6 +631,8 @@
     let nodeMap = {};
     let sequenceGroups = [];
     let savedLogHeight = 200;
+    let currentDiagramMeta = null;
+    var DIAGRAM_META = {};
 
     function init() {
         dom.input.value = editorString;
@@ -495,6 +643,20 @@
     }
 
     function discoverJsonFiles() {
+        fetch('/api/diagrams').then(function(r) {
+            if (!r.ok) throw new Error('API unavailable');
+            return r.json();
+        }).then(function(diagrams) {
+            if (!diagrams) return;
+            diagrams.forEach(function(d) {
+                addApiDiagramOption(d);
+            });
+        }).catch(function() {
+            fallbackDiscoverJsonFiles();
+        });
+    }
+
+    function fallbackDiscoverJsonFiles() {
         fetch('json/').then(function(r) {
             if (!r.ok) return;
             return r.text();
@@ -504,12 +666,12 @@
             if (!matches) return;
             var unique = matches.filter(function(v, i, a) { return a.indexOf(v) === i; });
             unique.forEach(function(filename) {
-                addJsonFileOption(filename);
+                addJsonFileOptionLegacy(filename);
             });
         }).catch(function() {});
     }
 
-    function addJsonFileOption(filename) {
+    function addJsonFileOptionLegacy(filename) {
         for (var i = 0; i < dom.jsonSelector.options.length; i++) {
             if (dom.jsonSelector.options[i].value === filename) return;
         }
@@ -527,6 +689,33 @@
                 dom.jsonSelector.appendChild(opt);
             });
         }).catch(function() {});
+    }
+
+    function addApiDiagramOption(diagram) {
+        for (var i = 0; i < dom.jsonSelector.options.length; i++) {
+            if (dom.jsonSelector.options[i].value === diagram.id) return;
+        }
+        var opt = document.createElement('option');
+        opt.value = diagram.id;
+        var displayName = diagram.title || diagram.id;
+        if (diagram.source === 'db' && diagram.tags && diagram.tags.length > 0) {
+            displayName = diagram.title + ' \u2022 ' + diagram.tags[0];
+        }
+        opt.textContent = displayName;
+        opt.dataset.source = diagram.source;
+        opt.dataset.diagramId = diagram.id;
+        dom.jsonSelector.appendChild(opt);
+    }
+
+    function refreshDiagramDropdown(selectId) {
+        while (dom.jsonSelector.options.length > 1) {
+            dom.jsonSelector.remove(1);
+        }
+        fetch('/api/diagrams').then(function(r) { return r.json(); })
+            .then(function(diagrams) {
+                diagrams.forEach(function(d) { addApiDiagramOption(d); });
+                if (selectId) dom.jsonSelector.value = selectId;
+            }).catch(function() {});
     }
 
     function handleCollabParam() {
@@ -562,26 +751,42 @@
         var key = dom.jsonSelector.value;
         if (key === '__default__') {
             dom.input.value = editorString;
+            currentDiagramMeta = null;
             render();
             resetAnimation(true);
             return;
         }
         if (SAMPLE_JSONS[key]) {
             dom.input.value = JSON.stringify(SAMPLE_JSONS[key], null, 4);
+            currentDiagramMeta = DIAGRAM_META[key] || null;
             render();
             resetAnimation(true);
             return;
         }
-        fetch('json/' + key).then(function(r) {
-            if (!r.ok) throw new Error('File not found');
+        fetch('/api/diagrams/' + key).then(function(r) {
+            if (!r.ok) throw new Error('Not found');
             return r.json();
-        }).then(function(data) {
-            SAMPLE_JSONS[key] = data;
-            dom.input.value = JSON.stringify(data, null, 4);
+        }).then(function(diagram) {
+            currentDiagramMeta = {
+                id: diagram.id,
+                title: diagram.title,
+                description: diagram.description,
+                tags: diagram.tags,
+                source: diagram.source,
+                version: diagram.version
+            };
+            var flowData = diagram.flow;
+            if (flowData && !flowData.title) {
+                flowData.title = diagram.title;
+            }
+            DIAGRAM_META[key] = currentDiagramMeta;
+            SAMPLE_JSONS[key] = flowData;
+            dom.input.value = JSON.stringify(flowData, null, 4);
             render();
             resetAnimation(true);
         }).catch(function() {
             dom.input.value = editorString;
+            currentDiagramMeta = null;
             render();
             resetAnimation(true);
         });
@@ -937,7 +1142,52 @@
         }
     }
 
-    function appendLog(stepNum, text, status) {
+    var POPUP_ICONS = {
+        alert: '<svg viewBox="0 0 24 24" fill="none" stroke="#f0ad4e" stroke-width="2"><path d="M12 2L1 21h22L12 2z"/><line x1="12" y1="9" x2="12" y2="15"/><circle cx="12" cy="18" r="0.5" fill="#f0ad4e"/></svg>',
+        issue: '<svg viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2"><polygon points="12,1 22.4,6.5 22.4,17.5 12,23 1.6,17.5 1.6,6.5"/><line x1="12" y1="8" x2="12" y2="14"/><circle cx="12" cy="17" r="0.5" fill="#e74c3c"/></svg>',
+        amplify: '<svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="7,12 10.5,16 17,8"/></svg>'
+    };
+
+    function showPopUp(popUp, nodeId) {
+        if (!popUp || !popUp.type || !popUp.msg) return;
+        document.querySelectorAll('.popup-toast').forEach(function(el) { el.remove(); });
+        var toast = document.createElement('div');
+        toast.className = 'popup-toast popup-' + popUp.type;
+        var iconSvg = POPUP_ICONS[popUp.type] || POPUP_ICONS.alert;
+        toast.innerHTML = '<div class="popup-icon">' + iconSvg + '</div><div class="popup-msg"></div>';
+        toast.querySelector('.popup-msg').textContent = popUp.msg;
+
+        var node = nodeId ? nodeMap[nodeId] : null;
+        if (node && node.el) {
+            dom.previewCanvas.appendChild(toast);
+            // measure the toast first
+            void toast.offsetWidth;
+            var nodeLeft = parseInt(node.el.style.left) || 0;
+            var nodeTop = parseInt(node.el.style.top) || 0;
+            var nodeW = node.el.offsetWidth || node.w || 100;
+            var toastW = toast.offsetWidth;
+            var toastH = toast.offsetHeight;
+            // position centered above the node with 10px gap
+            toast.style.left = (nodeLeft + nodeW / 2 - toastW / 2) + 'px';
+            toast.style.top = (nodeTop - toastH - 10) + 'px';
+        } else {
+            // fallback: top-right fixed position
+            toast.style.position = 'fixed';
+            toast.style.top = '80px';
+            toast.style.right = '30px';
+            document.body.appendChild(toast);
+        }
+
+        // fade in
+        requestAnimationFrame(function() { toast.classList.add('visible'); });
+
+        setTimeout(function() {
+            toast.classList.remove('visible');
+            setTimeout(function() { toast.remove(); }, 400);
+        }, 3000);
+    }
+
+    function appendLog(stepNum, text, status, popUp) {
         if (dom.logPane.children[0] && dom.logPane.children[0].innerText.includes("Ready")) {
             dom.logPane.innerHTML = '';
         }
@@ -949,8 +1199,17 @@
         if (status === 'wip') tagHtml = '<span class="log-tag tag-wip">[WIP]</span>';
         else if (status === 'ready') tagHtml = '<span class="log-tag tag-ready">[READY]</span>';
 
-        div.innerHTML = '<span class="log-step">Step ' + stepNum + '</span>' + tagHtml + '<span class="log-text"></span><span class="log-time">' + timeStr + '</span>';
+        var popUpHtml = '';
+        if (popUp && popUp.type && popUp.msg) {
+            var iconSvg = POPUP_ICONS[popUp.type] || POPUP_ICONS.alert;
+            popUpHtml = '<span class="log-popup-icon">' + iconSvg + '</span><span class="log-popup-msg"></span>';
+        }
+
+        div.innerHTML = '<span class="log-step">Step ' + stepNum + '</span>' + tagHtml + '<span class="log-text"></span>' + popUpHtml + '<span class="log-time">' + timeStr + '</span>';
         div.querySelector('.log-text').textContent = text;
+        if (popUp && popUp.msg && div.querySelector('.log-popup-msg')) {
+            div.querySelector('.log-popup-msg').textContent = popUp.msg;
+        }
         dom.logPane.appendChild(div);
         dom.logPane.scrollTop = dom.logPane.scrollHeight;
     }
@@ -963,6 +1222,7 @@
         dom.btnNext.disabled = true;
         dom.btnPlay.innerHTML = "&#9654; Play";
 
+        document.querySelectorAll('.popup-toast').forEach(function(el) { el.remove(); });
         if (fullReset) {
             clearLog();
             clearBadges();
@@ -980,12 +1240,17 @@
         clearLog();
         clearBadges();
 
+        var lastPopUp = null;
+        var lastPopUpNode = null;
         seq.forEach(function(step, i) {
             addStepBadge(step.to, i + 1, step.status);
-            appendLog(i + 1, step.text, step.status);
+            appendLog(i + 1, step.text, step.status, step.popUp);
+            if (step.popUp) { lastPopUp = step.popUp; lastPopUpNode = step.to; }
         });
 
         document.querySelectorAll('g[id^="seq-step-"]').forEach(function(g) { g.style.opacity = 1; });
+
+        if (lastPopUp) showPopUp(lastPopUp, lastPopUpNode);
 
         stepIndex = seq.length;
         dom.btnPlay.innerHTML = "&#8634; Replay";
@@ -1041,10 +1306,11 @@
             if (groupId) {
                 var el = document.getElementById(groupId);
                 if (el) el.style.opacity = 1;
-                appendLog(stepNum, step.text, step.status);
+                appendLog(stepNum, step.text, step.status, step.popUp);
             } else {
-                appendLog(stepNum, step.text + " (Hidden in Seq)", step.status);
+                appendLog(stepNum, step.text + " (Hidden in Seq)", step.status, step.popUp);
             }
+            if (step.popUp) showPopUp(step.popUp, step.to);
             setTimeout(cb, 500);
         } else {
             var n1 = nodeMap[step.from];
@@ -1068,7 +1334,8 @@
 
             setTimeout(function() {
                 addStepBadge(step.to, stepNum, step.status);
-                appendLog(stepNum, step.text, step.status);
+                appendLog(stepNum, step.text, step.status, step.popUp);
+                if (step.popUp) showPopUp(step.popUp, step.to);
                 cb();
             }, 1000);
         }
@@ -1083,6 +1350,7 @@
     };
 
     dom.btnExportPdf.onclick = function() {
+        dom.optionsDropdown.classList.remove('open');
         dom.pdfOverlay.classList.add('visible');
     };
 
@@ -1228,15 +1496,15 @@
             }
 
             var container = document.createElement('div');
-            container.style.cssText = 'width:600px;background:#fdf6e3;border:1px solid #d4c4a8;border-radius:4px;font-family:Segoe UI,Helvetica Neue,Helvetica,Arial,sans-serif;font-size:14px;color:#222;';
+            container.style.cssText = 'width:400px;background:#fdf6e3;border:1px solid #d4c4a8;border-radius:4px;font-family:Segoe UI,Helvetica Neue,Helvetica,Arial,sans-serif;font-size:10px;color:#222;';
 
             var header = document.createElement('div');
-            header.style.cssText = 'background:#eee8d5;color:#586e75;padding:8px 15px;font-size:0.8rem;font-weight:bold;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #d4c4a8;border-radius:4px 4px 0 0;';
+            header.style.cssText = 'background:#eee8d5;color:#586e75;padding:5px 12px;font-size:0.7rem;font-weight:bold;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #d4c4a8;border-radius:4px 4px 0 0;';
             header.textContent = 'Project Notes';
             container.appendChild(header);
 
             var body = document.createElement('div');
-            body.style.cssText = 'padding:10px 25px 10px 35px;line-height:28px;font-weight:600;white-space:pre-wrap;word-wrap:break-word;background-image:linear-gradient(transparent 27px,#d4c4a8 1px);background-size:100% 28px;';
+            body.style.cssText = 'padding:6px 16px 6px 24px;line-height:16px;font-weight:500;white-space:pre-wrap;word-wrap:break-word;background-image:linear-gradient(transparent 15px,#d4c4a8 1px);background-size:100% 16px;';
             body.textContent = notes.replace(/\\n/g, '\n');
             container.appendChild(body);
 
@@ -1247,7 +1515,7 @@
             dom.exportArea.appendChild(container);
 
             setTimeout(function() {
-                html2canvas(container, { backgroundColor: null, scale: 2, useCORS: true }).then(function(canvas) {
+                html2canvas(container, { backgroundColor: null, scale: 1, useCORS: true }).then(function(canvas) {
                     resolve(canvas);
                 });
             }, 300);
@@ -1257,7 +1525,7 @@
     function captureLogsView() {
         return new Promise(function(resolve) {
             var container = document.createElement('div');
-            container.style.cssText = 'width:1160px;background:' + getComputedStyle(document.body).getPropertyValue('--bg-color').trim() + ';padding:0;font-family:Consolas,monospace;font-size:13px;';
+            container.style.cssText = 'width:1160px;background:' + getComputedStyle(document.body).getPropertyValue('--bg-color').trim() + ';padding:0;font-family:Consolas,monospace;font-size:10px;';
 
             var label = document.createElement('div');
             label.style.cssText = 'padding:8px 15px;font-size:14px;font-weight:bold;color:' + getComputedStyle(document.body).getPropertyValue('--text-main').trim() + ';font-family:Segoe UI,sans-serif;margin-top:10px;';
@@ -1281,11 +1549,181 @@
             dom.exportArea.appendChild(container);
 
             setTimeout(function() {
-                html2canvas(container, { backgroundColor: null, scale: 2, useCORS: true }).then(function(canvas) {
+                html2canvas(container, { backgroundColor: null, scale: 1, useCORS: true }).then(function(canvas) {
                     resolve(canvas);
                 });
             }, 300);
         });
+    }
+
+    // --- Options Dropdown Toggle ---
+    dom.btnOptions.onclick = function(e) {
+        e.stopPropagation();
+        dom.optionsDropdown.classList.toggle('open');
+    };
+    document.addEventListener('click', function(e) {
+        if (!dom.optionsDropdown.contains(e.target) && e.target !== dom.btnOptions) {
+            dom.optionsDropdown.classList.remove('open');
+        }
+    });
+    // Toggle checkboxes when clicking their parent opt-item row
+    dom.optionsDropdown.querySelectorAll('.opt-toggle').forEach(function(row) {
+        row.addEventListener('click', function(e) {
+            if (e.target.tagName === 'INPUT') return;
+            var cb = row.querySelector('input[type="checkbox"]');
+            if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); }
+        });
+    });
+
+    // --- Upload JSON ---
+    dom.optUpload.onclick = function() {
+        dom.optionsDropdown.classList.remove('open');
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,application/json';
+        input.onchange = function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    var data = JSON.parse(ev.target.result);
+                    if (!data.nodes || !Array.isArray(data.nodes)) {
+                        alert('Invalid diagram JSON: must contain a "nodes" array.');
+                        return;
+                    }
+                    dom.input.value = JSON.stringify(data, null, 4);
+                    currentDiagramMeta = { source: 'editor' };
+                    render();
+                    resetAnimation(true);
+                    document.getElementById('save-title').value = data.title || file.name.replace('.json', '');
+                    document.getElementById('save-description').value = '';
+                    document.getElementById('save-tags').value = '';
+                    document.getElementById('save-modal-title').textContent = 'Save Uploaded Diagram';
+                    dom.saveOverlay.classList.add('visible');
+                } catch (ex) {
+                    alert('Invalid JSON file: ' + ex.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    };
+
+    // --- Save to Repository ---
+    dom.optSave.onclick = function() {
+        dom.optionsDropdown.classList.remove('open');
+        var title = graph.title || '';
+        document.getElementById('save-title').value = title;
+        document.getElementById('save-description').value =
+            (currentDiagramMeta && currentDiagramMeta.description) || '';
+        document.getElementById('save-tags').value =
+            (currentDiagramMeta && currentDiagramMeta.tags) ? currentDiagramMeta.tags.join(', ') : '';
+        document.getElementById('save-modal-title').textContent =
+            (currentDiagramMeta && currentDiagramMeta.id && currentDiagramMeta.source === 'db')
+                ? 'Update Diagram' : 'Save New Diagram';
+        dom.saveOverlay.classList.add('visible');
+    };
+
+    document.getElementById('btn-save-cancel').onclick = function() {
+        dom.saveOverlay.classList.remove('visible');
+    };
+
+    document.getElementById('btn-save-confirm').onclick = function() {
+        var title = document.getElementById('save-title').value.trim();
+        var description = document.getElementById('save-description').value.trim();
+        var tagsStr = document.getElementById('save-tags').value.trim();
+        var tags = tagsStr ? tagsStr.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [];
+
+        var cleanJson = stripJsonComments(dom.input.value);
+        cleanJson = normalizeMultilineStrings(cleanJson);
+        var flowData;
+        try {
+            flowData = JSON.parse(cleanJson);
+        } catch (e) {
+            alert('Fix JSON errors before saving.');
+            return;
+        }
+
+        var isUpdate = currentDiagramMeta && currentDiagramMeta.id && currentDiagramMeta.source === 'db';
+        var url = isUpdate ? '/api/diagrams/' + currentDiagramMeta.id : '/api/diagrams';
+        var method = isUpdate ? 'PUT' : 'POST';
+
+        var body = {
+            title: title || flowData.title || 'Untitled',
+            description: description,
+            tags: tags,
+            flow: flowData
+        };
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        }).then(function(r) {
+            if (!r.ok) throw new Error('Save failed: ' + r.status);
+            return r.json();
+        }).then(function(saved) {
+            currentDiagramMeta = {
+                id: saved.id,
+                title: saved.title,
+                description: saved.description,
+                tags: saved.tags,
+                source: 'db',
+                version: saved.version
+            };
+            refreshDiagramDropdown(saved.id);
+            dom.saveOverlay.classList.remove('visible');
+        }).catch(function(err) {
+            alert(err.message);
+        });
+    };
+
+    // --- Download JSON Spec ---
+    dom.optDownloadSpec.onclick = function() {
+        dom.optionsDropdown.classList.remove('open');
+        var a = document.createElement('a');
+        a.href = '/json_spec.txt';
+        a.download = 'json_spec.txt';
+        a.click();
+    };
+
+    // --- Download JSON ---
+    dom.optDownload.onclick = function() {
+        dom.optionsDropdown.classList.remove('open');
+        if (currentDiagramMeta && currentDiagramMeta.id) {
+            fetch('/api/diagrams/' + currentDiagramMeta.id)
+                .then(function(r) { return r.json(); })
+                .then(function(diagram) {
+                    downloadJson(diagram, diagram.title || 'diagram');
+                }).catch(function() {
+                    downloadEditorJson();
+                });
+        } else {
+            downloadEditorJson();
+        }
+    };
+
+    function downloadEditorJson() {
+        var exportData;
+        try {
+            var cleanJson = stripJsonComments(dom.input.value);
+            cleanJson = normalizeMultilineStrings(cleanJson);
+            exportData = JSON.parse(cleanJson);
+        } catch (e) {
+            exportData = { error: 'Invalid JSON in editor' };
+        }
+        downloadJson(exportData, exportData.title || 'diagram');
+    }
+
+    function downloadJson(data, filename) {
+        var blob = new Blob([JSON.stringify(data, null, 4)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename.replace(/[^a-z0-9_-]/gi, '-').toLowerCase() + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
     }
 
     document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
