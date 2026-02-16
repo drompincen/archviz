@@ -124,6 +124,48 @@ Create a `.json` file in `src/main/resources/static/json/` following this struct
 | `status` | `"ready"` (green check) or `"wip"` (orange hourglass) |
 | `skipSequence` | `true` to hide from sequence diagram (e.g. databases) |
 
+## Persistence
+
+By default the app stores diagrams in memory (lost on restart). To use **Amazon DynamoDB** for persistent storage:
+
+### 1. Switch the store in `application.properties`
+
+```properties
+# Change from inMemory to dynamodb
+diagram.store=dynamodb
+```
+
+### 2. Configure AWS region and table name (optional)
+
+The defaults are `us-east-1` and `archviz-diagrams`. Override in `application.properties` if needed:
+
+```properties
+aws.region=us-east-1
+aws.dynamodb.table-name=archviz-diagrams
+```
+
+### 3. Provide AWS credentials
+
+Credentials are resolved via the standard AWS credential chain:
+
+- Environment variables: `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+- `~/.aws/credentials` profile file
+- IAM role (when running on EC2/ECS/Lambda)
+
+### 4. Create the DynamoDB table
+
+The table only requires `id` (String) as the partition key. All other attributes are stored automatically.
+
+```bash
+aws dynamodb create-table \
+  --table-name archviz-diagrams \
+  --attribute-definitions AttributeName=id,AttributeType=S \
+  --key-schema AttributeName=id,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST
+```
+
+That's it — start the app with `mvn spring-boot:run` and diagrams saved via the UI will persist in DynamoDB.
+
 ## Project Structure
 
 ```

@@ -5,7 +5,12 @@
       "Bash(command -v:*)",
       "Bash(python3:*)",
       "Bash(curl:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "WebSearch",
+      "Bash(export JAVA_HOME=/root/.jbang/cache/jdks/17:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:zdenek-papez.medium.com)",
+      "Bash(mvn clean test:*)"
     ]
   }
 }
