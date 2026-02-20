@@ -10,7 +10,18 @@
       "Bash(export JAVA_HOME=/root/.jbang/cache/jdks/17:*)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:zdenek-papez.medium.com)",
-      "Bash(mvn clean test:*)"
+      "Bash(mvn clean test:*)",
+      "Bash(pdftotext:*)",
+      "Bash(jbang:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(mvn package:*)",
+      "Bash(mvn help:effective-pom:*)",
+      "Bash(java:*)",
+      "Bash(mvn dependency:tree:*)",
+      "WebFetch(domain:central.sonatype.com)",
+      "Bash(mvn test:*)",
+      "Bash(git -C:*)"
     ]
   }
 }
