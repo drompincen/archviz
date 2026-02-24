@@ -46,7 +46,7 @@ class StoryModeIT {
         page.navigate("http://localhost:" + port +
                 "/collab-animation.html?collab=coffee-shop-transformation.json&story=true");
         page.waitForLoadState();
-        page.waitForTimeout(1500);
+        page.locator(".narr-slide.type-problem").waitFor();
     }
 
     @Test
@@ -69,28 +69,30 @@ class StoryModeIT {
 
         // Click Next to vision
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-vision").waitFor();
         assertThat(page.locator(".narr-slide.type-vision")).isVisible();
         assertThat(dots.nth(1)).hasClass(java.util.regex.Pattern.compile(".*active.*"));
 
         // Click Next to phase 0
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-phase").waitFor();
         assertThat(page.locator(".narr-slide.type-phase")).isVisible();
 
         // Click dot 0 to go back to problem
         dots.nth(0).click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-problem").waitFor();
         assertThat(page.locator(".narr-slide.type-problem")).isVisible();
     }
 
     @Test
     void benefitsSidebar_accumulatesPerPhase() {
         // Navigate to phase slide: Problem -> Vision -> Phase 0 -> Phase 1
-        for (int i = 0; i < 3; i++) {
-            page.locator(".narr-nav-btn[data-nav='1']").click();
-            page.waitForTimeout(300);
-        }
+        page.locator(".narr-nav-btn[data-nav='1']").click();
+        page.locator(".narr-slide.type-vision").waitFor();
+        page.locator(".narr-nav-btn[data-nav='1']").click();
+        page.locator(".narr-slide.type-phase").waitFor();
+        page.locator(".narr-nav-btn[data-nav='1']").click();
+        page.waitForFunction("document.querySelectorAll('.narr-slide.type-phase').length >= 1");
 
         // On Phase 1 (mobile), sidebar should show benefits
         Locator sidebar = page.locator(".narr-benefits-sidebar");
@@ -100,7 +102,7 @@ class StoryModeIT {
 
             // Navigate to Phase 2
             page.locator(".narr-nav-btn[data-nav='1']").click();
-            page.waitForTimeout(300);
+            page.waitForFunction("document.querySelectorAll('.narr-sb-benefit-card').length >= " + phase1Benefits);
 
             int phase2Benefits = page.locator(".narr-sb-benefit-card").count();
             assertTrue(phase2Benefits >= phase1Benefits,
@@ -113,9 +115,9 @@ class StoryModeIT {
     void kpiHud_updatesPerPhase() {
         // Navigate to first phase slide (index 2: Problem, Vision, Phase 0)
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-vision").waitFor();
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-phase").waitFor();
 
         Locator kpiHud = page.locator("#kpi-hud");
         assertThat(kpiHud).hasClass(java.util.regex.Pattern.compile(".*visible.*"));
@@ -127,9 +129,9 @@ class StoryModeIT {
 
         // Navigate to a later phase slide
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-phase").waitFor();
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-phase").waitFor();
 
         String valueAtPhase2 = page.locator(".kpi-hud-value").first().textContent();
         // Values should differ as idea card deltas accumulate
@@ -141,13 +143,13 @@ class StoryModeIT {
     void viewArchitecture_transitionsToCollab() {
         // Navigate to a phase slide
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-vision").waitFor();
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-phase").waitFor();
 
         // Click View Architecture
         page.locator(".narr-view-arch-btn").click();
-        page.waitForTimeout(500);
+        page.waitForFunction("!document.getElementById('narrative-view').classList.contains('visible')");
 
         // Canvas should be visible, narrative hidden
         assertFalse(page.locator("#preview-canvas").getAttribute("class").contains("hidden"),
@@ -164,17 +166,17 @@ class StoryModeIT {
     void backToStory_returnsToSameSlide() {
         // Navigate to phase slide (index 2)
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-vision").waitFor();
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-phase").waitFor();
 
         // View Architecture
         page.locator(".narr-view-arch-btn").click();
-        page.waitForTimeout(500);
+        page.waitForFunction("!document.getElementById('narrative-view').classList.contains('visible')");
 
         // Click back arrow
         page.locator("#narr-back-arrow").click();
-        page.waitForTimeout(500);
+        page.locator("#narrative-view.visible").waitFor();
 
         // Should be back on a phase slide (same one we left)
         assertThat(page.locator("#narrative-view")).hasClass(java.util.regex.Pattern.compile(".*visible.*"));
@@ -188,12 +190,12 @@ class StoryModeIT {
 
         // Press Right arrow to advance
         page.keyboard().press("ArrowRight");
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-vision").waitFor();
         assertThat(page.locator(".narr-slide.type-vision")).isVisible();
 
         // Press Left arrow to go back
         page.keyboard().press("ArrowLeft");
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-problem").waitFor();
         assertThat(page.locator(".narr-slide.type-problem")).isVisible();
     }
 
