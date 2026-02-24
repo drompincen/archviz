@@ -72,7 +72,7 @@ class CollabPageIT {
         // Open options dropdown and enable JSON editor first
         page.locator("#btn-options").click();
         page.locator("#chk-show-editor").dispatchEvent("click");
-        page.waitForTimeout(300);
+        page.locator("#left-sidebar").waitFor(new Locator.WaitForOptions().setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
 
         page.locator("#json-input").fill("{ invalid json !!!");
         page.locator("#btn-update").click();
@@ -97,8 +97,8 @@ class CollabPageIT {
         // Open options dropdown, then check the "JSON Editor" checkbox
         page.locator("#btn-options").click();
         page.locator("#chk-show-editor").dispatchEvent("click");
-        page.waitForTimeout(300);
         Locator sidebar = page.locator("#left-sidebar");
+        page.waitForFunction("!document.getElementById('left-sidebar').classList.contains('hidden')");
         assertFalse(sidebar.getAttribute("class").contains("hidden"),
                 "Sidebar should be visible after toggling editor on");
     }
@@ -123,8 +123,8 @@ class CollabPageIT {
         String secondValue = (String) selector.evaluate("el => el.options[1].value");
         selector.selectOption(secondValue);
 
-        // Wait for render to complete
-        page.waitForTimeout(1000);
+        // Wait for nodes to re-render
+        page.waitForFunction("document.querySelectorAll('#nodes-container .node').length >= 1");
 
         // Editor should have new content
         String editorContent = page.locator("#json-input").inputValue();
@@ -142,7 +142,7 @@ class CollabPageIT {
         Locator selector = page.locator("#json-selector");
         String secondValue = (String) selector.evaluate("el => el.options[1].value");
         selector.selectOption(secondValue);
-        page.waitForTimeout(500);
+        page.waitForFunction("window.location.href.includes('collab=')");
 
         String url = page.url();
         assertTrue(url.contains("collab="), "URL should contain ?collab= after selecting a diagram");
@@ -153,7 +153,7 @@ class CollabPageIT {
         page.navigate("http://localhost:" + port +
                 "/collab-animation.html?collab=coffee-shop-transformation.json&story=true");
         page.waitForLoadState();
-        page.waitForTimeout(1500);
+        page.locator("#narrative-view.visible").waitFor();
 
         assertThat(page.locator("#narrative-view")).hasClass(java.util.regex.Pattern.compile(".*visible.*"));
     }
@@ -163,21 +163,21 @@ class CollabPageIT {
         page.navigate("http://localhost:" + port +
                 "/collab-animation.html?collab=coffee-shop-transformation.json&story=true");
         page.waitForLoadState();
-        page.waitForTimeout(1500);
+        page.locator(".narr-slide.type-problem").waitFor();
 
         // Should start on first slide (problem)
         assertThat(page.locator(".narr-slide.type-problem")).isVisible();
 
         // Click Next
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-vision").waitFor();
 
         // Should now be on vision slide
         assertThat(page.locator(".narr-slide.type-vision")).isVisible();
 
         // Click Prev
         page.locator(".narr-nav-btn[data-nav='-1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-problem").waitFor();
 
         // Back to problem
         assertThat(page.locator(".narr-slide.type-problem")).isVisible();
@@ -188,17 +188,17 @@ class CollabPageIT {
         page.navigate("http://localhost:" + port +
                 "/collab-animation.html?collab=coffee-shop-transformation.json&story=true");
         page.waitForLoadState();
-        page.waitForTimeout(1500);
+        page.locator(".narr-slide.type-problem").waitFor();
 
         // Navigate to first phase slide (Problem -> Vision -> Phase 0)
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-vision").waitFor();
         page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.waitForTimeout(300);
+        page.locator(".narr-slide.type-phase").waitFor();
 
         // Click "View Architecture"
         page.locator(".narr-view-arch-btn").click();
-        page.waitForTimeout(500);
+        page.waitForFunction("!document.getElementById('narrative-view').classList.contains('visible')");
 
         // Narrative should be hidden, canvas visible
         assertFalse(page.locator("#narrative-view").getAttribute("class").contains("visible"),
