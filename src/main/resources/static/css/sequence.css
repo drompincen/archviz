@@ -1,0 +1,45 @@
+/* ── Sequence Diagram SVG styles ── */
+
+#sequence-view {
+    width: 100%; height: 100%;
+    position: absolute; top:0; left:0;
+    overflow: auto;
+    padding: 40px;
+    box-sizing: border-box;
+    opacity: 0; pointer-events: none; z-index: -1;
+    transition: opacity 0.3s;
+    background: var(--bg-color);
+}
+#sequence-view.visible { opacity: 1; pointer-events: auto; z-index: 10; }
+
+.seq-lifeline { stroke: #555; stroke-width: 1; stroke-dasharray: 5,5; }
+body.light-theme .seq-lifeline { stroke: #bbb; }
+.seq-head-rect { stroke-width: 2; rx: 6; }
+.seq-head-text { font-size: 12px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
+.seq-arrow { stroke: #d4d4d4; stroke-width: 2; marker-end: url(#arrowhead); }
+body.light-theme .seq-arrow { stroke: #555; }
+.seq-arrow-label { font-size: 11px; fill: #aaa; text-anchor: middle; }
+body.light-theme .seq-arrow-label { fill: #666; }
+.seq-status-bg { stroke: #2d2d2d; stroke-width: 1px; }
+.seq-status-text { font-size: 10px; font-weight: bold; fill: #fff; text-anchor: middle; dominant-baseline: middle; }
+.status-ready-svg { fill: #2ecc71; }
+.status-wip-svg { fill: #f39c12; }
+
+.seq-node.tag-legacy .seq-head-rect { fill: var(--tag-legacy-bg); stroke: var(--tag-legacy-border); }
+.seq-node.tag-legacy .seq-head-text { fill: var(--tag-legacy-text); }
+.seq-node.tag-new .seq-head-rect { fill: var(--tag-new-bg); stroke: var(--tag-new-border); }
+.seq-node.tag-new .seq-head-text { fill: var(--tag-new-text); }
+.seq-node.tag-core .seq-head-rect { fill: var(--tag-core-bg); stroke: var(--tag-core-border); }
+.seq-node.tag-core .seq-head-text { fill: var(--tag-core-text); }
+.seq-node.tag-agent .seq-head-rect { fill: var(--tag-agent-bg); stroke: var(--tag-agent-border); }
+.seq-node.tag-agent .seq-head-text { fill: var(--tag-agent-text); }
+.seq-node.tag-external .seq-head-rect { fill: var(--tag-external-bg); stroke: var(--tag-external-border); stroke-dasharray: 4,2; }
+.seq-node.tag-external .seq-head-text { fill: var(--tag-external-text); }
+.seq-node.tag-aws .seq-head-rect { fill: var(--tag-aws-bg); stroke: var(--tag-aws-border); }
+.seq-node.tag-aws .seq-head-text { fill: var(--tag-aws-text); }
+.seq-node.tag-internal .seq-head-rect { fill: var(--tag-internal-bg); stroke: var(--tag-internal-border); }
+.seq-node.tag-internal .seq-head-text { fill: var(--tag-internal-text); }
+.seq-node.tag-observability .seq-head-rect { fill: var(--tag-observability-bg); stroke: var(--tag-observability-border); }
+.seq-node.tag-observability .seq-head-text { fill: var(--tag-observability-text); }
+.seq-node.tag-data .seq-head-rect { fill: var(--tag-data-bg); stroke: var(--tag-data-border); }
+.seq-node.tag-data .seq-head-text { fill: var(--tag-data-text); }
