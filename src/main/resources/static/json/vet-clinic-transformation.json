@@ -1,0 +1,551 @@
+{
+    "title": "Paws & Claws Vet Clinic — Digital Transformation",
+    "notes": "Project: Paws & Claws Digital Transformation\nTeam: Clinic Operations + IT\nSponsor: Dr. Sarah Chen (Owner / Lead Vet)\n\nThis story walks stakeholders through the modernization\nof a traditional paper-based veterinary clinic into a\ndigital-first, telehealth-enabled, AI-assisted practice.\n\nPresentation order:\n  1. Problem — why paper charts and phone-only booking hurt\n  2. Vision — where we're headed (95% fill rate, $680K revenue)\n  3. Roadmap — four phases of delivery\n  4. Phase drill-down — architecture at each stage\n\nUse the Phase slider to reveal architecture layers.\nSwitch Flows to see different patient visit scenarios.",
+
+    "phases": [
+        { "id": "legacy",     "label": "0 — Legacy (Today)" },
+        { "id": "digital",    "label": "1 — Digital Records & Booking" },
+        { "id": "telehealth", "label": "2 — Telehealth" },
+        { "id": "ai-insights","label": "3 — AI Insights" }
+    ],
+
+    "zones": [
+        { "id": "clinic-building", "type": "on-prem", "label": "Paws & Claws Clinic", "x": 10, "y": 10, "w": 380, "h": 620 },
+        { "id": "cloud", "type": "cloud", "label": "AWS Cloud", "x": 410, "y": 10, "w": 740, "h": 620, "phase": "digital" },
+        { "id": "vpc", "type": "vpc", "label": "VPC — Production", "x": 430, "y": 50, "w": 700, "h": 560, "parent": "cloud", "phase": "digital" },
+        { "id": "public-subnet", "type": "subnet", "label": "Public Subnet", "x": 450, "y": 85, "w": 310, "h": 250, "parent": "vpc", "phase": "digital" },
+        { "id": "private-subnet", "type": "subnet", "label": "Private Subnet", "x": 450, "y": 350, "w": 310, "h": 240, "parent": "vpc", "phase": "digital" }
+    ],
+
+    "nodes": [
+        { "id": "pet-owner", "type": "human", "tag": "external", "label": "Pet\nOwner", "x": 30, "y": 50, "w": 120, "h": 75 },
+        { "id": "receptionist", "type": "user", "tag": "legacy", "label": "Receptionist\n(phone & desk)", "x": 30, "y": 170, "w": 140, "h": 80 },
+        { "id": "wall-calendar", "type": "storage", "tag": "legacy", "label": "Wall\nCalendar", "x": 30, "y": 300, "w": 120, "h": 65 },
+        { "id": "paper-charts", "type": "storage", "tag": "legacy", "label": "Paper\nCharts", "x": 30, "y": 400, "w": 120, "h": 65 },
+        { "id": "vet-doctor", "type": "user", "tag": "core", "label": "Vet\nDoctor", "x": 200, "y": 170, "w": 130, "h": 80 },
+        { "id": "exam-room", "type": "service", "tag": "core", "label": "Exam\nRoom", "x": 200, "y": 300, "w": 130, "h": 80 },
+        { "id": "pharmacy", "type": "service", "tag": "legacy", "label": "In-House\nPharmacy", "x": 200, "y": 430, "w": 130, "h": 75 },
+        { "id": "paper-rx", "type": "storage", "tag": "legacy", "label": "Handwritten\nRx Pad", "x": 30, "y": 500, "w": 130, "h": 65 },
+
+        { "id": "online-portal", "type": "gateway", "tag": "new", "label": "Online\nBooking Portal", "x": 470, "y": 100, "w": 140, "h": 85, "status": "ready", "phase": "digital" },
+        { "id": "emr-db", "type": "database", "tag": "data", "label": "EMR\nDatabase", "x": 780, "y": 100, "w": 130, "h": 80, "status": "ready", "phase": "digital" },
+        { "id": "reminder-fn", "type": "lambda", "tag": "aws", "label": "Reminder\nFunction", "x": 780, "y": 220, "w": 130, "h": 75, "status": "wip", "phase": "digital" },
+        { "id": "appt-svc", "type": "fargate", "tag": "core", "label": "Appointment\nService", "x": 470, "y": 370, "w": 140, "h": 85, "status": "ready", "phase": "digital" },
+        { "id": "appt-queue", "type": "queue", "tag": "aws", "label": "SQS\nAppt Queue", "x": 470, "y": 230, "w": 140, "h": 70, "phase": "digital" },
+        { "id": "sms-gateway", "type": "service", "tag": "external", "label": "Twilio\nSMS Gateway", "x": 630, "y": 100, "w": 120, "h": 80, "phase": "digital" },
+
+        { "id": "video-svc", "type": "service", "tag": "new", "label": "Video\nConsult Svc", "x": 630, "y": 220, "w": 130, "h": 80, "status": "ready", "phase": "telehealth" },
+        { "id": "photo-upload", "type": "lambda", "tag": "aws", "label": "Photo\nUpload Fn", "x": 630, "y": 370, "w": 130, "h": 75, "status": "wip", "phase": "telehealth" },
+        { "id": "rx-service", "type": "fargate", "tag": "new", "label": "e-Prescription\nService", "x": 470, "y": 490, "w": 140, "h": 80, "status": "ready", "phase": "telehealth" },
+        { "id": "e-pharmacy", "type": "service", "tag": "external", "label": "e-Pharmacy\nPartner", "x": 630, "y": 490, "w": 130, "h": 75, "phase": "telehealth" },
+
+        { "id": "symptom-ai", "type": "agent", "tag": "agent", "label": "Symptom\nAI Screener", "x": 940, "y": 100, "w": 140, "h": 85, "status": "wip", "phase": "ai-insights" },
+        { "id": "wellness-engine", "type": "agent", "tag": "agent", "label": "Wellness\nEngine", "x": 940, "y": 220, "w": 140, "h": 85, "status": "wip", "phase": "ai-insights" },
+        { "id": "analytics-dash", "type": "dashboard", "tag": "observability", "label": "Clinic\nDashboard", "x": 780, "y": 470, "w": 140, "h": 80, "phase": "ai-insights" },
+        { "id": "clinic-data-lake", "type": "database", "tag": "data", "label": "Clinic\nData Lake", "x": 940, "y": 370, "w": 140, "h": 80, "phase": "ai-insights" }
+    ],
+
+    "connections": [
+        { "from": "pet-owner", "to": "receptionist" },
+        { "from": "receptionist", "to": "wall-calendar" },
+        { "from": "receptionist", "to": "paper-charts" },
+        { "from": "receptionist", "to": "vet-doctor" },
+        { "from": "vet-doctor", "to": "exam-room" },
+        { "from": "vet-doctor", "to": "paper-rx" },
+        { "from": "paper-rx", "to": "pharmacy" },
+
+        { "from": "pet-owner", "to": "online-portal", "phase": "digital" },
+        { "from": "online-portal", "to": "appt-svc", "phase": "digital" },
+        { "from": "online-portal", "to": "sms-gateway", "phase": "digital" },
+        { "from": "appt-svc", "to": "appt-queue", "phase": "digital" },
+        { "from": "appt-svc", "to": "emr-db", "phase": "digital" },
+        { "from": "appt-queue", "to": "receptionist", "phase": "digital" },
+        { "from": "reminder-fn", "to": "sms-gateway", "phase": "digital" },
+        { "from": "emr-db", "to": "reminder-fn", "phase": "digital" },
+        { "from": "emr-db", "to": "vet-doctor", "phase": "digital" },
+
+        { "from": "pet-owner", "to": "video-svc", "phase": "telehealth" },
+        { "from": "pet-owner", "to": "photo-upload", "phase": "telehealth" },
+        { "from": "video-svc", "to": "vet-doctor", "phase": "telehealth" },
+        { "from": "photo-upload", "to": "emr-db", "phase": "telehealth" },
+        { "from": "vet-doctor", "to": "rx-service", "phase": "telehealth" },
+        { "from": "rx-service", "to": "e-pharmacy", "phase": "telehealth" },
+        { "from": "rx-service", "to": "emr-db", "phase": "telehealth" },
+
+        { "from": "emr-db", "to": "clinic-data-lake", "phase": "ai-insights" },
+        { "from": "clinic-data-lake", "to": "symptom-ai", "phase": "ai-insights" },
+        { "from": "clinic-data-lake", "to": "wellness-engine", "phase": "ai-insights" },
+        { "from": "clinic-data-lake", "to": "analytics-dash", "phase": "ai-insights" },
+        { "from": "wellness-engine", "to": "reminder-fn", "phase": "ai-insights" },
+        { "from": "symptom-ai", "to": "video-svc", "phase": "ai-insights" }
+    ],
+
+    "sequence": [
+        { "from": "pet-owner", "to": "receptionist", "text": "\"Hi, Bella hasn't been eating — can I get an appointment?\" (phone call)", "status": "ready" },
+        { "from": "receptionist", "to": "wall-calendar", "text": "Flip through wall calendar: \"Let me see what's open...\"", "status": "wip" },
+        { "from": "wall-calendar", "to": "receptionist", "text": "\"We have Thursday at 2pm — does that work?\"", "status": "wip", "popUp": { "type": "alert", "msg": "4.5 min phone hold time — 30% of callers hang up" } },
+        { "from": "receptionist", "to": "paper-charts", "text": "Dig through filing cabinet for Bella's chart", "status": "wip", "popUp": { "type": "issue", "msg": "Chart misfiled under 'B' instead of owner's last name" } },
+        { "from": "paper-charts", "to": "vet-doctor", "text": "Hand paper chart to Dr. Chen before appointment", "status": "wip" },
+        { "from": "vet-doctor", "to": "exam-room", "text": "Examine Bella — check vitals, palpate abdomen", "status": "ready" },
+        { "from": "vet-doctor", "to": "paper-rx", "text": "Scribble prescription on pad: \"Metoclopramide 5mg BID\"", "status": "wip" },
+        { "from": "paper-rx", "to": "pharmacy", "text": "Hand Rx slip to pharmacy tech", "status": "wip", "popUp": { "type": "alert", "msg": "No digital trail — dosage errors are a liability risk" } }
+    ],
+
+    "flows": [
+        {
+            "id": "legacy-phone",
+            "name": "Legacy — Phone Appointment",
+            "sequence": [
+                { "from": "pet-owner", "to": "receptionist", "text": "\"Hi, Bella hasn't been eating — can I get an appointment?\" (phone call)", "status": "ready" },
+                { "from": "receptionist", "to": "wall-calendar", "text": "Flip through wall calendar: \"Let me see what's open...\"", "status": "wip" },
+                { "from": "wall-calendar", "to": "receptionist", "text": "\"Thursday at 2pm is open\" — scribbles in pencil", "status": "wip", "popUp": { "type": "alert", "msg": "4.5 min phone hold time — 30% of callers hang up before booking" } },
+                { "from": "receptionist", "to": "paper-charts", "text": "Pull Bella's paper chart from filing cabinet", "status": "wip" },
+                { "from": "paper-charts", "to": "vet-doctor", "text": "Leave chart on Dr. Chen's desk for Thursday", "status": "wip" },
+                { "from": "vet-doctor", "to": "exam-room", "text": "Thursday: examine Bella — temp, weight, palpation", "status": "ready" },
+                { "from": "vet-doctor", "to": "paper-rx", "text": "Handwrite prescription for anti-nausea meds", "status": "wip", "popUp": { "type": "alert", "msg": "No digital record — illegible handwriting is a medication error risk" } }
+            ]
+        },
+        {
+            "id": "legacy-walkin",
+            "name": "Legacy — Walk-in Emergency",
+            "sequence": [
+                { "from": "pet-owner", "to": "receptionist", "text": "\"My dog Max cut his paw — it's bleeding!\" (walks in, panicked)", "status": "ready" },
+                { "from": "receptionist", "to": "paper-charts", "text": "Scramble to find Max's chart — is it under M? under owner name?", "status": "wip", "popUp": { "type": "issue", "msg": "Chart not found — misfiled 2 weeks ago, still missing" } },
+                { "from": "receptionist", "to": "vet-doctor", "text": "\"Dr. Patel, emergency walk-in — no chart, new intake form\"", "status": "wip" },
+                { "from": "vet-doctor", "to": "exam-room", "text": "Clean wound, assess depth, decide on stitches", "status": "ready" },
+                { "from": "vet-doctor", "to": "paper-rx", "text": "Write Rx: antibiotics + pain meds, handwritten", "status": "wip" },
+                { "from": "paper-rx", "to": "pharmacy", "text": "Rush Rx to pharmacy — \"can you read this?\"", "status": "wip", "popUp": { "type": "issue", "msg": "Pharmacy tech can't read dosage — calls vet to clarify, 10 min delay" } }
+            ]
+        },
+        {
+            "id": "online-booking",
+            "name": "Phase 1 — Online Booking",
+            "sequence": [
+                { "from": "pet-owner", "to": "online-portal", "text": "Book appointment: \"Bella — wellness check, Tuesday 10am\"", "status": "ready", "phase": "digital" },
+                { "from": "online-portal", "to": "appt-svc", "text": "Validate slot availability in real-time", "status": "ready", "phase": "digital" },
+                { "from": "appt-svc", "to": "emr-db", "text": "Create appointment record + pull Bella's digital chart", "status": "ready", "phase": "digital" },
+                { "from": "appt-svc", "to": "appt-queue", "text": "Queue confirmation for SMS delivery", "status": "ready", "phase": "digital" },
+                { "from": "appt-queue", "to": "receptionist", "text": "Appointment appears on receptionist dashboard", "status": "ready", "phase": "digital" },
+                { "from": "online-portal", "to": "sms-gateway", "text": "Send instant booking confirmation SMS", "status": "ready", "phase": "digital", "popUp": { "type": "amplify", "msg": "Booked in 30 seconds — no phone call needed" } },
+                { "from": "emr-db", "to": "reminder-fn", "text": "Trigger: 24-hour reminder scheduled", "status": "ready", "phase": "digital" },
+                { "from": "reminder-fn", "to": "sms-gateway", "text": "\"Reminder: Bella's appointment is tomorrow at 10am\"", "status": "ready", "phase": "digital", "popUp": { "type": "amplify", "msg": "Automated reminders cut no-shows by 60%" } },
+                { "from": "emr-db", "to": "vet-doctor", "text": "Dr. Chen reviews Bella's full digital history on tablet", "status": "ready", "phase": "digital" },
+                { "from": "vet-doctor", "to": "exam-room", "text": "Examine Bella with complete medical history on screen", "status": "ready", "phase": "digital" }
+            ]
+        },
+        {
+            "id": "telehealth-consult",
+            "name": "Phase 2 — Video Telehealth",
+            "sequence": [
+                { "from": "pet-owner", "to": "photo-upload", "text": "Upload photo: \"Bella's ear looks red and swollen\"", "status": "ready", "phase": "telehealth" },
+                { "from": "photo-upload", "to": "emr-db", "text": "Attach photo to Bella's EMR record", "status": "ready", "phase": "telehealth" },
+                { "from": "pet-owner", "to": "video-svc", "text": "Join video call from home — show Bella's ear on camera", "status": "ready", "phase": "telehealth" },
+                { "from": "video-svc", "to": "vet-doctor", "text": "Dr. Patel examines ear via HD video + uploaded photo", "status": "ready", "phase": "telehealth" },
+                { "from": "vet-doctor", "to": "rx-service", "text": "Diagnose ear infection — prescribe Otomax drops", "status": "ready", "phase": "telehealth", "popUp": { "type": "amplify", "msg": "Diagnosis in 8 minutes — no car ride, no waiting room stress for Bella" } },
+                { "from": "rx-service", "to": "emr-db", "text": "Log prescription in EMR with dosage + duration", "status": "ready", "phase": "telehealth" },
+                { "from": "rx-service", "to": "e-pharmacy", "text": "e-Prescribe to partner pharmacy for home delivery", "status": "ready", "phase": "telehealth", "popUp": { "type": "amplify", "msg": "Meds delivered to door — no second trip" } }
+            ]
+        },
+        {
+            "id": "ai-wellness",
+            "name": "Phase 3 — AI Wellness Check",
+            "sequence": [
+                { "from": "clinic-data-lake", "to": "wellness-engine", "text": "Scan all pet records: who's due for annual vaccines?", "status": "ready", "phase": "ai-insights" },
+                { "from": "wellness-engine", "to": "reminder-fn", "text": "Flag: Bella's rabies vaccine expires in 3 weeks", "status": "ready", "phase": "ai-insights" },
+                { "from": "reminder-fn", "to": "sms-gateway", "text": "\"Bella's rabies vaccine is due soon — book online!\"", "status": "ready", "phase": "ai-insights", "popUp": { "type": "amplify", "msg": "Proactive outreach — catches 40% of lapsed vaccine schedules" } },
+                { "from": "pet-owner", "to": "online-portal", "text": "Owner clicks link in SMS → books vaccine appointment", "status": "ready", "phase": "ai-insights" },
+                { "from": "clinic-data-lake", "to": "symptom-ai", "text": "Load breed + age + history for pre-screening", "status": "ready", "phase": "ai-insights" },
+                { "from": "symptom-ai", "to": "video-svc", "text": "AI summary: \"Golden Retriever, 7yr — watch for hip dysplasia signs\"", "status": "ready", "phase": "ai-insights" },
+                { "from": "clinic-data-lake", "to": "analytics-dash", "text": "Stream: 847 visits this month, 92% fill rate, $58K revenue", "status": "ready", "phase": "ai-insights", "popUp": { "type": "amplify", "msg": "Real-time visibility — clinic runs like a business, not a guessing game" } }
+            ]
+        }
+    ],
+
+    "story": {
+        "storyId": "paws-claws-digital-2026",
+        "version": 1,
+        "createdAt": "2026-01-15T09:00:00Z",
+        "updatedAt": "2026-02-23T15:00:00Z",
+        "createdBy": "dr.chen@pawsandclaws.com",
+
+        "problem": {
+            "headline": "Paper charts and phone-only booking are bleeding clients to the modern vet chain down the road",
+            "description": "Paws & Claws has 3 vets, 2 receptionists, and a loyal local clientele — but we're hemorrhaging patients to VetCorp, a modern chain with an app. Our receptionists spend 70% of their day on the phone. The wall calendar can't handle overbooking or cancellations gracefully. Paper charts get misfiled twice a month (a liability nightmare). Every visit — even a 2-minute \"is this rash normal?\" question — requires a full in-person appointment. We have zero data on client retention, no vaccine reminders, and no way to reach pet owners proactively. We're a great clinic running on 1990s infrastructure.",
+            "impactMetric": {
+                "kpiId": "appt_fill_rate",
+                "value": 65,
+                "unit": "%"
+            },
+            "evidence": [
+                { "label": "Appointment no-show audit (Jan 2026)", "url": "no-show-audit-jan2026.csv", "addedAt": "2026-01-20T10:00:00Z", "addedBy": "office-mgr@pawsandclaws.com" },
+                { "label": "Phone system hold-time report (Dec 2025)", "url": "phone-hold-time-dec2025.pdf", "addedAt": "2026-01-18T08:00:00Z", "addedBy": "receptionist@pawsandclaws.com" },
+                { "label": "Client exit survey — why they switched to VetCorp (n=85)", "url": "client-exit-survey-jan2026.pdf", "addedAt": "2026-01-25T14:00:00Z", "addedBy": "dr.chen@pawsandclaws.com" },
+                { "label": "Misfiled chart incident log (2025)", "url": "chart-incident-log-2025.xlsx", "addedAt": "2026-02-01T09:00:00Z", "addedBy": "office-mgr@pawsandclaws.com" }
+            ],
+            "scope": ["receptionist", "wall-calendar", "paper-charts", "paper-rx", "pharmacy"],
+            "risks": [
+                "Client attrition: 42% of churned clients cite 'couldn't get through on the phone' as top reason",
+                "Liability: misfiled charts mean incomplete vaccination records — one missed rabies booster = legal exposure",
+                "Revenue leakage: 35% unfilled appointment slots = ~$147K/year in lost revenue",
+                "Staff burnout: receptionists fielding 80+ calls/day with zero automation"
+            ]
+        },
+
+        "vision": {
+            "summary": "95% fill rate, 30% telehealth visits, AI-driven wellness — $680K+ annual revenue",
+            "description": "Transform Paws & Claws into a digitally-enabled veterinary practice where pet owners book online in seconds, receive automated reminders, and consult vets via video for simple issues. Digital EMR eliminates lost charts forever. AI pre-screening triages symptoms before appointments, and predictive wellness reminders keep pets on schedule for vaccines and checkups. The vet focuses on medicine, not paperwork. The receptionist becomes a client experience coordinator, not a phone operator.",
+            "kpiTargets": [
+                { "kpiId": "appt_fill_rate", "min": 90, "max": 96, "confidence": "high", "horizon": "12 months" },
+                { "kpiId": "phone_wait_min", "min": 0.5, "max": 1.5, "confidence": "high", "horizon": "6 months" },
+                { "kpiId": "records_lost", "min": 0, "max": 0, "confidence": "high", "horizon": "3 months" },
+                { "kpiId": "telehealth_pct", "min": 25, "max": 35, "confidence": "medium", "horizon": "12 months" },
+                { "kpiId": "annual_revenue", "min": 620000, "max": 720000, "confidence": "medium", "horizon": "12 months" },
+                { "kpiId": "client_retention", "min": 82, "max": 90, "confidence": "medium", "horizon": "12 months" }
+            ],
+            "acceptanceCriteria": [
+                "Appointment fill rate > 90% sustained for 30 consecutive days",
+                "Zero misfiled or lost charts for 90 consecutive days (digital EMR)",
+                "Average phone hold time < 1.5 minutes confirmed by phone system logs",
+                "25%+ of consultations delivered via telehealth for 30 consecutive days",
+                "Monthly revenue > $55K for 3 consecutive months"
+            ]
+        },
+
+        "kpis": [
+            {
+                "id": "appt_fill_rate",
+                "label": "Appointment Fill Rate",
+                "unit": "%",
+                "direction": "higher_is_better",
+                "baseline": 65,
+                "current": 65,
+                "format": "0"
+            },
+            {
+                "id": "phone_wait_min",
+                "label": "Phone Wait Time",
+                "unit": "min",
+                "direction": "lower_is_better",
+                "baseline": 4.5,
+                "current": 4.5,
+                "format": "0.1f"
+            },
+            {
+                "id": "records_lost",
+                "label": "Lost Records / Month",
+                "unit": "#",
+                "direction": "lower_is_better",
+                "baseline": 2,
+                "current": 2,
+                "format": "0"
+            },
+            {
+                "id": "telehealth_pct",
+                "label": "Telehealth Visit %",
+                "unit": "%",
+                "direction": "higher_is_better",
+                "baseline": 0,
+                "current": 0,
+                "format": "0"
+            },
+            {
+                "id": "annual_revenue",
+                "label": "Annual Revenue",
+                "unit": "$",
+                "direction": "higher_is_better",
+                "baseline": 420000,
+                "current": 420000,
+                "format": "$0,0"
+            },
+            {
+                "id": "client_retention",
+                "label": "Client Retention Rate",
+                "unit": "%",
+                "direction": "higher_is_better",
+                "baseline": 58,
+                "current": 58,
+                "format": "0"
+            }
+        ],
+
+        "phases": [
+            {
+                "phaseRef": "legacy",
+                "label": "Legacy Baseline (Today)",
+                "owner": "dr.chen@pawsandclaws.com",
+                "timebox": "Current State",
+                "status": "completed",
+                "description": "Paper charts, wall calendar, phone-only booking, handwritten prescriptions. 65% fill rate, 4.5-minute average phone hold, 2 lost charts per month. This is where we are — a good clinic with terrible infrastructure.",
+                "order": 0
+            },
+            {
+                "phaseRef": "digital",
+                "label": "Online Booking + Digital EMR",
+                "owner": "it-lead@pawsandclaws.com",
+                "timebox": "2026 Q2 (10 weeks)",
+                "status": "active",
+                "description": "Launch online booking portal so pet owners can self-schedule 24/7. Digitize all patient records into cloud EMR — no more paper charts. Automated SMS reminders 24 hours before appointments. Receptionist shifts from phone operator to client coordinator. Digital prescription records eliminate handwriting errors.",
+                "order": 1
+            },
+            {
+                "phaseRef": "telehealth",
+                "label": "Telehealth & e-Prescriptions",
+                "owner": "dr.patel@pawsandclaws.com",
+                "timebox": "2026 Q3 (8 weeks)",
+                "status": "planned",
+                "description": "Add video consultation capability for simple visits: rash checks, post-surgery follow-ups, behavioral questions. Pet owners upload photos before the call. Vets e-prescribe directly to a partner pharmacy for home delivery. Reduces unnecessary in-person visits by 30% and frees exam room capacity for cases that truly need hands-on care.",
+                "order": 2
+            },
+            {
+                "phaseRef": "ai-insights",
+                "label": "AI Insights & Predictive Wellness",
+                "owner": "it-lead@pawsandclaws.com",
+                "timebox": "2026 Q4 (8 weeks)",
+                "status": "planned",
+                "description": "AI symptom pre-screener helps pet owners describe symptoms before a consult, giving the vet a head start. Predictive wellness engine scans all pet records and proactively reminds owners about upcoming vaccines, dental cleanings, and breed-specific health checks. Analytics dashboard gives clinic leadership real-time visibility into fill rates, revenue, and patient volume trends.",
+                "order": 3
+            }
+        ],
+
+        "ideaCards": [
+            {
+                "id": "idea-online-portal",
+                "title": "Online Booking Portal",
+                "owner": "it-lead@pawsandclaws.com",
+                "hypothesis": "If pet owners can book appointments online 24/7, we eliminate the phone bottleneck entirely for scheduling. Based on competitor data, 60% of bookings will shift online within 3 months, cutting phone volume by half and reducing average hold time from 4.5 min to under 1.5 min.",
+                "linkedNodes": ["online-portal", "appt-svc", "appt-queue"],
+                "linkedFlows": ["online-booking"],
+                "phases": ["digital"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "appt_fill_rate", "delta": 15, "confidence": "high" },
+                    { "kpiId": "phone_wait_min", "delta": -2.5, "confidence": "high" },
+                    { "kpiId": "annual_revenue", "delta": 63000, "confidence": "medium" }
+                ],
+                "comments": [
+                    { "author": "dr.chen@pawsandclaws.com", "text": "VetCorp has had online booking for 2 years. This is table stakes — we need it yesterday.", "timestamp": "2026-02-05T10:00:00Z" },
+                    { "author": "receptionist@pawsandclaws.com", "text": "Please! I can't keep up with 80+ calls a day. My voice is gone by 3pm.", "timestamp": "2026-02-06T09:00:00Z" }
+                ],
+                "evidenceLinks": [
+                    { "label": "VetCorp online booking adoption data (industry report)", "url": "vetcorp-booking-benchmark-2025.pdf", "addedAt": "2026-02-03T11:00:00Z", "addedBy": "dr.chen@pawsandclaws.com" }
+                ]
+            },
+            {
+                "id": "idea-digital-emr",
+                "title": "Digital Electronic Medical Records",
+                "owner": "it-lead@pawsandclaws.com",
+                "hypothesis": "Migrating from paper charts to cloud EMR eliminates misfiling (2 incidents/month), gives vets instant access to complete patient history during exams, and creates the data foundation for all future digital features (telehealth, AI, analytics).",
+                "linkedNodes": ["emr-db", "vet-doctor"],
+                "linkedFlows": ["online-booking"],
+                "phases": ["digital"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "records_lost", "delta": -2, "confidence": "high" },
+                    { "kpiId": "client_retention", "delta": 8, "confidence": "medium" },
+                    { "kpiId": "annual_revenue", "delta": 42000, "confidence": "medium" }
+                ],
+                "comments": [
+                    { "author": "dr.patel@pawsandclaws.com", "text": "Last week I couldn't find a cat's vaccine history before a surgery. That's dangerous.", "timestamp": "2026-02-07T14:00:00Z" }
+                ],
+                "evidenceLinks": [
+                    { "label": "AVMA study: EMR adoption reduces errors by 78%", "url": "avma-emr-error-reduction-study.pdf", "addedAt": "2026-02-04T10:00:00Z", "addedBy": "it-lead@pawsandclaws.com" }
+                ]
+            },
+            {
+                "id": "idea-auto-reminders",
+                "title": "Automated Appointment Reminders",
+                "owner": "it-lead@pawsandclaws.com",
+                "hypothesis": "Sending automated SMS/email reminders 24 hours before appointments will reduce no-shows from 35% to under 12%, based on human healthcare data showing 60-70% no-show reduction with reminders.",
+                "linkedNodes": ["reminder-fn", "sms-gateway"],
+                "linkedFlows": ["online-booking"],
+                "phases": ["digital"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "appt_fill_rate", "delta": 12, "confidence": "high" },
+                    { "kpiId": "annual_revenue", "delta": 50400, "confidence": "high" }
+                ],
+                "comments": [],
+                "evidenceLinks": []
+            },
+            {
+                "id": "idea-video-telehealth",
+                "title": "Video Telehealth Consultations",
+                "owner": "dr.patel@pawsandclaws.com",
+                "hypothesis": "30% of our visits are simple consults (rash checks, post-op follow-ups, behavioral questions) that don't require hands-on examination. Video telehealth handles these remotely, freeing exam room capacity for surgeries and emergencies, and reducing pet owner travel stress.",
+                "linkedNodes": ["video-svc", "photo-upload", "rx-service"],
+                "linkedFlows": ["telehealth-consult"],
+                "phases": ["telehealth"],
+                "status": "proposed",
+                "confidence": "medium",
+                "expectedKpiImpacts": [
+                    { "kpiId": "telehealth_pct", "delta": 30, "confidence": "medium" },
+                    { "kpiId": "annual_revenue", "delta": 84000, "confidence": "medium" },
+                    { "kpiId": "client_retention", "delta": 12, "confidence": "medium" }
+                ],
+                "comments": [
+                    { "author": "dr.chen@pawsandclaws.com", "text": "I spend 20 min per follow-up visit that could be a 5-min video call. Let's free up that time for surgeries.", "timestamp": "2026-02-10T14:00:00Z" }
+                ],
+                "evidenceLinks": [
+                    { "label": "Veterinary telehealth adoption trends 2025", "url": "vet-telehealth-trends-2025.pdf", "addedAt": "2026-02-08T10:00:00Z", "addedBy": "dr.patel@pawsandclaws.com" }
+                ]
+            },
+            {
+                "id": "idea-symptom-screener",
+                "title": "AI Symptom Pre-Screener",
+                "owner": "it-lead@pawsandclaws.com",
+                "hypothesis": "An AI-powered symptom questionnaire before telehealth calls gives the vet a structured summary (species, breed, age, symptoms, duration, severity). This cuts average consult time by 40% and helps triage urgent cases vs. routine ones.",
+                "linkedNodes": ["symptom-ai", "clinic-data-lake"],
+                "linkedFlows": ["ai-wellness"],
+                "phases": ["ai-insights"],
+                "status": "proposed",
+                "confidence": "low",
+                "expectedKpiImpacts": [
+                    { "kpiId": "telehealth_pct", "delta": 5, "confidence": "low" },
+                    { "kpiId": "annual_revenue", "delta": 25000, "confidence": "low" }
+                ],
+                "comments": [
+                    { "author": "dr.patel@pawsandclaws.com", "text": "Start simple: decision-tree questionnaire, not a full AI model. We can add ML later once we have the data.", "timestamp": "2026-02-15T11:00:00Z" }
+                ],
+                "evidenceLinks": []
+            },
+            {
+                "id": "idea-wellness-predictions",
+                "title": "Predictive Wellness Reminders",
+                "owner": "it-lead@pawsandclaws.com",
+                "hypothesis": "An engine that scans pet records and proactively sends vaccine/dental/checkup reminders based on breed, age, and last visit date will recover 40% of lapsed patients. Currently we have zero proactive outreach — clients forget, and we lose them.",
+                "linkedNodes": ["wellness-engine", "analytics-dash"],
+                "linkedFlows": ["ai-wellness"],
+                "phases": ["ai-insights"],
+                "status": "proposed",
+                "confidence": "medium",
+                "expectedKpiImpacts": [
+                    { "kpiId": "client_retention", "delta": 15, "confidence": "medium" },
+                    { "kpiId": "appt_fill_rate", "delta": 5, "confidence": "medium" },
+                    { "kpiId": "annual_revenue", "delta": 67200, "confidence": "medium" }
+                ],
+                "comments": [
+                    { "author": "dr.chen@pawsandclaws.com", "text": "We have 1,200 registered pets. If even 20% come back for a lapsed vaccine, that's 240 appointments we're not getting today.", "timestamp": "2026-02-16T09:00:00Z" }
+                ],
+                "evidenceLinks": []
+            }
+        ],
+
+        "benefits": [
+            {
+                "id": "benefit-fill-rate",
+                "phaseId": "digital",
+                "title": "Appointment fill rate jumps from 65% to 85%+ with online booking + reminders",
+                "kpiId": "appt_fill_rate",
+                "baseline": 65,
+                "targetRange": { "min": 82, "max": 90 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["online-portal", "appt-svc", "reminder-fn"],
+                "boundFlows": ["online-booking"]
+            },
+            {
+                "id": "benefit-zero-lost-charts",
+                "phaseId": "digital",
+                "title": "Zero lost or misfiled patient records — digital EMR eliminates paper risk",
+                "kpiId": "records_lost",
+                "baseline": 2,
+                "targetRange": { "min": 0, "max": 0 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["emr-db", "appt-svc"],
+                "boundFlows": ["online-booking"]
+            },
+            {
+                "id": "benefit-phone-wait",
+                "phaseId": "digital",
+                "title": "Phone wait time drops from 4.5 min to under 1.5 min",
+                "kpiId": "phone_wait_min",
+                "baseline": 4.5,
+                "targetRange": { "min": 0.5, "max": 1.5 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["online-portal", "sms-gateway"],
+                "boundFlows": ["online-booking"]
+            },
+            {
+                "id": "benefit-telehealth-adoption",
+                "phaseId": "telehealth",
+                "title": "30% of visits handled via telehealth — frees exam rooms for complex cases",
+                "kpiId": "telehealth_pct",
+                "baseline": 0,
+                "targetRange": { "min": 25, "max": 35 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["video-svc", "photo-upload", "rx-service"],
+                "boundFlows": ["telehealth-consult"]
+            },
+            {
+                "id": "benefit-client-retention",
+                "phaseId": "ai-insights",
+                "title": "Client retention rate rises from 58% to 85%+ with proactive wellness outreach",
+                "kpiId": "client_retention",
+                "baseline": 58,
+                "targetRange": { "min": 82, "max": 90 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["wellness-engine", "reminder-fn", "clinic-data-lake"],
+                "boundFlows": ["ai-wellness"]
+            },
+            {
+                "id": "benefit-revenue-target",
+                "phaseId": "ai-insights",
+                "title": "Annual revenue reaches $680K+ (62% increase from baseline)",
+                "kpiId": "annual_revenue",
+                "baseline": 420000,
+                "targetRange": { "min": 620000, "max": 720000 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["analytics-dash", "wellness-engine", "online-portal", "video-svc"],
+                "boundFlows": ["online-booking", "telehealth-consult", "ai-wellness"]
+            }
+        ],
+
+        "bindings": [
+            { "ideaId": "idea-online-portal", "nodeId": "online-portal", "benefitId": "benefit-fill-rate" },
+            { "ideaId": "idea-online-portal", "nodeId": "appt-svc", "benefitId": "benefit-fill-rate" },
+            { "ideaId": "idea-online-portal", "nodeId": "online-portal", "benefitId": "benefit-phone-wait" },
+            { "ideaId": "idea-online-portal", "nodeId": "online-portal", "benefitId": "benefit-revenue-target" },
+            { "ideaId": "idea-digital-emr", "nodeId": "emr-db", "benefitId": "benefit-zero-lost-charts" },
+            { "ideaId": "idea-digital-emr", "nodeId": "emr-db", "benefitId": "benefit-revenue-target" },
+            { "ideaId": "idea-auto-reminders", "nodeId": "reminder-fn", "benefitId": "benefit-fill-rate" },
+            { "ideaId": "idea-auto-reminders", "nodeId": "sms-gateway", "benefitId": "benefit-phone-wait" },
+            { "ideaId": "idea-video-telehealth", "nodeId": "video-svc", "benefitId": "benefit-telehealth-adoption" },
+            { "ideaId": "idea-video-telehealth", "nodeId": "rx-service", "benefitId": "benefit-telehealth-adoption" },
+            { "ideaId": "idea-video-telehealth", "nodeId": "video-svc", "benefitId": "benefit-revenue-target" },
+            { "ideaId": "idea-symptom-screener", "nodeId": "symptom-ai", "benefitId": "benefit-revenue-target" },
+            { "ideaId": "idea-wellness-predictions", "nodeId": "wellness-engine", "benefitId": "benefit-client-retention" },
+            { "ideaId": "idea-wellness-predictions", "nodeId": "analytics-dash", "benefitId": "benefit-revenue-target" }
+        ],
+
+        "auditLog": [
+            { "timestamp": "2026-01-15T09:00:00Z", "actor": "dr.chen@pawsandclaws.com", "action": "story.created", "targetId": "paws-claws-digital-2026", "from": null, "to": null, "evidenceUrl": null, "note": "Initiated digital transformation after losing 12 clients to VetCorp in December alone" },
+            { "timestamp": "2026-02-05T10:30:00Z", "actor": "dr.chen@pawsandclaws.com", "action": "idea.status_change", "targetId": "idea-online-portal", "from": "proposed", "to": "accepted", "evidenceUrl": "vetcorp-booking-benchmark-2025.pdf", "note": "Approved unanimously — receptionists practically begged for this" },
+            { "timestamp": "2026-02-05T10:45:00Z", "actor": "it-lead@pawsandclaws.com", "action": "idea.status_change", "targetId": "idea-digital-emr", "from": "proposed", "to": "accepted", "evidenceUrl": "avma-emr-error-reduction-study.pdf", "note": "Bundled with online portal — EMR is the foundation for everything" },
+            { "timestamp": "2026-02-05T11:00:00Z", "actor": "it-lead@pawsandclaws.com", "action": "idea.status_change", "targetId": "idea-auto-reminders", "from": "proposed", "to": "accepted", "evidenceUrl": null, "note": "Low-hanging fruit — Twilio integration is 2 days of work" },
+            { "timestamp": "2026-02-12T14:00:00Z", "actor": "dr.patel@pawsandclaws.com", "action": "idea.created", "targetId": "idea-video-telehealth", "from": null, "to": "proposed", "evidenceUrl": "vet-telehealth-trends-2025.pdf", "note": "Proposed after attending AVMA telehealth webinar — huge demand from pet owners who work from home" }
+        ],
+
+        "uiHints": {
+            "initialView": "narrative",
+            "initialPhase": "legacy",
+            "autoTransitionToCollab": true,
+            "narrativeLayout": "vertical",
+            "ideaOverlayDefault": false,
+            "benefitLanesDefault": false
+        }
+    }
+}

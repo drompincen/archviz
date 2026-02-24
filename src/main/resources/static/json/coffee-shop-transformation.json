@@ -1,0 +1,543 @@
+{
+    "title": "Bean & Byte Coffee — Digital Transformation",
+    "notes": "Project: Bean & Byte Digital Transformation\nTeam: Digital Strategy + IT\nSponsor: CEO / COO\n\nThis story walks stakeholders through the modernization\nof a traditional cash-register coffee shop into a\ndigital-first, mobile-ordering, credits-based business.\n\nPresentation order:\n  1. Problem — why the current system hurts\n  2. Vision — where we're headed (3x revenue)\n  3. Roadmap — four phases of delivery\n  4. Phase drill-down — architecture at each stage\n\nUse the Phase slider to reveal architecture layers.\nSwitch Flows to see different ordering scenarios.",
+
+    "phases": [
+        { "id": "legacy",   "label": "0 — Legacy (Today)" },
+        { "id": "mobile",   "label": "1 — Mobile Ordering" },
+        { "id": "credits",  "label": "2 — Credits & Loyalty" },
+        { "id": "analytics","label": "3 — Analytics & AI" }
+    ],
+
+    "zones": [
+        { "id": "storefront", "type": "on-prem", "label": "Physical Store", "x": 10, "y": 10, "w": 340, "h": 620 },
+        { "id": "cloud", "type": "cloud", "label": "AWS Cloud", "x": 370, "y": 10, "w": 780, "h": 620, "phase": "mobile" },
+        { "id": "vpc", "type": "vpc", "label": "VPC — Production", "x": 390, "y": 50, "w": 740, "h": 560, "parent": "cloud", "phase": "mobile" },
+        { "id": "public-subnet", "type": "subnet", "label": "Public Subnet", "x": 410, "y": 85, "w": 290, "h": 250, "parent": "vpc", "phase": "mobile" },
+        { "id": "private-subnet", "type": "subnet", "label": "Private Subnet", "x": 410, "y": 350, "w": 290, "h": 240, "parent": "vpc", "phase": "mobile" },
+        { "id": "data-subnet", "type": "subnet", "label": "Data Layer", "x": 720, "y": 85, "w": 390, "h": 505, "parent": "vpc", "phase": "mobile" }
+    ],
+
+    "nodes": [
+        { "id": "walk-in", "type": "human", "tag": "external", "label": "Walk-in\nCustomer", "x": 30, "y": 80, "w": 120, "h": 75 },
+        { "id": "cashier", "type": "user", "tag": "legacy", "label": "Cashier +\nOld Register", "x": 170, "y": 80, "w": 130, "h": 80 },
+        { "id": "card-terminal", "type": "service", "tag": "legacy", "label": "Card\nTerminal", "x": 170, "y": 200, "w": 130, "h": 70 },
+        { "id": "barista", "type": "user", "tag": "core", "label": "Barista\n(paper ticket)", "x": 80, "y": 320, "w": 130, "h": 80 },
+        { "id": "cash-drawer", "type": "storage", "tag": "legacy", "label": "Cash\nDrawer", "x": 30, "y": 200, "w": 110, "h": 65 },
+        { "id": "paper-log", "type": "storage", "tag": "legacy", "label": "Paper\nSales Log", "x": 30, "y": 460, "w": 120, "h": 65 },
+
+        { "id": "mobile-customer", "type": "human", "tag": "external", "label": "Mobile\nCustomer", "x": 30, "y": 540, "w": 120, "h": 70, "phase": "mobile" },
+        { "id": "pos-tablet", "type": "service", "tag": "new", "label": "POS\nTablet", "x": 170, "y": 320, "w": 130, "h": 75, "status": "ready", "phase": "mobile" },
+
+        { "id": "api-gw", "type": "gateway", "tag": "aws", "label": "API\nGateway", "x": 430, "y": 100, "w": 130, "h": 85, "status": "ready", "phase": "mobile" },
+        { "id": "order-svc", "type": "fargate", "tag": "core", "label": "Order\nService", "x": 430, "y": 230, "w": 130, "h": 85, "status": "ready", "phase": "mobile" },
+        { "id": "payment-gw", "type": "service", "tag": "external", "label": "Stripe\nPayment GW", "x": 570, "y": 100, "w": 120, "h": 80, "phase": "mobile" },
+        { "id": "order-queue", "type": "queue", "tag": "aws", "label": "SQS\nOrder Queue", "x": 430, "y": 370, "w": 130, "h": 70, "phase": "mobile" },
+        { "id": "notify-fn", "type": "lambda", "tag": "aws", "label": "Push\nNotify", "x": 430, "y": 470, "w": 130, "h": 75, "status": "wip", "phase": "mobile" },
+        { "id": "order-db", "type": "database", "tag": "data", "label": "Orders\nDB", "x": 740, "y": 100, "w": 130, "h": 80, "status": "ready", "phase": "mobile" },
+        { "id": "menu-cache", "type": "cache", "tag": "data", "label": "Menu\nCache", "x": 740, "y": 220, "w": 130, "h": 70, "phase": "mobile" },
+
+        { "id": "wallet-svc", "type": "fargate", "tag": "new", "label": "Wallet &\nCredits Svc", "x": 740, "y": 320, "w": 140, "h": 85, "status": "ready", "phase": "credits" },
+        { "id": "loyalty-engine", "type": "agent", "tag": "agent", "label": "Loyalty\nEngine", "x": 900, "y": 320, "w": 130, "h": 85, "status": "wip", "phase": "credits" },
+        { "id": "customer-db", "type": "database", "tag": "data", "label": "Customer\nProfiles DB", "x": 900, "y": 100, "w": 130, "h": 80, "phase": "credits" },
+
+        { "id": "analytics-dash", "type": "dashboard", "tag": "observability", "label": "Revenue\nDashboard", "x": 740, "y": 470, "w": 140, "h": 80, "phase": "analytics" },
+        { "id": "forecast-agent", "type": "agent", "tag": "agent", "label": "Demand\nForecaster", "x": 900, "y": 470, "w": 130, "h": 80, "status": "wip", "phase": "analytics" },
+        { "id": "inventory-db", "type": "database", "tag": "data", "label": "Inventory\nDB", "x": 900, "y": 220, "w": 130, "h": 70, "phase": "analytics" }
+    ],
+
+    "connections": [
+        { "from": "walk-in", "to": "cashier" },
+        { "from": "cashier", "to": "card-terminal" },
+        { "from": "cashier", "to": "cash-drawer" },
+        { "from": "cashier", "to": "barista" },
+        { "from": "barista", "to": "paper-log" },
+
+        { "from": "mobile-customer", "to": "api-gw", "phase": "mobile" },
+        { "from": "walk-in", "to": "pos-tablet", "phase": "mobile" },
+        { "from": "pos-tablet", "to": "api-gw", "phase": "mobile" },
+        { "from": "api-gw", "to": "order-svc", "phase": "mobile" },
+        { "from": "api-gw", "to": "payment-gw", "phase": "mobile" },
+        { "from": "order-svc", "to": "order-queue", "phase": "mobile" },
+        { "from": "order-svc", "to": "order-db", "phase": "mobile" },
+        { "from": "order-svc", "to": "menu-cache", "phase": "mobile" },
+        { "from": "order-queue", "to": "pos-tablet", "phase": "mobile" },
+        { "from": "order-queue", "to": "notify-fn", "phase": "mobile" },
+        { "from": "payment-gw", "to": "order-svc", "phase": "mobile" },
+
+        { "from": "order-svc", "to": "wallet-svc", "phase": "credits" },
+        { "from": "wallet-svc", "to": "customer-db", "phase": "credits" },
+        { "from": "wallet-svc", "to": "loyalty-engine", "phase": "credits" },
+        { "from": "loyalty-engine", "to": "customer-db", "phase": "credits" },
+        { "from": "loyalty-engine", "to": "notify-fn", "phase": "credits" },
+
+        { "from": "order-db", "to": "analytics-dash", "phase": "analytics" },
+        { "from": "customer-db", "to": "analytics-dash", "phase": "analytics" },
+        { "from": "analytics-dash", "to": "forecast-agent", "phase": "analytics" },
+        { "from": "forecast-agent", "to": "inventory-db", "phase": "analytics" },
+        { "from": "inventory-db", "to": "order-svc", "phase": "analytics" }
+    ],
+
+    "sequence": [
+        { "from": "walk-in", "to": "cashier", "text": "\"Large latte, please\" (verbal order)", "status": "ready" },
+        { "from": "cashier", "to": "cash-drawer", "text": "Take $5 cash, fumble for change", "status": "wip" },
+        { "from": "cashier", "to": "barista", "text": "Scribble on paper ticket: \"LG LATTE\"", "status": "wip" },
+        { "from": "barista", "to": "walk-in", "text": "\"Large latte!\" (shouts name)", "status": "ready" },
+        { "from": "barista", "to": "paper-log", "text": "Tally mark on daily sheet", "status": "wip", "popUp": { "type": "alert", "msg": "No digital record — revenue leakage risk" } }
+    ],
+
+    "flows": [
+        {
+            "id": "legacy-cash",
+            "name": "Legacy — Cash Order (Today)",
+            "sequence": [
+                { "from": "walk-in", "to": "cashier", "text": "\"Large latte, please\" (verbal order)", "status": "ready" },
+                { "from": "cashier", "to": "cash-drawer", "text": "Take $5 cash, fumble for change", "status": "wip" },
+                { "from": "cashier", "to": "barista", "text": "Scribble on paper ticket: \"LG LATTE\"", "status": "wip" },
+                { "from": "barista", "to": "walk-in", "text": "\"Large latte!\" (shouts name)", "status": "ready" },
+                { "from": "barista", "to": "paper-log", "text": "Tally mark on daily sheet", "status": "wip", "popUp": { "type": "alert", "msg": "No digital record — revenue leakage risk" } }
+            ]
+        },
+        {
+            "id": "legacy-card",
+            "name": "Legacy — Card Swipe (Slow)",
+            "sequence": [
+                { "from": "walk-in", "to": "cashier", "text": "\"Medium mocha\" — wants to pay by card", "status": "ready" },
+                { "from": "cashier", "to": "card-terminal", "text": "Swipe card on old terminal", "status": "wip" },
+                { "from": "card-terminal", "to": "cashier", "text": "Processing... 12 seconds", "status": "wip", "popUp": { "type": "issue", "msg": "Terminal timeout — customer line growing" } },
+                { "from": "card-terminal", "to": "cashier", "text": "Approved — print paper receipt", "status": "ready" },
+                { "from": "cashier", "to": "barista", "text": "Write ticket: \"MD MOCHA\"", "status": "wip" },
+                { "from": "barista", "to": "walk-in", "text": "\"Medium mocha!\"", "status": "ready" },
+                { "from": "barista", "to": "paper-log", "text": "Tally mark + staple receipt", "status": "wip" }
+            ]
+        },
+        {
+            "id": "mobile-order",
+            "name": "Phase 1 — Mobile Order Ahead",
+            "sequence": [
+                { "from": "mobile-customer", "to": "api-gw", "text": "POST /orders {latte, oat milk, large}", "status": "ready", "phase": "mobile" },
+                { "from": "api-gw", "to": "order-svc", "text": "Validate order against menu cache", "status": "ready", "phase": "mobile" },
+                { "from": "order-svc", "to": "menu-cache", "text": "Check item availability", "status": "ready", "phase": "mobile" },
+                { "from": "menu-cache", "to": "order-svc", "text": "Available — $5.50", "status": "ready", "phase": "mobile" },
+                { "from": "api-gw", "to": "payment-gw", "text": "Charge $5.50 via Apple Pay", "status": "ready", "phase": "mobile" },
+                { "from": "payment-gw", "to": "order-svc", "text": "Payment confirmed in 0.8s", "status": "ready", "phase": "mobile", "popUp": { "type": "amplify", "msg": "Payment instant — no line wait" } },
+                { "from": "order-svc", "to": "order-db", "text": "INSERT order #4071", "status": "ready", "phase": "mobile" },
+                { "from": "order-svc", "to": "order-queue", "text": "Enqueue for barista station", "status": "ready", "phase": "mobile" },
+                { "from": "order-queue", "to": "pos-tablet", "text": "Order appears on barista screen", "status": "ready", "phase": "mobile" },
+                { "from": "pos-tablet", "to": "barista", "text": "\"Oat Latte LG — Mobile #4071\"", "status": "ready", "phase": "mobile" },
+                { "from": "order-queue", "to": "notify-fn", "text": "Trigger push notification", "status": "ready", "phase": "mobile" },
+                { "from": "notify-fn", "to": "mobile-customer", "text": "\"Your latte is being made!\"", "status": "ready", "phase": "mobile", "popUp": { "type": "amplify", "msg": "Customer notified — walks in, grabs, leaves" } }
+            ]
+        },
+        {
+            "id": "credits-reload",
+            "name": "Phase 2 — Pay with Credits",
+            "sequence": [
+                { "from": "mobile-customer", "to": "api-gw", "text": "POST /orders {cappuccino} + pay with credits", "status": "ready", "phase": "mobile" },
+                { "from": "api-gw", "to": "order-svc", "text": "Route to order service", "status": "ready", "phase": "mobile" },
+                { "from": "order-svc", "to": "wallet-svc", "text": "Debit 55 credits ($5.50)", "status": "ready", "phase": "credits" },
+                { "from": "wallet-svc", "to": "customer-db", "text": "UPDATE balance = balance - 55", "status": "ready", "phase": "credits" },
+                { "from": "wallet-svc", "to": "loyalty-engine", "text": "Log purchase: +10 loyalty pts", "status": "ready", "phase": "credits" },
+                { "from": "loyalty-engine", "to": "customer-db", "text": "UPDATE loyalty_points += 10", "status": "ready", "phase": "credits" },
+                { "from": "loyalty-engine", "to": "notify-fn", "text": "Check reward threshold", "status": "ready", "phase": "credits" },
+                { "from": "notify-fn", "to": "mobile-customer", "text": "\"5 more pts to free drink!\"", "status": "ready", "phase": "credits", "popUp": { "type": "amplify", "msg": "Gamification drives repeat visits" } },
+                { "from": "order-svc", "to": "order-queue", "text": "Enqueue cappuccino", "status": "ready", "phase": "mobile" },
+                { "from": "order-queue", "to": "pos-tablet", "text": "Order on barista screen", "status": "ready", "phase": "mobile" }
+            ]
+        },
+        {
+            "id": "ai-forecast",
+            "name": "Phase 3 — AI Demand Forecast",
+            "sequence": [
+                { "from": "order-db", "to": "analytics-dash", "text": "Stream: 847 orders today", "status": "ready", "phase": "analytics" },
+                { "from": "customer-db", "to": "analytics-dash", "text": "Stream: 312 unique customers", "status": "ready", "phase": "analytics" },
+                { "from": "analytics-dash", "to": "forecast-agent", "text": "Trigger demand forecast for tomorrow", "status": "ready", "phase": "analytics" },
+                { "from": "forecast-agent", "to": "inventory-db", "text": "Predict: need 40lb espresso, 20gal oat milk", "status": "ready", "phase": "analytics", "popUp": { "type": "amplify", "msg": "AI prevents stockouts — zero waste" } },
+                { "from": "inventory-db", "to": "order-svc", "text": "Auto-update menu availability", "status": "ready", "phase": "analytics" }
+            ]
+        }
+    ],
+
+    "story": {
+        "storyId": "bean-byte-digital-2026",
+        "version": 1,
+        "createdAt": "2026-02-01T09:00:00Z",
+        "updatedAt": "2026-02-23T15:00:00Z",
+        "createdBy": "ceo@beanandbyte.com",
+
+        "problem": {
+            "headline": "Our register kills 40% of potential revenue",
+            "description": "Bean & Byte serves 30 orders/hour with a cash register from 2009. The line averages 8 minutes during peak. 62% of payments are cash (slow to count, impossible to audit). Credit card swipes take 12 seconds each on our old terminal. We have zero customer data — no emails, no purchase history, no way to run promotions. Walk-by traffic sees the line and keeps walking. We're leaving money on the sidewalk.",
+            "impactMetric": {
+                "kpiId": "orders_per_hour",
+                "value": 30,
+                "unit": "orders/hr"
+            },
+            "evidence": [
+                { "label": "Peak-hour video audit (Jan 2026)", "url": "peak-hour-video-audit-jan2026.mp4", "addedAt": "2026-01-20T10:00:00Z", "addedBy": "coo@beanandbyte.com" },
+                { "label": "POS terminal error logs (Dec 2025)", "url": "terminal-error-logs-dec2025.csv", "addedAt": "2026-01-15T08:00:00Z", "addedBy": "it@beanandbyte.com" },
+                { "label": "Customer intercept survey (n=200)", "url": "customer-survey-results-jan2026.pdf", "addedAt": "2026-01-25T14:00:00Z", "addedBy": "marketing@beanandbyte.com" },
+                { "label": "Competitor benchmarks (Starbucks, Blue Bottle)", "url": "competitor-digital-benchmark-2026.pdf", "addedAt": "2026-02-01T09:00:00Z", "addedBy": "ceo@beanandbyte.com" }
+            ],
+            "scope": ["cashier", "card-terminal", "cash-drawer", "paper-log"],
+            "risks": [
+                "Revenue leakage: cash handling discrepancies average $47/day ($17K/year)",
+                "Customer churn: survey shows 34% won't wait more than 5 minutes",
+                "Zero marketing data: can't email, can't retarget, can't personalize",
+                "Staff burnout: cashier + order-taker + receipt-printer is one person"
+            ]
+        },
+
+        "vision": {
+            "summary": "3x throughput, phone-first ordering, Starbucks-style credits — $1.2M annual revenue",
+            "description": "Transform Bean & Byte into a digital-first coffee brand where 75% of orders happen before the customer walks in. A credits/wallet system locks in prepaid revenue and drives repeat visits via gamified loyalty. Real-time analytics and AI forecasting eliminate waste and stockouts. The barista focuses on craft, not cashiering.",
+            "kpiTargets": [
+                { "kpiId": "orders_per_hour", "min": 85, "max": 95, "confidence": "high", "horizon": "12 months" },
+                { "kpiId": "avg_wait_min", "min": 1.5, "max": 3.0, "confidence": "high", "horizon": "6 months" },
+                { "kpiId": "revenue_per_customer", "min": 6.50, "max": 8.00, "confidence": "medium", "horizon": "12 months" },
+                { "kpiId": "digital_order_pct", "min": 70, "max": 80, "confidence": "medium", "horizon": "12 months" },
+                { "kpiId": "annual_revenue", "min": 1000000, "max": 1200000, "confidence": "medium", "horizon": "12 months" }
+            ],
+            "acceptanceCriteria": [
+                "Sustained 85+ orders/hour during 7-9 AM peak for 30 days",
+                "Average wait time < 3 minutes confirmed by in-store sensors",
+                "75%+ orders are prepaid (mobile or credits) for 30 consecutive days",
+                "Credit reload rate > 60% (customers refill wallet before it hits zero)",
+                "Monthly revenue > $100K for 3 consecutive months"
+            ]
+        },
+
+        "kpis": [
+            {
+                "id": "orders_per_hour",
+                "label": "Peak Orders / Hour",
+                "unit": "orders/hr",
+                "direction": "higher_is_better",
+                "baseline": 30,
+                "current": 30,
+                "format": "0"
+            },
+            {
+                "id": "avg_wait_min",
+                "label": "Avg Wait Time",
+                "unit": "min",
+                "direction": "lower_is_better",
+                "baseline": 8.0,
+                "current": 8.0,
+                "format": "0.1f"
+            },
+            {
+                "id": "revenue_per_customer",
+                "label": "Revenue / Customer",
+                "unit": "$",
+                "direction": "higher_is_better",
+                "baseline": 4.50,
+                "current": 4.50,
+                "format": "$0.00"
+            },
+            {
+                "id": "digital_order_pct",
+                "label": "Digital Order %",
+                "unit": "%",
+                "direction": "higher_is_better",
+                "baseline": 0,
+                "current": 0,
+                "format": "0"
+            },
+            {
+                "id": "annual_revenue",
+                "label": "Annual Revenue",
+                "unit": "$",
+                "direction": "higher_is_better",
+                "baseline": 394200,
+                "current": 394200,
+                "format": "$0,0"
+            },
+            {
+                "id": "cash_pct",
+                "label": "Cash Payment %",
+                "unit": "%",
+                "direction": "lower_is_better",
+                "baseline": 62,
+                "current": 62,
+                "format": "0"
+            }
+        ],
+
+        "phases": [
+            {
+                "phaseRef": "legacy",
+                "label": "Legacy Baseline (Today)",
+                "owner": "coo@beanandbyte.com",
+                "timebox": "Current State",
+                "status": "completed",
+                "description": "Cash register, paper tickets, no digital anything. This is where we are. 30 orders/hour, $4.50 per customer, 8-minute average wait.",
+                "order": 0
+            },
+            {
+                "phaseRef": "mobile",
+                "label": "Mobile Order-Ahead + Digital POS",
+                "owner": "cto@beanandbyte.com",
+                "timebox": "2026 Q2 (12 weeks)",
+                "status": "active",
+                "description": "Launch mobile app with order-ahead. Replace cash register with POS tablet. Add Stripe for instant card/Apple Pay/Google Pay. Digital order queue to barista screen. Push notifications. Eliminates the cashier bottleneck.",
+                "order": 1
+            },
+            {
+                "phaseRef": "credits",
+                "label": "Credits Wallet + Loyalty",
+                "owner": "cpo@beanandbyte.com",
+                "timebox": "2026 Q3 (8 weeks)",
+                "status": "planned",
+                "description": "Starbucks-style prepaid credits wallet. Customers load $25/$50/$100 and pay by tapping phone. Loyalty points engine: every 10th drink free. Personalized offers based on purchase history. This locks in revenue and builds habit loops.",
+                "order": 2
+            },
+            {
+                "phaseRef": "analytics",
+                "label": "Analytics + AI Forecasting",
+                "owner": "cto@beanandbyte.com",
+                "timebox": "2026 Q4 (8 weeks)",
+                "status": "planned",
+                "description": "Revenue dashboard for real-time business intelligence. AI demand forecaster predicts tomorrow's ingredient needs. Inventory auto-management prevents stockouts and waste. Personalization engine suggests upsells in the app based on customer history and time of day.",
+                "order": 3
+            }
+        ],
+
+        "ideaCards": [
+            {
+                "id": "idea-mobile-app",
+                "title": "Mobile Order-Ahead App",
+                "owner": "cto@beanandbyte.com",
+                "hypothesis": "If customers can order and pay from their phone before arriving, we eliminate the register line entirely for mobile users, cutting average wait from 8 min to under 2 min for those customers and increasing throughput by 50%+.",
+                "linkedNodes": ["api-gw", "order-svc", "mobile-customer"],
+                "linkedFlows": ["mobile-order"],
+                "phases": ["mobile"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "orders_per_hour", "delta": 25, "confidence": "high" },
+                    { "kpiId": "avg_wait_min", "delta": -4.0, "confidence": "high" },
+                    { "kpiId": "digital_order_pct", "delta": 40, "confidence": "medium" },
+                    { "kpiId": "annual_revenue", "delta": 131400, "confidence": "medium" }
+                ],
+                "comments": [
+                    { "author": "ceo@beanandbyte.com", "text": "This is the single highest-impact move. Competitors already have this.", "timestamp": "2026-02-05T10:00:00Z" },
+                    { "author": "barista-lead@beanandbyte.com", "text": "Need a clear screen UI — the ticket printer was messy but at least it was tangible.", "timestamp": "2026-02-06T09:00:00Z" }
+                ],
+                "evidenceLinks": [
+                    { "label": "Starbucks mobile order adoption curve", "url": "starbucks-mobile-adoption-data.pdf", "addedAt": "2026-02-03T11:00:00Z", "addedBy": "cpo@beanandbyte.com" }
+                ]
+            },
+            {
+                "id": "idea-pos-tablet",
+                "title": "Replace Register with POS Tablet",
+                "owner": "cto@beanandbyte.com",
+                "hypothesis": "Replacing the 2009 cash register with a modern POS tablet (Square/Toast) cuts per-transaction time from 45s to 15s for walk-in customers and digitizes all sales data automatically.",
+                "linkedNodes": ["pos-tablet", "cashier"],
+                "linkedFlows": ["mobile-order"],
+                "phases": ["mobile"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "orders_per_hour", "delta": 10, "confidence": "high" },
+                    { "kpiId": "avg_wait_min", "delta": -1.5, "confidence": "high" },
+                    { "kpiId": "cash_pct", "delta": -30, "confidence": "medium" }
+                ],
+                "comments": [],
+                "evidenceLinks": []
+            },
+            {
+                "id": "idea-instant-pay",
+                "title": "Instant Digital Payment (Apple Pay / Stripe)",
+                "owner": "cto@beanandbyte.com",
+                "hypothesis": "Replacing the 12-second card terminal with tap-to-pay (< 1 second) removes the payment bottleneck. Combined with mobile pre-pay, we expect 80%+ of transactions under 2 seconds.",
+                "linkedNodes": ["payment-gw", "api-gw"],
+                "linkedFlows": ["mobile-order"],
+                "phases": ["mobile"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "avg_wait_min", "delta": -1.5, "confidence": "high" },
+                    { "kpiId": "orders_per_hour", "delta": 5, "confidence": "medium" },
+                    { "kpiId": "cash_pct", "delta": -20, "confidence": "high" }
+                ],
+                "comments": [],
+                "evidenceLinks": []
+            },
+            {
+                "id": "idea-credits-wallet",
+                "title": "Starbucks-Style Prepaid Credits",
+                "owner": "cpo@beanandbyte.com",
+                "hypothesis": "A prepaid credits wallet ($25/$50/$100 reload tiers) creates lock-in: customers with balance visit 2.3x more often (Starbucks data). We project 40% of active users maintain a balance, driving a 35% increase in revenue per customer.",
+                "linkedNodes": ["wallet-svc", "customer-db"],
+                "linkedFlows": ["credits-reload"],
+                "phases": ["credits"],
+                "status": "proposed",
+                "confidence": "medium",
+                "expectedKpiImpacts": [
+                    { "kpiId": "revenue_per_customer", "delta": 1.60, "confidence": "medium" },
+                    { "kpiId": "orders_per_hour", "delta": 15, "confidence": "medium" },
+                    { "kpiId": "digital_order_pct", "delta": 25, "confidence": "medium" },
+                    { "kpiId": "annual_revenue", "delta": 197100, "confidence": "medium" }
+                ],
+                "comments": [
+                    { "author": "cfo@beanandbyte.com", "text": "Love the float revenue — prepaid balances are interest-free loans from customers.", "timestamp": "2026-02-10T14:00:00Z" }
+                ],
+                "evidenceLinks": [
+                    { "label": "Starbucks 10-K: $1.8B in stored value card liabilities", "url": "starbucks-10k-stored-value.pdf", "addedAt": "2026-02-08T10:00:00Z", "addedBy": "cfo@beanandbyte.com" }
+                ]
+            },
+            {
+                "id": "idea-loyalty-gamify",
+                "title": "Gamified Loyalty Points",
+                "owner": "cpo@beanandbyte.com",
+                "hypothesis": "A points-based loyalty program (every $1 = 1 point, 100 points = free drink) with streak bonuses and surprise rewards increases visit frequency by 30% and average ticket by $0.80 from upsell prompts.",
+                "linkedNodes": ["loyalty-engine", "notify-fn"],
+                "linkedFlows": ["credits-reload"],
+                "phases": ["credits"],
+                "status": "proposed",
+                "confidence": "medium",
+                "expectedKpiImpacts": [
+                    { "kpiId": "revenue_per_customer", "delta": 0.80, "confidence": "medium" },
+                    { "kpiId": "orders_per_hour", "delta": 10, "confidence": "low" },
+                    { "kpiId": "annual_revenue", "delta": 118300, "confidence": "low" }
+                ],
+                "comments": [],
+                "evidenceLinks": []
+            },
+            {
+                "id": "idea-ai-forecast",
+                "title": "AI Demand Forecasting",
+                "owner": "cto@beanandbyte.com",
+                "hypothesis": "An ML model trained on order history + weather + day-of-week predicts next-day ingredient demand within 5% accuracy, eliminating stockouts (currently 3/week) and reducing waste by 20% ($8K/year savings).",
+                "linkedNodes": ["forecast-agent", "inventory-db", "analytics-dash"],
+                "linkedFlows": ["ai-forecast"],
+                "phases": ["analytics"],
+                "status": "proposed",
+                "confidence": "low",
+                "expectedKpiImpacts": [
+                    { "kpiId": "revenue_per_customer", "delta": 0.30, "confidence": "low" },
+                    { "kpiId": "annual_revenue", "delta": 52400, "confidence": "low" }
+                ],
+                "comments": [
+                    { "author": "cto@beanandbyte.com", "text": "Start simple: moving average + day-of-week seasonality. Don't need GPT for milk orders.", "timestamp": "2026-02-15T11:00:00Z" }
+                ],
+                "evidenceLinks": []
+            }
+        ],
+
+        "benefits": [
+            {
+                "id": "benefit-throughput",
+                "phaseId": "mobile",
+                "title": "Peak throughput jumps from 30 to 55+ orders/hour",
+                "kpiId": "orders_per_hour",
+                "baseline": 30,
+                "targetRange": { "min": 50, "max": 65 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["api-gw", "order-svc", "pos-tablet"],
+                "boundFlows": ["mobile-order"]
+            },
+            {
+                "id": "benefit-wait-time",
+                "phaseId": "mobile",
+                "title": "Wait time drops from 8 min to under 3 min",
+                "kpiId": "avg_wait_min",
+                "baseline": 8.0,
+                "targetRange": { "min": 1.5, "max": 3.0 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["api-gw", "payment-gw", "pos-tablet", "order-queue"],
+                "boundFlows": ["mobile-order"]
+            },
+            {
+                "id": "benefit-digital-shift",
+                "phaseId": "mobile",
+                "title": "40%+ orders shift to digital (from 0%)",
+                "kpiId": "digital_order_pct",
+                "baseline": 0,
+                "targetRange": { "min": 35, "max": 50 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["api-gw", "mobile-customer"],
+                "boundFlows": ["mobile-order"]
+            },
+            {
+                "id": "benefit-revenue-credits",
+                "phaseId": "credits",
+                "title": "Revenue per customer rises 35% via credits + upsell",
+                "kpiId": "revenue_per_customer",
+                "baseline": 4.50,
+                "targetRange": { "min": 5.80, "max": 6.90 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["wallet-svc", "loyalty-engine", "customer-db"],
+                "boundFlows": ["credits-reload"]
+            },
+            {
+                "id": "benefit-digital-dominant",
+                "phaseId": "credits",
+                "title": "Digital orders hit 65%+ with credits as default",
+                "kpiId": "digital_order_pct",
+                "baseline": 40,
+                "targetRange": { "min": 60, "max": 75 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["wallet-svc", "mobile-customer"],
+                "boundFlows": ["credits-reload"]
+            },
+            {
+                "id": "benefit-3x-revenue",
+                "phaseId": "analytics",
+                "title": "Annual revenue reaches $1M+ (3x baseline)",
+                "kpiId": "annual_revenue",
+                "baseline": 394200,
+                "targetRange": { "min": 1000000, "max": 1200000 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["analytics-dash", "forecast-agent", "wallet-svc", "order-svc"],
+                "boundFlows": ["mobile-order", "credits-reload", "ai-forecast"]
+            }
+        ],
+
+        "bindings": [
+            { "ideaId": "idea-mobile-app", "nodeId": "api-gw", "benefitId": "benefit-throughput" },
+            { "ideaId": "idea-mobile-app", "nodeId": "order-svc", "benefitId": "benefit-throughput" },
+            { "ideaId": "idea-mobile-app", "nodeId": "api-gw", "benefitId": "benefit-wait-time" },
+            { "ideaId": "idea-mobile-app", "nodeId": "api-gw", "benefitId": "benefit-digital-shift" },
+            { "ideaId": "idea-pos-tablet", "nodeId": "pos-tablet", "benefitId": "benefit-throughput" },
+            { "ideaId": "idea-pos-tablet", "nodeId": "pos-tablet", "benefitId": "benefit-wait-time" },
+            { "ideaId": "idea-instant-pay", "nodeId": "payment-gw", "benefitId": "benefit-wait-time" },
+            { "ideaId": "idea-credits-wallet", "nodeId": "wallet-svc", "benefitId": "benefit-revenue-credits" },
+            { "ideaId": "idea-credits-wallet", "nodeId": "wallet-svc", "benefitId": "benefit-digital-dominant" },
+            { "ideaId": "idea-credits-wallet", "nodeId": "wallet-svc", "benefitId": "benefit-3x-revenue" },
+            { "ideaId": "idea-loyalty-gamify", "nodeId": "loyalty-engine", "benefitId": "benefit-revenue-credits" },
+            { "ideaId": "idea-loyalty-gamify", "nodeId": "loyalty-engine", "benefitId": "benefit-3x-revenue" },
+            { "ideaId": "idea-ai-forecast", "nodeId": "forecast-agent", "benefitId": "benefit-3x-revenue" },
+            { "ideaId": "idea-ai-forecast", "nodeId": "analytics-dash", "benefitId": "benefit-3x-revenue" }
+        ],
+
+        "auditLog": [
+            { "timestamp": "2026-02-01T09:00:00Z", "actor": "ceo@beanandbyte.com", "action": "story.created", "targetId": "bean-byte-digital-2026", "from": null, "to": null, "evidenceUrl": null, "note": "Kicked off digital transformation initiative after Q4 revenue miss" },
+            { "timestamp": "2026-02-05T10:30:00Z", "actor": "ceo@beanandbyte.com", "action": "idea.status_change", "targetId": "idea-mobile-app", "from": "proposed", "to": "accepted", "evidenceUrl": "competitor-digital-benchmark-2026.pdf", "note": "Board approved — this is table stakes, not optional" },
+            { "timestamp": "2026-02-05T10:35:00Z", "actor": "cto@beanandbyte.com", "action": "idea.status_change", "targetId": "idea-pos-tablet", "from": "proposed", "to": "accepted", "evidenceUrl": null, "note": "Bundled with mobile app — same phase" },
+            { "timestamp": "2026-02-05T10:40:00Z", "actor": "cto@beanandbyte.com", "action": "idea.status_change", "targetId": "idea-instant-pay", "from": "proposed", "to": "accepted", "evidenceUrl": null, "note": "Stripe integration is a weekend of work" }
+        ],
+
+        "uiHints": {
+            "initialView": "narrative",
+            "initialPhase": "legacy",
+            "autoTransitionToCollab": true,
+            "narrativeLayout": "vertical",
+            "ideaOverlayDefault": false,
+            "benefitLanesDefault": false
+        }
+    }
+}

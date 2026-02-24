@@ -46,6 +46,10 @@ Top-level object fields:
 - nodes: Node[] (required for diagrams)
 - connections: Connection[] (optional; used for spatial connectors and particle animation)
 - sequence: SequenceStep[] (optional; used for sequence view and dual-view animation)
+- zones: Zone[] (optional; infrastructure boundary boxes behind nodes)
+- phases: Phase[] (optional; progressive reveal layers — adds a slider to the header)
+- flows: Flow[] (optional; named animation sequences — adds a dropdown to the header)
+- story: Story (optional; narrative layer for stakeholder presentations — see below)
 
 Node
 {
@@ -74,15 +78,116 @@ SequenceStep
   status?: "ready" | "wip"     // optional status (affects arrow badge/coloring)
 }
 
+Zone
+{
+  id: string,                 // unique identifier
+  type?: "cloud" | "on-prem" | "vpc" | "subnet" | "edge" | "dmz" | "region" | "az" | "k8s-cluster" | "namespace",
+  label?: string,             // displayed at top-left of the zone
+  x: number, y: number,       // position on canvas (px)
+  w: number, h: number,       // size (px)
+  parent?: string,            // id of parent zone (for render ordering)
+  phase?: string              // phase ID — zone only appears at that phase
+}
+
+Phase
+{
+  id: string,                 // unique phase identifier
+  label: string               // display label next to the slider
+}
+- Items with a phase field are visible when their phase index <= the selected phase index.
+- Items without a phase field are always visible.
+
+Flow
+{
+  id: string,                 // unique flow identifier
+  name: string,               // display name in the dropdown
+  sequence: SequenceStep[]    // array of steps (same format as root sequence)
+}
+- Each flow's sequence is independently filtered by the current phase.
+- The root "sequence" array is used when "Default Sequence" is selected.
+
+Story Object (optional)
+- When a "story" key is present, a narrative layer is enabled.
+- Clicking the "Story" button (or using ?story=true) enters a slide-based walkthrough:
+  Problem → Vision → Phase slides with initiative cards and KPI tracking.
+{
+  storyId?: string,           // unique identifier for the story
+  version?: number,           // version number
+  problem: {
+    headline: string,         // short headline for the problem slide
+    description: string,      // detailed problem description
+    impactMetric?: { kpiId: string, value: number, unit: string },
+    evidence?: [{ label: string, url: string }],
+    scope?: string[],         // node IDs affected (clickable)
+    risks?: string[]          // risk statement strings
+  },
+  vision: {
+    summary: string,          // one-line vision summary
+    description: string,      // detailed vision description
+    kpiTargets?: [{ kpiId: string, min: number, max: number, confidence: string, horizon: string }],
+    acceptanceCriteria?: string[]
+  },
+  kpis?: [{
+    id: string,               // unique KPI identifier
+    label: string,            // display label
+    unit: string,             // e.g. "orders/hr", "%", "$"
+    direction: "higher_is_better" | "lower_is_better",
+    baseline: number,         // starting value
+    current: number,          // current value
+    format?: string           // e.g. "0", "0.1f", "$0.00", "$0,0"
+  }],
+  phases?: [{
+    phaseRef: string,         // references a root-level phase ID
+    label: string,
+    order: number,            // sort order (0-based)
+    owner?: string,
+    timebox?: string,         // e.g. "2026 Q2 (12 weeks)"
+    status?: "completed" | "active" | "planned",
+    description: string
+  }],
+  ideaCards?: [{
+    id: string,
+    title: string,
+    owner?: string,
+    hypothesis: string,       // what we believe will happen
+    linkedNodes?: string[],   // node IDs (clickable chips)
+    linkedFlows?: string[],   // flow IDs
+    phases?: string[],        // phase IDs where introduced
+    status?: "accepted" | "rejected" | "proposed",
+    confidence?: "high" | "medium" | "low",
+    expectedKpiImpacts?: [{ kpiId: string, delta: number, confidence: string }]
+  }],
+  benefits?: [{
+    id: string,
+    title: string,
+    phaseId: string,          // phase where benefit is realized
+    kpiId?: string,
+    targetRange?: { min: number, max: number },
+    boundNodes?: string[],    // node IDs highlighted on click
+    boundFlows?: string[]
+  }],
+  bindings?: [{               // connects ideas to nodes to benefits
+    ideaId: string,
+    nodeId: string,
+    benefitId: string
+  }],
+  uiHints?: {
+    initialView?: "narrative",  // auto-start story mode
+    initialPhase?: string       // phase ID for slider at start
+  }
+}
+
 Authoring Tips
 - Use tag values to communicate domain/phase: legacy, core, new, agent, external
 - Prefer concise labels; use "\n" to break onto multiple lines (e.g., "API\nGateway")
 - Hide infrastructure-like nodes from sequence view with skipSequence: true
 - Keep ids stable across edits; they are the join keys for connections and steps
+- For story mode: ensure all node IDs in scope, linkedNodes, boundNodes exist in the nodes array
+- For story mode: ensure all kpiId references in impacts, targets, and benefits resolve to a story.kpis entry
 
 Loading External Examples
 - Place files in json/ and use: collab-animation.html?collab=your-file.json
 - The dropdown auto-discovers *.json in json/ (server must allow directory listing)
 
 Version
-- This document reflects collab-animation.html as of PR #3 (dedup connectors, multiline notes) and PR #2 (dynamic JSON dropdown).
+- This document reflects collab-animation.html with zones, phases, flows, and story narrative layer.
