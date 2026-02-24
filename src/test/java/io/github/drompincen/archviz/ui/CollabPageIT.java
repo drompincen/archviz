@@ -119,12 +119,15 @@ class CollabPageIT {
         page.waitForFunction("document.getElementById('json-selector').options.length > 1");
         Locator selector = page.locator("#json-selector");
 
+        // Capture current editor content before switching
+        String beforeContent = page.locator("#json-input").inputValue();
+
         // Pick the second option (first real diagram)
         String secondValue = (String) selector.evaluate("el => el.options[1].value");
         selector.selectOption(secondValue);
 
-        // Wait for nodes to re-render
-        page.waitForFunction("document.querySelectorAll('#nodes-container .node').length >= 1");
+        // Wait for editor content to actually change
+        page.waitForFunction("(before) => document.getElementById('json-input').value !== before", beforeContent);
 
         // Editor should have new content
         String editorContent = page.locator("#json-input").inputValue();
