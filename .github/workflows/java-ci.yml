@@ -21,6 +21,9 @@ jobs:
           java-version: '17'
           cache: 'maven'
 
+      - name: Install Playwright browsers
+        run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium" -Dexec.classpathScope=test
+
       - name: Build and test (Maven)
         run: mvn -B -ntp verify
 

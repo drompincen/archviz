@@ -69,6 +69,11 @@ class CollabPageIT {
 
     @Test
     void invalidJson_showsError() {
+        // Open options dropdown and enable JSON editor first
+        page.locator("#btn-options").click();
+        page.locator("#chk-show-editor").dispatchEvent("click");
+        page.waitForTimeout(300);
+
         page.locator("#json-input").fill("{ invalid json !!!");
         page.locator("#btn-update").click();
         assertThat(page.locator("#error-msg")).hasClass(java.util.regex.Pattern.compile(".*visible.*"));
@@ -78,7 +83,9 @@ class CollabPageIT {
     void themeToggle_appliesLightClass() {
         assertFalse(page.locator("body").evaluate("el => el.classList.contains('light-theme')").toString().equals("true"),
                 "Body should not have light-theme initially");
-        page.locator("#chk-light-mode").click();
+        // Open options dropdown, then click the theme checkbox
+        page.locator("#btn-options").click();
+        page.locator("#chk-light-mode").dispatchEvent("click");
         assertTrue(page.locator("body").evaluate("el => el.classList.contains('light-theme')").toString().equals("true"),
                 "Body should have light-theme after toggling");
     }
@@ -87,8 +94,10 @@ class CollabPageIT {
     void editorToggle_showsHidesSidebar() {
         // sidebar starts hidden
         assertThat(page.locator("#left-sidebar")).hasClass(java.util.regex.Pattern.compile(".*hidden.*"));
-        // check the "JSON Editor" checkbox to show it
-        page.locator("#chk-show-editor").click();
+        // Open options dropdown, then check the "JSON Editor" checkbox
+        page.locator("#btn-options").click();
+        page.locator("#chk-show-editor").dispatchEvent("click");
+        page.waitForTimeout(300);
         Locator sidebar = page.locator("#left-sidebar");
         assertFalse(sidebar.getAttribute("class").contains("hidden"),
                 "Sidebar should be visible after toggling editor on");

@@ -6,15 +6,19 @@ Animated, interactive architecture diagrams in the browser. Define nodes, connec
 
 - **Spatial View** — drag-and-drop nodes on a canvas with animated message particles
 - **Sequence View** — auto-generated sequence diagram from the same JSON
+- **Story Mode** — wizard-style narrative walkthrough (Problem → Vision → Roadmap phases) with slide navigation, keyboard arrows, and dot indicators
+- **Benefits Panel** — phase-grouped benefit cards that accumulate as you advance; click a card to highlight bound nodes
+- **KPI HUD** — live KPI dashboard that updates per phase based on idea card impact deltas
 - **Live JSON Editor** — edit the diagram definition in-browser and see changes instantly
 - **Project Notebook** — freeform notes rendered beside the diagram
 - **PDF Export** — export spatial view, sequence diagram, notes, and logs to PDF
 - **Dark / Light Theme** — toggle with one click
 - **Zones** — infrastructure boundary boxes (VPC, subnet, cloud, on-prem, edge, DMZ, etc.)
-- **Phases** — progressive reveal slider to show architecture layers (skeleton → processing → observability)
+- **Phases** — progressive reveal slider; supports both single-phase strings and multi-phase arrays
 - **Flows** — multiple named animation sequences over the same architecture (happy path, error path, etc.)
 - **Step-through Mode** — pause and advance the animation one step at a time
 - **JSON Dropdown** — auto-discovers `.json` files from the `json/` folder
+- **Back-to-Story Navigation** — drill into architecture from any story slide, then return to the same slide
 
 ## Included Examples
 
@@ -22,6 +26,7 @@ Animated, interactive architecture diagrams in the browser. Define nodes, connec
 |------|-------------|
 | `ai-agent-collab.json` | Multi-agent orchestration with shared memory |
 | `ci-cd-pipeline.json` | Git to production CI/CD flow |
+| `coffee-shop-transformation.json` | Digital transformation with full story mode (problem, vision, KPIs, 4 phases, idea cards, benefits) |
 | `ecommerce-checkout.json` | Shopping cart to payment to notification |
 | `event-pipeline.json` | Kafka-based real-time data pipeline |
 | `iot-sensor-network.json` | Edge sensors with anomaly detection |
@@ -72,13 +77,19 @@ java -jar target/archviz-0.2.0.jar
 
 Then open **http://localhost:8080/collab-animation.html**
 
-## Loading a Specific Diagram
+## URL Parameters
 
-Use the dropdown in the header, or pass a query parameter:
+Use the dropdown in the header, or pass query parameters:
 
 ```
 http://localhost:8080/collab-animation.html?collab=rag-pipeline.json
+http://localhost:8080/collab-animation.html?collab=coffee-shop-transformation.json&story=true
 ```
+
+| Parameter | Description |
+|-----------|-------------|
+| `collab=<file>.json` | Load a specific diagram from the `json/` folder |
+| `story=true` | Auto-activate story mode (requires a `story` key in the JSON) |
 
 ## Adding Your Own Diagrams
 
@@ -143,7 +154,7 @@ Create a `.json` file in `src/main/resources/static/json/` following this struct
 |-------|-------------|
 | `status` | `"ready"` (green check) or `"wip"` (orange hourglass) |
 | `skipSequence` | `true` to hide from sequence diagram (e.g. databases) |
-| `phase` | Phase ID — node only appears when that phase is selected |
+| `phase` | String or Array. String: node visible from that phase onward. Array: node visible only in the listed phases. |
 
 ### Zones (infrastructure boundaries)
 
@@ -292,7 +303,9 @@ That's it — start the app with `mvn spring-boot:run` and diagrams saved via th
 ```
 .
 ├── ArchViz.java                             # jbang single-file runner
-├── pom.xml                                  # Maven build (Spring Boot 3.4.2, Java 17)
+├── pom.xml                                  # Maven build (Spring Boot 3.3.1, Java 17)
+├── docs/                                    # Design docs and test plans
+│   └── playwright-testing.md                # Playwright integration test guide
 ├── src/main/java/io/github/drompincen/archviz/
 │   ├── ArchVizApplication.java              # Spring Boot main class
 │   ├── JsonListController.java              # GET /json/ directory listing
@@ -300,10 +313,39 @@ That's it — start the app with `mvn spring-boot:run` and diagrams saved via th
 ├── src/main/resources/
 │   ├── application.properties
 │   └── static/
-│       ├── animation.html                   # Phase animator
-│       ├── collab-animation.html            # Collaboration animator (main)
-│       └── json/                            # Example diagram definitions
+│       ├── collab-animation.html            # Main HTML shell (module imports)
+│       ├── css/                             # Modular CSS (core, nodes, sequence, widgets, benefits, narrative)
+│       ├── js/                              # ES modules (state, rendering, narrative, benefits, animation, etc.)
+│       ├── json/                            # Example diagram definitions
+│       └── json_spec.txt                    # JSON format specification
+├── src/test/java/io/github/drompincen/archviz/
+│   └── ui/
+│       ├── CollabAnimationUITest.java       # HtmlUnit-based UI tests (mvn test)
+│       ├── CollabPageIT.java                # Playwright core UI tests (mvn verify)
+│       └── StoryModeIT.java                 # Playwright story mode tests (mvn verify)
 └── README.md
+```
+
+## Testing
+
+The project has three test layers:
+
+| Layer | Tool | Command | Files |
+|-------|------|---------|-------|
+| Unit tests | JUnit 5 + MockMvc | `mvn test` | `*Test.java` |
+| HtmlUnit UI tests | Selenium HtmlUnit | `mvn test` | `CollabAnimationUITest.java` |
+| Playwright integration tests | Playwright (Chromium) | `mvn verify` | `*IT.java` |
+
+Playwright tests run in a real headless Chromium browser, testing CSS rendering, ES module loading, story mode navigation, and keyboard interactions. See [docs/playwright-testing.md](docs/playwright-testing.md) for details.
+
+To run all tests including Playwright:
+
+```bash
+# Install Chromium (first time only)
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium" -Dexec.classpathScope=test
+
+# Run all tests
+mvn verify
 ```
 
 ## License

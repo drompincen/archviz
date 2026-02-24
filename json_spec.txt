@@ -3,7 +3,7 @@ DROM Architecture Visualizer — JSON Specification
 
 This guide details the JSON specification used to configure the architecture
 visualizer. The JSON is divided into these sections: Metadata, Nodes,
-Connections, Sequence, Zones, Phases, and Flows.
+Connections, Sequence, Zones, Phases, Flows, and Story.
 
 
 1. Root Object
@@ -19,12 +19,15 @@ The root of the JSON object controls the global settings of the diagram.
     "nodes": [ ... ],
     "connections": [ ... ],
     "sequence": [ ... ],
-    "flows": [ ... ]
+    "flows": [ ... ],
+    "story": { ... }
   }
 
   title   (String)  The text displayed at the top-left of the canvas.
   notes   (String)  Freeform project notes displayed in the notebook widget.
                     Use \n for line breaks.
+  story   (Object)  Optional. Narrative story layer for wizard-style
+                    presentations (see Section 8).
 
 
 2. The nodes Array
@@ -57,7 +60,11 @@ Defines the boxes (components) on the canvas.
   tag       String  Determines the color scheme (see below).
   status    String  Optional. "ready" (green check) or "wip" (orange hourglass).
   phase     String  Optional. Phase ID — node only appears when that phase
-                    is selected. Omit to always show.
+            or      is selected. Omit to always show.
+            Array   String: visible from that phase onward (phase index <=
+                    selected). Array of strings: visible only when one of
+                    the listed phase IDs is selected (can appear, then
+                    disappear at later phases).
   skipSequence Boolean  Optional. true to hide from sequence diagram.
 
 Supported Values for type (Icons)
@@ -239,6 +246,121 @@ Each flow's sequence is independently filtered by the current phase.
 The root "sequence" array is used when "Default Sequence" is selected.
 
 
+8. The story Object (Optional)
+-------------------------------
+
+Adds a wizard-style narrative layer for stakeholder presentations.
+When present, a "Story" button appears in the header. Clicking it (or
+using ?story=true in the URL) enters a slide-based walkthrough:
+Problem → Vision → Phase slides with initiative cards and KPI tracking.
+
+  "story": {
+    "storyId": "my-story-2026",
+    "version": 1,
+    "problem": { ... },
+    "vision": { ... },
+    "kpis": [ ... ],
+    "phases": [ ... ],
+    "ideaCards": [ ... ],
+    "benefits": [ ... ],
+    "bindings": [ ... ],
+    "uiHints": { ... }
+  }
+
+Top-Level Story Fields
+
+  Property    Type    Description
+  ----------  ------  -----------------------------------------------------------
+  storyId     String  Optional. Unique identifier for the story.
+  version     Number  Optional. Version number for tracking changes.
+  problem     Object  The problem statement slide.
+  vision      Object  The vision/target state slide.
+  kpis        Array   KPI definitions with baseline, current, direction, format.
+  phases      Array   Story-layer phases (distinct from root phases). Each has
+                      phaseRef, label, order, owner, timebox, status, description.
+  ideaCards   Array   Initiative/idea cards linked to phases and KPIs.
+  benefits    Array   Benefit cards grouped by phase, with KPI targets.
+  bindings    Array   Optional. Node-to-KPI bindings.
+  uiHints     Object  Optional. UI configuration (initialView, initialPhase).
+
+story.problem Object
+
+  Property      Type    Description
+  ------------  ------  -----------------------------------------------------------
+  headline      String  Short headline displayed at the top of the slide.
+  description   String  Detailed problem description.
+  impactMetric  Object  Optional. { kpiId, value, unit } — highlighted KPI badge.
+  evidence      Array   Optional. [{ label, url }] — links to supporting docs.
+  scope         Array   Optional. Node IDs affected by the problem (clickable).
+  risks         Array   Optional. Risk statement strings.
+
+story.vision Object
+
+  Property            Type    Description
+  ------------------  ------  -----------------------------------------------------------
+  summary             String  One-line vision summary.
+  description         String  Detailed vision description.
+  kpiTargets          Array   [{ kpiId, min, max, confidence, horizon }] — target ranges.
+  acceptanceCriteria  Array   Optional. Acceptance criteria strings.
+
+story.kpis Array
+
+  Property   Type    Description
+  ---------  ------  -----------------------------------------------------------
+  id         String  Unique KPI identifier (referenced by other story objects).
+  label      String  Display label.
+  unit       String  Unit string (e.g. "orders/hr", "%", "$").
+  direction  String  "higher_is_better" or "lower_is_better".
+  baseline   Number  Starting value (shown on problem slide).
+  current    Number  Current value (may equal baseline initially).
+  format     String  Optional. Display format: "0", "0.1f", "$0.00", "$0,0".
+
+story.phases Array
+
+  Property     Type    Description
+  -----------  ------  -----------------------------------------------------------
+  phaseRef     String  References a root-level phase ID.
+  label        String  Display label for the story slide.
+  order        Number  Sort order (0-based).
+  owner        String  Optional. Responsible person/team.
+  timebox      String  Optional. Time estimate (e.g. "2026 Q2 (12 weeks)").
+  status       String  Optional. "completed", "active", or "planned".
+  description  String  Phase description shown on the slide.
+
+story.ideaCards Array
+
+  Property            Type    Description
+  ------------------  ------  -----------------------------------------------------------
+  id                  String  Unique idea identifier.
+  title               String  Idea title.
+  owner               String  Optional. Responsible person.
+  hypothesis          String  What we believe will happen if implemented.
+  linkedNodes         Array   Optional. Node IDs this idea affects (clickable chips).
+  linkedFlows         Array   Optional. Flow IDs this idea relates to.
+  phases              Array   Phase IDs where this idea is introduced.
+  status              String  "accepted", "rejected", or "proposed".
+  confidence          String  "high", "medium", or "low".
+  expectedKpiImpacts  Array   [{ kpiId, delta, confidence }] — projected KPI changes.
+
+story.benefits Array
+
+  Property     Type    Description
+  -----------  ------  -----------------------------------------------------------
+  id           String  Unique benefit identifier.
+  title        String  Benefit title shown on sidebar card.
+  phaseId      String  Phase where this benefit is realized.
+  kpiId        String  Optional. Linked KPI.
+  targetRange  Object  Optional. { min, max } — expected KPI range.
+  boundNodes   Array   Optional. Node IDs to highlight when card is clicked.
+
+story.uiHints Object
+
+  Property      Type    Description
+  ------------  ------  -----------------------------------------------------------
+  initialView   String  Optional. "narrative" to auto-start story mode.
+  initialPhase  String  Optional. Phase ID to set on the slider at story start.
+
+
 Backward Compatibility
 ----------------------
 
@@ -249,6 +371,10 @@ Backward Compatibility
   No flows          Falls back to root sequence
   No phase on item  Item always visible regardless of selected phase
   No zone on node   Node floats freely
+  No story          Story button has no highlight, story mode unavailable
+  No story.kpis     KPI HUD hidden during narrative
+  No story.benefits Benefits sidebar empty during narrative
+  No uiHints        Story mode must be activated manually or via ?story=true
 
 
 Minimal Example
