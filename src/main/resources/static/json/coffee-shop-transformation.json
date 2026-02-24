@@ -21,10 +21,10 @@
     "nodes": [
         { "id": "walk-in", "type": "human", "tag": "external", "label": "Walk-in\nCustomer", "x": 30, "y": 80, "w": 120, "h": 75 },
         { "id": "cashier", "type": "user", "tag": "legacy", "label": "Cashier +\nOld Register", "x": 170, "y": 80, "w": 130, "h": 80 },
-        { "id": "card-terminal", "type": "service", "tag": "legacy", "label": "Card\nTerminal", "x": 170, "y": 200, "w": 130, "h": 70 },
+        { "id": "card-terminal", "type": "service", "tag": "legacy", "label": "Card\nTerminal", "x": 170, "y": 200, "w": 130, "h": 70, "phase": ["legacy", "mobile"] },
         { "id": "barista", "type": "user", "tag": "core", "label": "Barista\n(paper ticket)", "x": 80, "y": 320, "w": 130, "h": 80 },
-        { "id": "cash-drawer", "type": "storage", "tag": "legacy", "label": "Cash\nDrawer", "x": 30, "y": 200, "w": 110, "h": 65 },
-        { "id": "paper-log", "type": "storage", "tag": "legacy", "label": "Paper\nSales Log", "x": 30, "y": 460, "w": 120, "h": 65 },
+        { "id": "cash-drawer", "type": "storage", "tag": "legacy", "label": "Cash\nDrawer", "x": 30, "y": 200, "w": 110, "h": 65, "phase": ["legacy", "mobile"] },
+        { "id": "paper-log", "type": "storage", "tag": "legacy", "label": "Paper\nSales Log", "x": 30, "y": 460, "w": 120, "h": 65, "phase": ["legacy"] },
 
         { "id": "mobile-customer", "type": "human", "tag": "external", "label": "Mobile\nCustomer", "x": 30, "y": 540, "w": 120, "h": 70, "phase": "mobile" },
         { "id": "pos-tablet", "type": "service", "tag": "new", "label": "POS\nTablet", "x": 170, "y": 320, "w": 130, "h": 75, "status": "ready", "phase": "mobile" },
@@ -48,10 +48,10 @@
 
     "connections": [
         { "from": "walk-in", "to": "cashier" },
-        { "from": "cashier", "to": "card-terminal" },
-        { "from": "cashier", "to": "cash-drawer" },
+        { "from": "cashier", "to": "card-terminal", "phase": ["legacy", "mobile"] },
+        { "from": "cashier", "to": "cash-drawer", "phase": ["legacy", "mobile"] },
         { "from": "cashier", "to": "barista" },
-        { "from": "barista", "to": "paper-log" },
+        { "from": "barista", "to": "paper-log", "phase": ["legacy"] },
 
         { "from": "mobile-customer", "to": "api-gw", "phase": "mobile" },
         { "from": "walk-in", "to": "pos-tablet", "phase": "mobile" },

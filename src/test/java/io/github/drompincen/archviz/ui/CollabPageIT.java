@@ -209,4 +209,41 @@ class CollabPageIT {
         // Back arrow should be visible
         assertThat(page.locator("#narr-back-arrow")).isVisible();
     }
+
+    @Test
+    void phaseArrayVisibility_nodeHidesInLaterPhase() {
+        // Load coffee-shop diagram which has card-terminal with phase: ["legacy", "mobile"]
+        page.navigate("http://localhost:" + port +
+                "/collab-animation.html?collab=coffee-shop-transformation.json");
+        page.waitForLoadState();
+        page.waitForFunction("document.querySelectorAll('#nodes-container .node').length >= 3");
+
+        // At phase 0 (legacy), card-terminal should be in the DOM
+        assertEquals(1, page.locator("#node-card-terminal").count(),
+                "card-terminal should exist at phase 0 (legacy)");
+
+        // Move slider to phase 1 (mobile) — still present
+        page.locator("#phase-slider").evaluate("el => { el.value = 1; el.dispatchEvent(new Event('input')); }");
+        page.waitForFunction("document.getElementById('node-card-terminal') !== null");
+        assertEquals(1, page.locator("#node-card-terminal").count(),
+                "card-terminal should exist at phase 1 (mobile)");
+
+        // Move slider to phase 2 (credits) — should be removed from DOM
+        page.locator("#phase-slider").evaluate("el => { el.value = 2; el.dispatchEvent(new Event('input')); }");
+        page.waitForFunction("document.getElementById('node-card-terminal') === null");
+        assertEquals(0, page.locator("#node-card-terminal").count(),
+                "card-terminal should be gone at phase 2 (credits)");
+
+        // Move slider to phase 3 (analytics) — still gone
+        page.locator("#phase-slider").evaluate("el => { el.value = 3; el.dispatchEvent(new Event('input')); }");
+        page.waitForFunction("document.getElementById('node-card-terminal') === null");
+        assertEquals(0, page.locator("#node-card-terminal").count(),
+                "card-terminal should be gone at phase 3 (analytics)");
+
+        // Move back to phase 0 (legacy) — should reappear
+        page.locator("#phase-slider").evaluate("el => { el.value = 0; el.dispatchEvent(new Event('input')); }");
+        page.waitForFunction("document.getElementById('node-card-terminal') !== null");
+        assertEquals(1, page.locator("#node-card-terminal").count(),
+                "card-terminal should reappear at phase 0 (legacy)");
+    }
 }
