@@ -329,6 +329,18 @@ function renderVisionSlide(vision, kpis) {
         vision.kpiTargets.forEach(function(target) {
             var kpi = kpis.find(function(k) { return k.id === target.kpiId; });
             var label = kpi ? kpi.label : target.kpiId;
+
+            if (kpi && kpi.format === 'qualitative') {
+                var goalText = target.goalLabel ||
+                    (kpi.direction === 'lower_is_better' ? '\u25BC Reduce' : '\u25B2 Improve');
+                if (target.horizon) goalText += ' (' + target.horizon + ')';
+                html += '<div class="narr-kpi-target">';
+                html += '<div class="narr-kpi-target-label">' + escapeHtml(label) + '</div>';
+                html += '<div class="narr-kpi-target-goal">' + goalText + '</div>';
+                html += '</div>';
+                return;
+            }
+
             var baseline = kpi ? kpi.baseline : 0;
             var targetMid = (target.min + target.max) / 2;
 
@@ -423,15 +435,21 @@ function renderPhaseSlide(phaseData, phaseIdx, story) {
                 idea.expectedKpiImpacts.forEach(function(impact) {
                     var kpi = kpiMap[impact.kpiId];
                     var label = kpi ? kpi.label : impact.kpiId;
-                    var sign = impact.delta > 0 ? '+' : '';
-                    var unit = kpi ? kpi.unit : '';
                     var impCls = '';
                     if (kpi) {
                         var good = (kpi.direction === 'higher_is_better' && impact.delta > 0) ||
                                    (kpi.direction === 'lower_is_better' && impact.delta < 0);
                         impCls = good ? 'impact-positive' : 'impact-negative';
                     }
-                    html += '<span class="narr-idea-impact ' + impCls + '">' + escapeHtml(label) + ' ' + sign + impact.delta + ' ' + unit + '</span>';
+                    var chipText;
+                    if (kpi && kpi.format === 'qualitative') {
+                        chipText = escapeHtml(label) + ' ' + formatQualitativeDelta(impact.delta);
+                    } else {
+                        var sign = impact.delta > 0 ? '+' : '';
+                        var unit = kpi ? kpi.unit : '';
+                        chipText = escapeHtml(label) + ' ' + sign + impact.delta + ' ' + unit;
+                    }
+                    html += '<span class="narr-idea-impact ' + impCls + '">' + chipText + '</span>';
                 });
                 html += '</div>';
             }
@@ -510,7 +528,9 @@ function renderBenefitsSidebar(story) {
         phaseBenefits.forEach(function(b) {
             var kpi = kpiMap[b.kpiId];
             var targetText = '';
-            if (b.targetRange) {
+            if (kpi && kpi.format === 'qualitative') {
+                targetText = kpi.direction === 'lower_is_better' ? '\u25BC Reduce' : '\u25B2 Improve';
+            } else if (b.targetRange) {
                 targetText = b.targetRange.min + ' \u2013 ' + b.targetRange.max;
                 if (kpi) targetText += ' ' + kpi.unit;
             }
@@ -595,9 +615,14 @@ function renderKpiHud() {
         var formattedVal = formatKpiValue(currentVal, kpi.format);
         var valClass = improving ? 'improving' : (declining ? 'declining' : '');
 
+        var isQual = kpi.format === 'qualitative';
         html += '<div class="kpi-hud-card">';
         html += '<div class="kpi-hud-label">' + escapeHtml(kpi.label) + '</div>';
-        html += '<div class="kpi-hud-value ' + valClass + '">' + formattedVal + '<span class="kpi-hud-unit">' + escapeHtml(kpi.unit) + '</span></div>';
+        if (isQual) {
+            html += '<div class="kpi-hud-value kpi-qualitative ' + valClass + '">' + formattedVal + '</div>';
+        } else {
+            html += '<div class="kpi-hud-value ' + valClass + '">' + formattedVal + '<span class="kpi-hud-unit">' + escapeHtml(kpi.unit) + '</span></div>';
+        }
         html += '</div>';
     });
 
@@ -632,6 +657,7 @@ function computeKpiValuesForPhase(kpis, story) {
 }
 
 function formatKpiValue(val, format) {
+    if (format === 'qualitative') return formatQualitativeValue(val);
     if (!format) return String(Math.round(val));
     if (format === '0') return String(Math.round(val));
     if (format === '0.1f') return val.toFixed(1);
@@ -641,6 +667,24 @@ function formatKpiValue(val, format) {
         return '$' + val.toFixed(2);
     }
     return String(Math.round(val));
+}
+
+function formatQualitativeValue(val) {
+    if (val >= 3) return '\u25B2\u25B2 Strongly Improved';
+    if (val === 2) return '\u25B2 Improved';
+    if (val === 1) return '\u25B2 Slightly Improved';
+    if (val === 0) return '\u2014 No Change';
+    if (val === -1) return '\u25BC Slightly Declined';
+    if (val === -2) return '\u25BC Declined';
+    return '\u25BC\u25BC Strongly Declined';
+}
+
+function formatQualitativeDelta(delta) {
+    if (delta >= 2) return '\u25B2\u25B2';
+    if (delta > 0) return '\u25B2';
+    if (delta === 0) return '\u2014';
+    if (delta <= -2) return '\u25BC\u25BC';
+    return '\u25BC';
 }
 
 /* ── Event bindings ── */

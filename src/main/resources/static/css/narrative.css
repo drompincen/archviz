@@ -172,6 +172,10 @@ body.light-theme .narr-kpi-target-bar { background: #ddd; }
     font-size: 0.78rem; color: #888; min-width: 100px; text-align: right;
 }
 body.light-theme .narr-kpi-target-value { color: #666; }
+.narr-kpi-target-goal {
+    flex: 1; font-size: 0.88rem; font-weight: 600; color: #2ecc71;
+}
+body.light-theme .narr-kpi-target-goal { color: #1a8a4a; }
 
 /* Acceptance Criteria */
 .narr-acceptance { margin-top: 16px; }
@@ -441,6 +445,9 @@ body.light-theme .kpi-hud-label { color: #999; }
 }
 .kpi-hud-value.improving { color: #2ecc71; }
 .kpi-hud-value.declining { color: #e74c3c; }
+.kpi-hud-value.kpi-qualitative {
+    font-size: 1rem; font-weight: 700;
+}
 .kpi-hud-unit {
     font-size: 0.75rem; font-weight: 400; color: #888;
     margin-left: 4px;
