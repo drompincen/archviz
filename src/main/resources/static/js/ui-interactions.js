@@ -144,9 +144,11 @@ export function initUIInteractions() {
         if (dom.chkSequenceMode.checked) renderSequenceView();
     });
 
-    // Phase slider
-    dom.phaseSlider.addEventListener('input', function() {
-        state.selectedPhase = parseInt(dom.phaseSlider.value);
+    // Phase dots
+    dom.phaseDots.addEventListener('click', function(e) {
+        var dot = e.target.closest('.phase-dot');
+        if (!dot) return;
+        state.selectedPhase = parseInt(dot.getAttribute('data-phase-idx'));
         if (state.graph.phases && state.graph.phases[state.selectedPhase]) {
             dom.phaseLabelDisplay.textContent = state.graph.phases[state.selectedPhase].label || state.graph.phases[state.selectedPhase].id;
         }
@@ -158,7 +160,7 @@ export function initUIInteractions() {
     dom.flowSelector.addEventListener('change', function() {
         state.selectedFlowId = dom.flowSelector.value;
 
-        // Auto-sync phase slider to the minimum phase required by this flow
+        // Auto-sync phase dots to the flow's max phase (forward or backward)
         if (state.selectedFlowId !== '__default__' && state.graph.flows && state.graph.phases && state.graph.phases.length > 0) {
             var flow = state.graph.flows.find(function(f) { return f.id === state.selectedFlowId; });
             if (flow && flow.sequence) {
@@ -176,9 +178,8 @@ export function initUIInteractions() {
                         }
                     }
                 });
-                if (maxPhaseNeeded > state.selectedPhase) {
+                if (maxPhaseNeeded !== state.selectedPhase) {
                     state.selectedPhase = maxPhaseNeeded;
-                    dom.phaseSlider.value = state.selectedPhase;
                     if (state.graph.phases[state.selectedPhase]) {
                         dom.phaseLabelDisplay.textContent = state.graph.phases[state.selectedPhase].label || state.graph.phases[state.selectedPhase].id;
                     }

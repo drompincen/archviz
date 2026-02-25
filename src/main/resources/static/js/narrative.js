@@ -73,7 +73,6 @@ export function renderNarrativeControls() {
                 var initIdx = getPhaseIndex(state.graph.story.uiHints.initialPhase);
                 if (initIdx >= 0) {
                     state.selectedPhase = initIdx;
-                    dom.phaseSlider.value = initIdx;
                     if (state.graph.phases[initIdx]) {
                         dom.phaseLabelDisplay.textContent = state.graph.phases[initIdx].label || state.graph.phases[initIdx].id;
                     }
@@ -216,7 +215,6 @@ function goToSlide(idx) {
 
 function syncPhase(phaseIdx) {
     state.selectedPhase = phaseIdx;
-    dom.phaseSlider.value = phaseIdx;
     if (state.graph.phases && state.graph.phases[phaseIdx]) {
         dom.phaseLabelDisplay.textContent = state.graph.phases[phaseIdx].label || state.graph.phases[phaseIdx].id;
     }
@@ -727,7 +725,6 @@ function bindViewArchButtons() {
             if (isNaN(idx)) return;
 
             state.selectedPhase = idx;
-            dom.phaseSlider.value = idx;
             if (state.graph.phases && state.graph.phases[idx]) {
                 dom.phaseLabelDisplay.textContent = state.graph.phases[idx].label || state.graph.phases[idx].id;
             }

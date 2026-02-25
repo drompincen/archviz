@@ -55,6 +55,10 @@ export function itemBelongsToPhase(item, phaseId) {
     return item.phase === phaseId;
 }
 
+export function flowHasVisibleSteps(flow) {
+    return (flow.sequence || []).some(function(step) { return isVisibleInPhase(step); });
+}
+
 export function resolveActiveSequence() {
     var seq;
     if (state.selectedFlowId !== '__default__' && state.graph.flows) {
