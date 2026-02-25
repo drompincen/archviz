@@ -217,6 +217,80 @@ Flows let you define multiple named animation paths through the same architectur
 
 A dropdown appears in the header when flows are present. The root `"sequence"` array is used as the default. Each flow's sequence is independently filtered by the current phase.
 
+## KPIs in Story Mode
+
+KPIs connect the architecture to business outcomes. They let you show stakeholders *why* each phase matters — not just what gets built, but what improves.
+
+### How it works
+
+1. **Define KPIs** with a baseline value, direction, and display format in `story.kpis`:
+
+```json
+"kpis": [
+    { "id": "orders_per_hour", "label": "Peak Orders / Hour", "unit": "orders/hr",
+      "direction": "higher_is_better", "baseline": 30, "current": 30, "format": "0" },
+    { "id": "avg_wait_min", "label": "Avg Wait Time", "unit": "min",
+      "direction": "lower_is_better", "baseline": 8.0, "current": 8.0, "format": "0.1f" }
+]
+```
+
+2. **Attach impact deltas to idea cards.** Each idea card declares how it expects to move specific KPIs. Deltas are signed numbers — positive for increase, negative for decrease:
+
+```json
+"ideaCards": [
+    {
+        "id": "pos-kiosk", "title": "Self-Service Kiosks",
+        "phases": ["legacy"],
+        "expectedKpiImpacts": [
+            { "kpiId": "orders_per_hour", "delta": 25, "confidence": "high" },
+            { "kpiId": "avg_wait_min", "delta": -4.0, "confidence": "high" }
+        ]
+    }
+]
+```
+
+3. **The KPI HUD updates automatically** as you navigate story slides. When you land on a phase slide, the platform accumulates deltas from all non-rejected idea cards whose phases are at or before the current phase. The HUD shows the projected value for each KPI with color coding:
+   - **Green** — improving (value moved in the desired direction)
+   - **Red** — declining (value moved against the desired direction)
+   - **Neutral** — unchanged from baseline
+
+4. **KPIs appear across multiple story elements:**
+
+| Where | What's shown |
+|-------|-------------|
+| **Problem slide** | `impactMetric` badge highlights the KPI most affected by the current problem |
+| **Vision slide** | Target bars show min/max ranges with confidence intervals for each KPI |
+| **Phase slides** | Idea cards show per-card delta chips (e.g. "+25 orders/hr") colored by direction |
+| **KPI HUD** (top-right) | Live running totals that update as you advance through phases |
+| **Benefits sidebar** | Benefit cards can reference a KPI with a target range |
+
+### KPI fields reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Unique identifier, referenced by idea cards and benefits |
+| `label` | String | Display name shown in the HUD and on slides |
+| `unit` | String | Unit string (e.g. `"orders/hr"`, `"%"`, `"$"`, `"min"`) |
+| `direction` | String | `"higher_is_better"` or `"lower_is_better"` — controls color coding |
+| `baseline` | Number | Starting value before any initiatives |
+| `current` | Number | Current value (may equal baseline initially) |
+| `format` | String | Display format: `"0"` (integer), `"0.1f"` (1 decimal), `"$0.00"`, `"$0,0"` |
+
+### Example: coffee shop transformation
+
+The included `coffee-shop-transformation.json` tracks 6 KPIs across 4 phases:
+
+| KPI | Baseline | After all phases | Direction |
+|-----|----------|-----------------|-----------|
+| Peak Orders / Hour | 30 | 95 | higher is better |
+| Avg Wait Time | 8.0 min | 1.0 min | lower is better |
+| Revenue / Customer | $4.50 | $7.20 | higher is better |
+| Digital Order % | 0% | 65% | higher is better |
+| Annual Revenue | $394,200 | $893,400 | higher is better |
+| Cash Payment % | 62% | 12% | lower is better |
+
+As you click through the story slides, the KPI HUD in the top-right corner animates from baseline to the accumulated values for the current phase.
+
 ## Performing an Architecture Review
 
 ArchViz is designed to support structured architecture reviews where you walk a team through both the **static architecture** and the **dynamic flows**.
