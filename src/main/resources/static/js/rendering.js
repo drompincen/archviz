@@ -2,7 +2,7 @@
 
 import { state, dom } from './state.js';
 import { ICONS } from './constants.js';
-import { stripJsonComments, normalizeMultilineStrings, isVisibleInPhase, resolveActiveSequence } from './core-data.js';
+import { stripJsonComments, normalizeMultilineStrings, isVisibleInPhase, resolveActiveSequence, flowHasVisibleSteps } from './core-data.js';
 import { clearLog } from './logging.js';
 import { renderBenefitsPanel } from './benefits.js';
 import { renderSequenceView } from './sequence-view.js';
@@ -82,6 +82,46 @@ export function updateConnections() {
     });
 }
 
+function updatePhaseDots() {
+    dom.phaseDots.innerHTML = '';
+    if (!state.graph.phases) return;
+    state.graph.phases.forEach(function(phase, idx) {
+        var dot = document.createElement('span');
+        dot.className = 'phase-dot';
+        if (idx <= state.selectedPhase) dot.classList.add('reached');
+        if (idx === state.selectedPhase) dot.classList.add('active');
+        dot.setAttribute('data-phase-idx', idx);
+        dot.title = phase.label || phase.id;
+        dom.phaseDots.appendChild(dot);
+    });
+}
+
+function updateFlowDropdown() {
+    if (state.graph.flows && state.graph.flows.length > 0) {
+        dom.flowControls.style.display = '';
+        var prevVal = state.selectedFlowId;
+        dom.flowSelector.innerHTML = '<option value="__default__">-- Default Sequence --</option>';
+        var visibleFlows = state.graph.flows.filter(function(f) { return flowHasVisibleSteps(f); });
+        visibleFlows.forEach(function(f) {
+            var opt = document.createElement('option');
+            opt.value = f.id;
+            opt.textContent = f.name || f.id;
+            dom.flowSelector.appendChild(opt);
+        });
+        dom.flowSelector.value = prevVal;
+        if (!dom.flowSelector.value) {
+            dom.flowSelector.value = '__default__';
+            state.selectedFlowId = '__default__';
+            resolveActiveSequence();
+        } else {
+            state.selectedFlowId = dom.flowSelector.value;
+        }
+    } else {
+        dom.flowControls.style.display = 'none';
+        state.selectedFlowId = '__default__';
+    }
+}
+
 export function render() {
     try {
         var cleanJson = stripJsonComments(dom.input.value);
@@ -100,38 +140,21 @@ export function render() {
         // Phase controls
         if (state.graph.phases && state.graph.phases.length > 0) {
             dom.phaseControls.style.display = '';
-            dom.phaseSlider.max = state.graph.phases.length - 1;
-            if (state.selectedPhase !== Infinity) {
-                dom.phaseSlider.value = Math.min(state.selectedPhase, state.graph.phases.length - 1);
-                dom.phaseLabelDisplay.textContent = state.graph.phases[dom.phaseSlider.value].label || state.graph.phases[dom.phaseSlider.value].id;
-            } else {
-                dom.phaseSlider.value = state.graph.phases.length - 1;
+            if (state.selectedPhase === Infinity) {
                 state.selectedPhase = state.graph.phases.length - 1;
-                dom.phaseLabelDisplay.textContent = state.graph.phases[state.selectedPhase].label || state.graph.phases[state.selectedPhase].id;
+            } else {
+                state.selectedPhase = Math.min(state.selectedPhase, state.graph.phases.length - 1);
             }
+            dom.phaseLabelDisplay.textContent = state.graph.phases[state.selectedPhase].label || state.graph.phases[state.selectedPhase].id;
+            updatePhaseDots();
         } else {
             dom.phaseControls.style.display = 'none';
             state.selectedPhase = Infinity;
+            dom.phaseDots.innerHTML = '';
         }
 
         // Flow controls
-        if (state.graph.flows && state.graph.flows.length > 0) {
-            dom.flowControls.style.display = '';
-            var prevVal = dom.flowSelector.value;
-            dom.flowSelector.innerHTML = '<option value="__default__">-- Default Sequence --</option>';
-            state.graph.flows.forEach(function(f) {
-                var opt = document.createElement('option');
-                opt.value = f.id;
-                opt.textContent = f.name || f.id;
-                dom.flowSelector.appendChild(opt);
-            });
-            dom.flowSelector.value = prevVal;
-            if (!dom.flowSelector.value) dom.flowSelector.value = '__default__';
-            state.selectedFlowId = dom.flowSelector.value;
-        } else {
-            dom.flowControls.style.display = 'none';
-            state.selectedFlowId = '__default__';
-        }
+        updateFlowDropdown();
 
         resolveActiveSequence();
 

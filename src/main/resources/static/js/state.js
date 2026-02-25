@@ -49,7 +49,7 @@ export function initDom() {
     dom.chkLightMode = document.getElementById('chk-light-mode');
     dom.jsonSelector = document.getElementById('json-selector');
     dom.phaseControls = document.getElementById('phase-controls');
-    dom.phaseSlider = document.getElementById('phase-slider');
+    dom.phaseDots = document.getElementById('phase-dots');
     dom.phaseLabelDisplay = document.getElementById('phase-label-display');
     dom.flowControls = document.getElementById('flow-controls');
     dom.flowSelector = document.getElementById('flow-selector');

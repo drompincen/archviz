@@ -144,9 +144,11 @@ export function initUIInteractions() {
         if (dom.chkSequenceMode.checked) renderSequenceView();
     });
 
-    // Phase slider
-    dom.phaseSlider.addEventListener('input', function() {
-        state.selectedPhase = parseInt(dom.phaseSlider.value);
+    // Phase dots
+    dom.phaseDots.addEventListener('click', function(e) {
+        var dot = e.target.closest('.phase-dot');
+        if (!dot) return;
+        state.selectedPhase = parseInt(dot.getAttribute('data-phase-idx'));
         if (state.graph.phases && state.graph.phases[state.selectedPhase]) {
             dom.phaseLabelDisplay.textContent = state.graph.phases[state.selectedPhase].label || state.graph.phases[state.selectedPhase].id;
         }
@@ -178,7 +180,6 @@ export function initUIInteractions() {
                 });
                 if (maxPhaseNeeded > state.selectedPhase) {
                     state.selectedPhase = maxPhaseNeeded;
-                    dom.phaseSlider.value = state.selectedPhase;
                     if (state.graph.phases[state.selectedPhase]) {
                         dom.phaseLabelDisplay.textContent = state.graph.phases[state.selectedPhase].label || state.graph.phases[state.selectedPhase].id;
                     }
