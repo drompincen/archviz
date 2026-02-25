@@ -4,11 +4,10 @@ import { state, dom } from './state.js';
 import { stripJsonComments, normalizeMultilineStrings } from './core-data.js';
 import { render } from './rendering.js';
 import { resetAnimation } from './animation.js';
+import { hasOptionForFile, sortDropdownOptions } from './data-loading.js';
 
 function addApiDiagramOption(diagram) {
-    for (var i = 0; i < dom.jsonSelector.options.length; i++) {
-        if (dom.jsonSelector.options[i].value === diagram.id) return;
-    }
+    if (hasOptionForFile(diagram.id)) return;
     var opt = document.createElement('option');
     opt.value = diagram.id;
     var displayName = diagram.title || diagram.id;
@@ -28,6 +27,7 @@ function refreshDiagramDropdown(selectId) {
     fetch('/api/diagrams').then(function(r) { return r.json(); })
         .then(function(diagrams) {
             diagrams.forEach(function(d) { addApiDiagramOption(d); });
+            sortDropdownOptions();
             if (selectId) dom.jsonSelector.value = selectId;
         }).catch(function() {});
 }

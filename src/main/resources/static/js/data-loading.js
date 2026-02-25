@@ -10,10 +10,39 @@ import { initPdfExport } from './export-pdf.js';
 import { initFileOperations } from './file-operations.js';
 import { initNarrative } from './narrative.js';
 
-function addApiDiagramOption(diagram) {
+// Normalize both "file-foo-bar" and "foo-bar.json" to "foo-bar.json"
+export function canonicalFilename(value) {
+    if (!value) return value;
+    var name = value.replace(/^file-/, '');
+    if (!name.endsWith('.json')) name += '.json';
+    return name;
+}
+
+export function hasOptionForFile(value) {
+    var canonical = canonicalFilename(value);
     for (var i = 0; i < dom.jsonSelector.options.length; i++) {
-        if (dom.jsonSelector.options[i].value === diagram.id) return;
+        if (canonicalFilename(dom.jsonSelector.options[i].value) === canonical) return true;
     }
+    return false;
+}
+
+export function sortDropdownOptions() {
+    var opts = [];
+    for (var i = 1; i < dom.jsonSelector.options.length; i++) {
+        opts.push(dom.jsonSelector.options[i]);
+    }
+    opts.sort(function(a, b) {
+        return a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase());
+    });
+    // Remove all non-default options, then re-append sorted
+    while (dom.jsonSelector.options.length > 1) {
+        dom.jsonSelector.remove(1);
+    }
+    opts.forEach(function(o) { dom.jsonSelector.appendChild(o); });
+}
+
+function addApiDiagramOption(diagram) {
+    if (hasOptionForFile(diagram.id)) return;
     var opt = document.createElement('option');
     opt.value = diagram.id;
     var displayName = diagram.title || diagram.id;
@@ -31,22 +60,19 @@ function addApiDiagramOption(diagram) {
 }
 
 function addJsonFileOptionLegacy(filename) {
-    for (var i = 0; i < dom.jsonSelector.options.length; i++) {
-        if (dom.jsonSelector.options[i].value === filename) return;
-    }
+    if (hasOptionForFile(filename)) return;
     fetch('json/' + filename).then(function(r) {
         if (!r.ok) return;
         return r.json().then(function(data) {
             var displayName = (data.title || filename.replace('.json', '').replace(/[-_]/g, ' '));
             state.SAMPLE_JSONS[filename] = data;
-            for (var j = 0; j < dom.jsonSelector.options.length; j++) {
-                if (dom.jsonSelector.options[j].value === filename) return;
-            }
+            if (hasOptionForFile(filename)) return;
             var opt = document.createElement('option');
             opt.value = filename;
             opt.textContent = displayName;
             opt.dataset.filename = filename;
             dom.jsonSelector.appendChild(opt);
+            sortDropdownOptions();
         });
     }).catch(function() {});
 }
@@ -60,6 +86,7 @@ function discoverJsonFiles() {
         diagrams.forEach(function(d) {
             addApiDiagramOption(d);
         });
+        sortDropdownOptions();
     }).catch(function() {
         fallbackDiscoverJsonFiles();
     });
@@ -92,18 +119,23 @@ function handleCollabParam() {
     }).then(function(data) {
         state.SAMPLE_JSONS[collabFile] = data;
         var displayName = data.title || collabFile.replace('.json', '').replace(/[-_]/g, ' ');
-        var exists = false;
-        for (var i = 0; i < dom.jsonSelector.options.length; i++) {
-            if (dom.jsonSelector.options[i].value === collabFile) { exists = true; break; }
-        }
-        if (!exists) {
+        if (!hasOptionForFile(collabFile)) {
             var opt = document.createElement('option');
             opt.value = collabFile;
             opt.textContent = displayName;
             opt.dataset.filename = collabFile;
             dom.jsonSelector.appendChild(opt);
+            sortDropdownOptions();
         }
-        dom.jsonSelector.value = collabFile;
+        // Select the matching option (may have file- prefix from API path)
+        var found = false;
+        for (var i = 0; i < dom.jsonSelector.options.length; i++) {
+            if (canonicalFilename(dom.jsonSelector.options[i].value) === canonicalFilename(collabFile)) {
+                dom.jsonSelector.value = dom.jsonSelector.options[i].value;
+                found = true;
+                break;
+            }
+        }
         dom.input.value = JSON.stringify(data, null, 4);
         render();
         resetAnimation(true);
