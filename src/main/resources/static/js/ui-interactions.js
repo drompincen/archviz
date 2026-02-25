@@ -160,7 +160,7 @@ export function initUIInteractions() {
     dom.flowSelector.addEventListener('change', function() {
         state.selectedFlowId = dom.flowSelector.value;
 
-        // Auto-sync phase slider to the minimum phase required by this flow
+        // Auto-sync phase dots to the flow's max phase (forward or backward)
         if (state.selectedFlowId !== '__default__' && state.graph.flows && state.graph.phases && state.graph.phases.length > 0) {
             var flow = state.graph.flows.find(function(f) { return f.id === state.selectedFlowId; });
             if (flow && flow.sequence) {
@@ -178,7 +178,7 @@ export function initUIInteractions() {
                         }
                     }
                 });
-                if (maxPhaseNeeded > state.selectedPhase) {
+                if (maxPhaseNeeded !== state.selectedPhase) {
                     state.selectedPhase = maxPhaseNeeded;
                     if (state.graph.phases[state.selectedPhase]) {
                         dom.phaseLabelDisplay.textContent = state.graph.phases[state.selectedPhase].label || state.graph.phases[state.selectedPhase].id;
