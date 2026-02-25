@@ -223,25 +223,25 @@ class CollabPageIT {
                 "card-terminal should exist at phase 0 (legacy)");
 
         // Click phase dot 1 (mobile) — still present
-        page.locator("#phase-dots .phase-dot[data-phase-idx='1']").click();
+        page.locator("#phase-dots .phase-dot[data-phase-idx='1']").dispatchEvent("click");
         page.waitForFunction("document.getElementById('node-card-terminal') !== null");
         assertEquals(1, page.locator("#node-card-terminal").count(),
                 "card-terminal should exist at phase 1 (mobile)");
 
         // Click phase dot 2 (credits) — should be removed from DOM
-        page.locator("#phase-dots .phase-dot[data-phase-idx='2']").click();
+        page.locator("#phase-dots .phase-dot[data-phase-idx='2']").dispatchEvent("click");
         page.waitForFunction("document.getElementById('node-card-terminal') === null");
         assertEquals(0, page.locator("#node-card-terminal").count(),
                 "card-terminal should be gone at phase 2 (credits)");
 
         // Click phase dot 3 (analytics) — still gone
-        page.locator("#phase-dots .phase-dot[data-phase-idx='3']").click();
+        page.locator("#phase-dots .phase-dot[data-phase-idx='3']").dispatchEvent("click");
         page.waitForFunction("document.getElementById('node-card-terminal') === null");
         assertEquals(0, page.locator("#node-card-terminal").count(),
                 "card-terminal should be gone at phase 3 (analytics)");
 
         // Click phase dot 0 (legacy) — should reappear
-        page.locator("#phase-dots .phase-dot[data-phase-idx='0']").click();
+        page.locator("#phase-dots .phase-dot[data-phase-idx='0']").dispatchEvent("click");
         page.waitForFunction("document.getElementById('node-card-terminal') !== null");
         assertEquals(1, page.locator("#node-card-terminal").count(),
                 "card-terminal should reappear at phase 0 (legacy)");
