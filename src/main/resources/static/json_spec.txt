@@ -313,7 +313,47 @@ story.kpis Array
   direction  String  "higher_is_better" or "lower_is_better".
   baseline   Number  Starting value (shown on problem slide).
   current    Number  Current value (may equal baseline initially).
-  format     String  Optional. Display format: "0", "0.1f", "$0.00", "$0,0".
+  format     String  Optional. Display format: "0", "0.1f", "$0.00", "$0,0",
+                     or "qualitative" for non-numeric directional KPIs.
+
+Qualitative KPIs
+
+  When format is "qualitative", the KPI shows directional arrows and labels
+  instead of numeric values. Use this for metrics that can't or shouldn't be
+  quantified (e.g. "Customer Satisfaction", "Operational Complexity").
+
+  The baseline should be 0, and idea card deltas use small integers:
+
+    Accumulated value   Display
+    -----------------   -----------------------------
+    >= 3                ▲▲ Strongly Improved
+    2                   ▲ Improved
+    1                   ▲ Slightly Improved
+    0                   — No Change
+    -1                  ▼ Slightly Declined
+    -2                  ▼ Declined
+    <= -3               ▼▼ Strongly Declined
+
+  The direction field still controls color coding (green/red).
+
+  Vision targets for qualitative KPIs use goalLabel instead of min/max:
+
+    { "kpiId": "team_morale", "goalLabel": "▲ Strongly Improve", "horizon": "12 months" }
+
+  If goalLabel is omitted, a default is derived from direction
+  ("▲ Improve" or "▼ Reduce").
+
+  Example:
+
+    {
+        "id": "team_morale",
+        "label": "Team Morale",
+        "unit": "",
+        "direction": "higher_is_better",
+        "baseline": 0,
+        "current": 0,
+        "format": "qualitative"
+    }
 
 story.phases Array
 

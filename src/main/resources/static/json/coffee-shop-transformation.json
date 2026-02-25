@@ -196,7 +196,9 @@
                 { "kpiId": "avg_wait_min", "min": 1.5, "max": 3.0, "confidence": "high", "horizon": "6 months" },
                 { "kpiId": "revenue_per_customer", "min": 6.50, "max": 8.00, "confidence": "medium", "horizon": "12 months" },
                 { "kpiId": "digital_order_pct", "min": 70, "max": 80, "confidence": "medium", "horizon": "12 months" },
-                { "kpiId": "annual_revenue", "min": 1000000, "max": 1200000, "confidence": "medium", "horizon": "12 months" }
+                { "kpiId": "annual_revenue", "min": 1000000, "max": 1200000, "confidence": "medium", "horizon": "12 months" },
+                { "kpiId": "customer_satisfaction", "goalLabel": "\u25B2 Strongly Improve", "horizon": "12 months" },
+                { "kpiId": "operational_complexity", "goalLabel": "\u25BC Reduce", "horizon": "12 months" }
             ],
             "acceptanceCriteria": [
                 "Sustained 85+ orders/hour during 7-9 AM peak for 30 days",
@@ -261,6 +263,24 @@
                 "baseline": 62,
                 "current": 62,
                 "format": "0"
+            },
+            {
+                "id": "customer_satisfaction",
+                "label": "Customer Satisfaction",
+                "unit": "",
+                "direction": "higher_is_better",
+                "baseline": 0,
+                "current": 0,
+                "format": "qualitative"
+            },
+            {
+                "id": "operational_complexity",
+                "label": "Operational Complexity",
+                "unit": "",
+                "direction": "lower_is_better",
+                "baseline": 0,
+                "current": 0,
+                "format": "qualitative"
             }
         ],
 
@@ -318,7 +338,9 @@
                     { "kpiId": "orders_per_hour", "delta": 25, "confidence": "high" },
                     { "kpiId": "avg_wait_min", "delta": -4.0, "confidence": "high" },
                     { "kpiId": "digital_order_pct", "delta": 40, "confidence": "medium" },
-                    { "kpiId": "annual_revenue", "delta": 131400, "confidence": "medium" }
+                    { "kpiId": "annual_revenue", "delta": 131400, "confidence": "medium" },
+                    { "kpiId": "customer_satisfaction", "delta": 2, "confidence": "high" },
+                    { "kpiId": "operational_complexity", "delta": 1, "confidence": "medium" }
                 ],
                 "comments": [
                     { "author": "ceo@beanandbyte.com", "text": "This is the single highest-impact move. Competitors already have this.", "timestamp": "2026-02-05T10:00:00Z" },
@@ -341,7 +363,9 @@
                 "expectedKpiImpacts": [
                     { "kpiId": "orders_per_hour", "delta": 10, "confidence": "high" },
                     { "kpiId": "avg_wait_min", "delta": -1.5, "confidence": "high" },
-                    { "kpiId": "cash_pct", "delta": -30, "confidence": "medium" }
+                    { "kpiId": "cash_pct", "delta": -30, "confidence": "medium" },
+                    { "kpiId": "customer_satisfaction", "delta": 1, "confidence": "high" },
+                    { "kpiId": "operational_complexity", "delta": -2, "confidence": "high" }
                 ],
                 "comments": [],
                 "evidenceLinks": []
@@ -400,7 +424,8 @@
                 "expectedKpiImpacts": [
                     { "kpiId": "revenue_per_customer", "delta": 0.80, "confidence": "medium" },
                     { "kpiId": "orders_per_hour", "delta": 10, "confidence": "low" },
-                    { "kpiId": "annual_revenue", "delta": 118300, "confidence": "low" }
+                    { "kpiId": "annual_revenue", "delta": 118300, "confidence": "low" },
+                    { "kpiId": "customer_satisfaction", "delta": 2, "confidence": "medium" }
                 ],
                 "comments": [],
                 "evidenceLinks": []
@@ -491,6 +516,20 @@
                 "realizedAt": null,
                 "boundNodes": ["wallet-svc", "mobile-customer"],
                 "boundFlows": ["credits-reload"]
+            },
+            {
+                "id": "benefit-customer-sat",
+                "phaseId": "mobile",
+                "title": "Customer satisfaction improves with shorter waits and mobile convenience",
+                "kpiId": "customer_satisfaction",
+                "boundNodes": ["api-gw", "mobile-customer", "pos-tablet"]
+            },
+            {
+                "id": "benefit-ops-simplify",
+                "phaseId": "mobile",
+                "title": "Operations simplified: digital POS replaces cash register + paper logs",
+                "kpiId": "operational_complexity",
+                "boundNodes": ["pos-tablet", "order-svc", "order-db"]
             },
             {
                 "id": "benefit-3x-revenue",

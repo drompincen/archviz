@@ -274,7 +274,41 @@ KPIs connect the architecture to business outcomes. They let you show stakeholde
 | `direction` | String | `"higher_is_better"` or `"lower_is_better"` — controls color coding |
 | `baseline` | Number | Starting value before any initiatives |
 | `current` | Number | Current value (may equal baseline initially) |
-| `format` | String | Display format: `"0"` (integer), `"0.1f"` (1 decimal), `"$0.00"`, `"$0,0"` |
+| `format` | String | Display format: `"0"` (integer), `"0.1f"` (1 decimal), `"$0.00"`, `"$0,0"`, or `"qualitative"` |
+
+### Qualitative (soft) KPIs
+
+Not every metric has a number. For things like "Customer Satisfaction" or "Operational Complexity", use `"format": "qualitative"`. Instead of numeric values, the HUD shows directional arrows:
+
+```json
+{
+    "id": "customer_satisfaction",
+    "label": "Customer Satisfaction",
+    "unit": "",
+    "direction": "higher_is_better",
+    "baseline": 0,
+    "current": 0,
+    "format": "qualitative"
+}
+```
+
+Idea card deltas use small integers (e.g. `+2`, `-1`) that map to labels like "Improved", "Slightly Declined", etc. The accumulated value determines the display:
+
+| Value | Display |
+|-------|---------|
+| >= 3 | ▲▲ Strongly Improved |
+| 2 | ▲ Improved |
+| 1 | ▲ Slightly Improved |
+| 0 | — No Change |
+| -1 | ▼ Slightly Declined |
+| -2 | ▼ Declined |
+| <= -3 | ▼▼ Strongly Declined |
+
+Vision targets for qualitative KPIs use `goalLabel` instead of min/max ranges:
+
+```json
+{ "kpiId": "customer_satisfaction", "goalLabel": "▲ Strongly Improve", "horizon": "12 months" }
+```
 
 ### Example: coffee shop transformation
 
@@ -288,6 +322,8 @@ The included `coffee-shop-transformation.json` tracks 6 KPIs across 4 phases:
 | Digital Order % | 0% | 65% | higher is better |
 | Annual Revenue | $394,200 | $893,400 | higher is better |
 | Cash Payment % | 62% | 12% | lower is better |
+| Customer Satisfaction | — No Change | ▲▲ Strongly Improved | higher is better (qualitative) |
+| Operational Complexity | — No Change | ▼ Slightly Declined | lower is better (qualitative) |
 
 As you click through the story slides, the KPI HUD in the top-right corner animates from baseline to the accumulated values for the current phase.
 

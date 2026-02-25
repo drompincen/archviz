@@ -83,8 +83,17 @@ export function renderBenefitsPanel() {
                 nodeChips += '<span>' + nid + '</span>';
             });
 
-            var baselineLabel = kpi ? (b.baseline + ' ' + kpi.unit) : b.baseline;
-            var targetLabel = kpi ? (b.targetRange.min + '\u2013' + b.targetRange.max + ' ' + kpi.unit) : '';
+            var baselineLabel = '';
+            var targetLabel = '';
+            if (kpi && kpi.format === 'qualitative') {
+                baselineLabel = '\u2014 No Change';
+                targetLabel = kpi.direction === 'lower_is_better' ? '\u25BC Reduce' : '\u25B2 Improve';
+            } else if (kpi && b.targetRange) {
+                baselineLabel = (b.baseline != null ? b.baseline : '') + ' ' + kpi.unit;
+                targetLabel = b.targetRange.min + '\u2013' + b.targetRange.max + ' ' + kpi.unit;
+            } else if (b.baseline != null) {
+                baselineLabel = String(b.baseline);
+            }
 
             html += '<div class="benefit-card ' + cardClass + '" data-benefit-id="' + b.id + '" data-bound-nodes="' + (b.boundNodes || []).join(',') + '">' +
                 '<div class="benefit-title"><span class="benefit-icon">' + icon + '</span> ' + b.title + '</div>' +
