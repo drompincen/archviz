@@ -200,6 +200,24 @@ class StoryModeIT {
     }
 
     @Test
+    void kpiHud_hiddenOnProblem_visibleOnVision() {
+        // On Problem slide, KPI HUD should NOT be visible
+        Locator kpiHud = page.locator("#kpi-hud");
+        String cls = kpiHud.getAttribute("class");
+        assertFalse(cls != null && cls.contains("visible"),
+                "KPI HUD should be hidden on Problem slide");
+
+        // Navigate to Vision slide
+        page.locator(".narr-nav-btn[data-nav='1']").click();
+        page.locator(".narr-slide.type-vision").waitFor();
+
+        // KPI HUD should now be visible
+        assertThat(kpiHud).hasClass(java.util.regex.Pattern.compile(".*visible.*"));
+        assertTrue(page.locator(".kpi-hud-card").count() >= 1,
+                "KPI HUD should show at least one card on Vision slide");
+    }
+
+    @Test
     void headerMinimal_inStoryMode() {
         // In story mode, body should have story-active class
         assertTrue(page.locator("body").evaluate("el => el.classList.contains('story-active')").toString().equals("true"),
