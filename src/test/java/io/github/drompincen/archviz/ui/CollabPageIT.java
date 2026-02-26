@@ -210,13 +210,31 @@ class CollabPageIT {
         assertThat(page.locator("#narr-back-arrow")).isVisible();
     }
 
-    @Test
-    void phaseArrayVisibility_nodeHidesInLaterPhase() {
-        // Load coffee-shop diagram which has card-terminal with phase: ["legacy", "mobile"]
+    /** Navigate to coffee-shop diagram and wait for it to fully render. */
+    private void loadCoffeeShop() {
         page.navigate("http://localhost:" + port +
                 "/collab-animation.html?collab=coffee-shop-transformation.json");
         page.waitForLoadState();
-        page.waitForFunction("document.querySelectorAll('#nodes-container .node').length >= 3");
+        // Wait for a coffee-shop-specific node to confirm the JSON loaded
+        page.waitForFunction("document.getElementById('node-walk-in') !== null");
+    }
+
+    /** Dismiss auto-started story mode and re-render at the given phase. */
+    private void dismissStoryAndGoToPhase(int phaseIdx) {
+        // Toggle off narrative via the story button (properly resets internal state)
+        page.locator("#btn-story-mode").dispatchEvent("click");
+        page.waitForFunction("!document.body.classList.contains('story-active')");
+        // Click phase dot to force a clean re-render at the desired phase
+        page.locator("#phase-dots .phase-dot[data-phase-idx='" + phaseIdx + "']").dispatchEvent("click");
+        page.waitForFunction(
+                "document.querySelector('#phase-dots .phase-dot.active[data-phase-idx=\"" + phaseIdx + "\"]') !== null");
+    }
+
+    @Test
+    void phaseArrayVisibility_nodeHidesInLaterPhase() {
+        // Load coffee-shop diagram which has card-terminal with phase: ["legacy", "mobile"]
+        loadCoffeeShop();
+        dismissStoryAndGoToPhase(0);
 
         // At phase 0 (legacy), card-terminal should be in the DOM
         assertEquals(1, page.locator("#node-card-terminal").count(),
@@ -245,5 +263,98 @@ class CollabPageIT {
         page.waitForFunction("document.getElementById('node-card-terminal') !== null");
         assertEquals(1, page.locator("#node-card-terminal").count(),
                 "card-terminal should reappear at phase 0 (legacy)");
+    }
+
+    @Test
+    void flowDropdown_filtersByPhase() {
+        loadCoffeeShop();
+        dismissStoryAndGoToPhase(0);
+
+        // At phase 0 (legacy), only legacy flows should be visible
+        Locator flowSelector = page.locator("#flow-selector");
+        page.waitForFunction("document.getElementById('flow-selector').options.length > 1");
+
+        // Count non-default options
+        int optionCount = ((Number) flowSelector.evaluate(
+                "el => Array.from(el.options).filter(o => o.value !== '__default__').length")).intValue();
+        assertEquals(2, optionCount,
+                "At phase 0 (legacy), only legacy-cash and legacy-card should appear");
+
+        // Verify specific flow IDs present
+        assertTrue((Boolean) flowSelector.evaluate(
+                "el => Array.from(el.options).some(o => o.value === 'legacy-cash')"),
+                "legacy-cash should be in dropdown at phase 0");
+        assertTrue((Boolean) flowSelector.evaluate(
+                "el => Array.from(el.options).some(o => o.value === 'legacy-card')"),
+                "legacy-card should be in dropdown at phase 0");
+        assertFalse((Boolean) flowSelector.evaluate(
+                "el => Array.from(el.options).some(o => o.value === 'mobile-order')"),
+                "mobile-order should NOT be in dropdown at phase 0");
+        assertFalse((Boolean) flowSelector.evaluate(
+                "el => Array.from(el.options).some(o => o.value === 'credits-reload')"),
+                "credits-reload should NOT be in dropdown at phase 0");
+        assertFalse((Boolean) flowSelector.evaluate(
+                "el => Array.from(el.options).some(o => o.value === 'ai-forecast')"),
+                "ai-forecast should NOT be in dropdown at phase 0");
+
+        // Move to phase 1 (mobile) — mobile-order should appear
+        page.locator("#phase-dots .phase-dot[data-phase-idx='1']").dispatchEvent("click");
+        page.waitForFunction(
+                "Array.from(document.getElementById('flow-selector').options).some(o => o.value === 'mobile-order')");
+
+        assertTrue((Boolean) flowSelector.evaluate(
+                "el => Array.from(el.options).some(o => o.value === 'mobile-order')"),
+                "mobile-order should appear at phase 1 (mobile)");
+        assertFalse((Boolean) flowSelector.evaluate(
+                "el => Array.from(el.options).some(o => o.value === 'legacy-cash')"),
+                "legacy-cash should NOT be in dropdown at phase 1 (mobile)");
+    }
+
+    @Test
+    void flowSelector_syncsPhaseWhenFlowHasPhasesProperty() {
+        loadCoffeeShop();
+        dismissStoryAndGoToPhase(1);
+
+        // At phase 1 (mobile), mobile-order should be in the dropdown
+        page.waitForFunction(
+                "Array.from(document.getElementById('flow-selector').options).some(o => o.value === 'mobile-order')");
+
+        // Select mobile-order via JS — should stay at phase 1 since mobile is in its phases list
+        page.evaluate("document.getElementById('flow-selector').value = 'mobile-order';" +
+                "document.getElementById('flow-selector').dispatchEvent(new Event('change'));");
+        String phaseLabel = page.locator("#phase-label-display").textContent();
+        assertTrue(phaseLabel.contains("Mobile"),
+                "Phase should stay at Mobile after selecting mobile-order, got: " + phaseLabel);
+
+        // Move to phase 2 (credits) where credits-reload is visible
+        page.locator("#phase-dots .phase-dot[data-phase-idx='2']").dispatchEvent("click");
+        page.waitForFunction(
+                "Array.from(document.getElementById('flow-selector').options).some(o => o.value === 'credits-reload')");
+
+        // Select credits-reload — phase should stay at credits
+        page.evaluate("document.getElementById('flow-selector').value = 'credits-reload';" +
+                "document.getElementById('flow-selector').dispatchEvent(new Event('change'));");
+        phaseLabel = page.locator("#phase-label-display").textContent();
+        assertTrue(phaseLabel.contains("Credits"),
+                "Phase should stay at Credits after selecting credits-reload, got: " + phaseLabel);
+
+        // Test phase-jump: inject credits-reload option into the dropdown at phase 3
+        // and select it — handler should jump to phase 2 (credits)
+        page.locator("#phase-dots .phase-dot[data-phase-idx='3']").dispatchEvent("click");
+        page.waitForFunction("document.querySelector('#phase-dots .phase-dot.active[data-phase-idx=\"3\"]') !== null");
+
+        // Inject the option and select it to trigger the phase-jump
+        page.evaluate(
+                "var sel = document.getElementById('flow-selector');" +
+                "var opt = document.createElement('option');" +
+                "opt.value = 'credits-reload'; opt.textContent = 'Credits';" +
+                "sel.appendChild(opt);" +
+                "sel.value = 'credits-reload';" +
+                "sel.dispatchEvent(new Event('change'));");
+        page.waitForFunction("document.querySelector('#phase-dots .phase-dot.active[data-phase-idx=\"2\"]') !== null");
+
+        phaseLabel = page.locator("#phase-label-display").textContent();
+        assertTrue(phaseLabel.contains("Credits"),
+                "Phase should jump to Credits when selecting credits-reload from phase 3, got: " + phaseLabel);
     }
 }

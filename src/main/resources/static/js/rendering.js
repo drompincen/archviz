@@ -2,7 +2,7 @@
 
 import { state, dom } from './state.js';
 import { ICONS } from './constants.js';
-import { stripJsonComments, normalizeMultilineStrings, isVisibleInPhase, resolveActiveSequence, flowHasVisibleSteps } from './core-data.js';
+import { stripJsonComments, normalizeMultilineStrings, isVisibleInPhase, resolveActiveSequence, isFlowVisibleInPhase } from './core-data.js';
 import { clearLog } from './logging.js';
 import { renderBenefitsPanel } from './benefits.js';
 import { renderSequenceView } from './sequence-view.js';
@@ -101,7 +101,7 @@ function updateFlowDropdown() {
         dom.flowControls.style.display = '';
         var prevVal = state.selectedFlowId;
         dom.flowSelector.innerHTML = '<option value="__default__">-- Default Sequence --</option>';
-        var visibleFlows = state.graph.flows.filter(function(f) { return flowHasVisibleSteps(f); });
+        var visibleFlows = state.graph.flows.filter(function(f) { return isFlowVisibleInPhase(f); });
         visibleFlows.forEach(function(f) {
             var opt = document.createElement('option');
             opt.value = f.id;

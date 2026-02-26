@@ -231,6 +231,7 @@ When present, a flow dropdown appears in the header.
     {
       "id": "happy-path",
       "name": "Happy Path — Place Order",
+      "phases": ["processing"],
       "sequence": [
         { "from": "user", "to": "gw", "text": "POST /orders", "status": "ready" },
         { "from": "gw", "to": "svc", "text": "Forward request", "status": "ready" }
@@ -240,10 +241,22 @@ When present, a flow dropdown appears in the header.
 
   id        (String)  Unique flow identifier.
   name      (String)  Display name shown in the dropdown.
+  phases    (Array)   Optional. Array of phase IDs where this flow is relevant.
+                      When present, the flow appears in the dropdown only when
+                      the selected phase ID is in this list. When absent, the
+                      flow is shown whenever it has visible steps (legacy
+                      behavior via step-scanning).
   sequence  (Array)   Array of step objects (same format as root sequence).
 
 Each flow's sequence is independently filtered by the current phase.
 The root "sequence" array is used when "Default Sequence" is selected.
+
+Phase Sync Behavior:
+  When a user selects a flow that has a "phases" property and the current
+  phase is not in the list, the phase slider automatically jumps to the
+  first phase in the flow's list. If the current phase is already in the
+  list, the slider stays put. Flows without "phases" use the legacy
+  behavior of jumping to the max phase found in their sequence steps.
 
 
 8. The story Object (Optional)
@@ -369,6 +382,7 @@ Backward Compatibility
   No phases         Phase slider hidden, everything visible
   No zones          No boundary boxes rendered
   No flows          Falls back to root sequence
+  No phases on flow Flow shown when any step is visible (step-scanning)
   No phase on item  Item always visible regardless of selected phase
   No zone on node   Node floats freely
   No story          Story button has no highlight, story mode unavailable
