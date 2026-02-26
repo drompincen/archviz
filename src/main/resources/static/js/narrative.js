@@ -591,11 +591,19 @@ function renderKpiHud() {
         return;
     }
 
+    var slide = slides[currentSlide];
+    if (slide && slide.type === 'problem') {
+        kpiHud.classList.remove('visible');
+        return;
+    }
+
     var story = state.graph.story;
     var kpis = story.kpis;
     var html = '';
 
-    var phaseValues = computeKpiValuesForPhase(kpis, story);
+    var phaseValues = (slide && slide.type === 'vision')
+        ? computeKpiValuesForAllPhases(kpis, story)
+        : computeKpiValuesForPhase(kpis, story);
 
     kpis.forEach(function(kpi) {
         var currentVal = phaseValues[kpi.id] !== undefined ? phaseValues[kpi.id] : kpi.current;
@@ -644,6 +652,25 @@ function computeKpiValuesForPhase(kpis, story) {
         });
         if (!applicable) return;
 
+        (idea.expectedKpiImpacts || []).forEach(function(impact) {
+            if (values[impact.kpiId] !== undefined) {
+                values[impact.kpiId] += impact.delta;
+            }
+        });
+    });
+
+    return values;
+}
+
+function computeKpiValuesForAllPhases(kpis, story) {
+    var values = {};
+    kpis.forEach(function(kpi) {
+        values[kpi.id] = kpi.baseline;
+    });
+
+    var ideaCards = story.ideaCards || [];
+    ideaCards.forEach(function(idea) {
+        if (idea.status === 'rejected') return;
         (idea.expectedKpiImpacts || []).forEach(function(impact) {
             if (values[impact.kpiId] !== undefined) {
                 values[impact.kpiId] += impact.delta;
