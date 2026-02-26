@@ -3,7 +3,7 @@
 import { state, dom } from './state.js';
 import { render, updateConnections } from './rendering.js';
 import { resetAnimation, togglePlay, fastForward } from './animation.js';
-import { getPhaseIndex, resolveActiveSequence } from './core-data.js';
+import { getPhaseIndex, resolveActiveSequence, getFlowPhaseRange } from './core-data.js';
 import { renderSequenceView } from './sequence-view.js';
 
 // ── Node drag ──
@@ -160,26 +160,41 @@ export function initUIInteractions() {
     dom.flowSelector.addEventListener('change', function() {
         state.selectedFlowId = dom.flowSelector.value;
 
-        // Auto-sync phase dots to the flow's max phase (forward or backward)
+        // Auto-sync phase dots to the flow's phase range
         if (state.selectedFlowId !== '__default__' && state.graph.flows && state.graph.phases && state.graph.phases.length > 0) {
             var flow = state.graph.flows.find(function(f) { return f.id === state.selectedFlowId; });
-            if (flow && flow.sequence) {
-                var maxPhaseNeeded = 0;
-                flow.sequence.forEach(function(step) {
-                    if (step.phase) {
-                        if (Array.isArray(step.phase)) {
-                            step.phase.forEach(function(pid) {
-                                var idx = getPhaseIndex(pid);
-                                if (idx > maxPhaseNeeded) maxPhaseNeeded = idx;
-                            });
-                        } else {
-                            var idx = getPhaseIndex(step.phase);
-                            if (idx > maxPhaseNeeded) maxPhaseNeeded = idx;
-                        }
+            if (flow) {
+                var range = getFlowPhaseRange(flow);
+                var targetPhase = -1;
+                if (range) {
+                    // Flow has explicit phases list
+                    var currentId = state.graph.phases[state.selectedPhase]
+                        ? state.graph.phases[state.selectedPhase].id : null;
+                    if (!currentId || flow.phases.indexOf(currentId) < 0) {
+                        targetPhase = range.min;
                     }
-                });
-                if (maxPhaseNeeded !== state.selectedPhase) {
-                    state.selectedPhase = maxPhaseNeeded;
+                } else if (flow.sequence) {
+                    // Fallback: scan steps for max phase needed
+                    var maxPhaseNeeded = 0;
+                    flow.sequence.forEach(function(step) {
+                        if (step.phase) {
+                            if (Array.isArray(step.phase)) {
+                                step.phase.forEach(function(pid) {
+                                    var idx = getPhaseIndex(pid);
+                                    if (idx > maxPhaseNeeded) maxPhaseNeeded = idx;
+                                });
+                            } else {
+                                var idx = getPhaseIndex(step.phase);
+                                if (idx > maxPhaseNeeded) maxPhaseNeeded = idx;
+                            }
+                        }
+                    });
+                    if (maxPhaseNeeded !== state.selectedPhase) {
+                        targetPhase = maxPhaseNeeded;
+                    }
+                }
+                if (targetPhase >= 0 && targetPhase !== state.selectedPhase) {
+                    state.selectedPhase = targetPhase;
                     if (state.graph.phases[state.selectedPhase]) {
                         dom.phaseLabelDisplay.textContent = state.graph.phases[state.selectedPhase].label || state.graph.phases[state.selectedPhase].id;
                     }

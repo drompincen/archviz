@@ -90,6 +90,7 @@
         {
             "id": "legacy-cash",
             "name": "Legacy — Cash Order (Today)",
+            "phases": ["legacy"],
             "sequence": [
                 { "from": "walk-in", "to": "cashier", "text": "\"Large latte, please\" (verbal order)", "status": "ready" },
                 { "from": "cashier", "to": "cash-drawer", "text": "Take $5 cash, fumble for change", "status": "wip" },
@@ -101,6 +102,7 @@
         {
             "id": "legacy-card",
             "name": "Legacy — Card Swipe (Slow)",
+            "phases": ["legacy"],
             "sequence": [
                 { "from": "walk-in", "to": "cashier", "text": "\"Medium mocha\" — wants to pay by card", "status": "ready" },
                 { "from": "cashier", "to": "card-terminal", "text": "Swipe card on old terminal", "status": "wip" },
@@ -114,6 +116,7 @@
         {
             "id": "mobile-order",
             "name": "Phase 1 — Mobile Order Ahead",
+            "phases": ["mobile"],
             "sequence": [
                 { "from": "mobile-customer", "to": "api-gw", "text": "POST /orders {latte, oat milk, large}", "status": "ready", "phase": "mobile" },
                 { "from": "api-gw", "to": "order-svc", "text": "Validate order against menu cache", "status": "ready", "phase": "mobile" },
@@ -132,6 +135,7 @@
         {
             "id": "credits-reload",
             "name": "Phase 2 — Pay with Credits",
+            "phases": ["credits"],
             "sequence": [
                 { "from": "mobile-customer", "to": "api-gw", "text": "POST /orders {cappuccino} + pay with credits", "status": "ready", "phase": "mobile" },
                 { "from": "api-gw", "to": "order-svc", "text": "Route to order service", "status": "ready", "phase": "mobile" },
@@ -148,6 +152,7 @@
         {
             "id": "ai-forecast",
             "name": "Phase 3 — AI Demand Forecast",
+            "phases": ["analytics"],
             "sequence": [
                 { "from": "order-db", "to": "analytics-dash", "text": "Stream: 847 orders today", "status": "ready", "phase": "analytics" },
                 { "from": "customer-db", "to": "analytics-dash", "text": "Stream: 312 unique customers", "status": "ready", "phase": "analytics" },

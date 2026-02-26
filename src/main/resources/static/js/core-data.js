@@ -59,6 +59,30 @@ export function flowHasVisibleSteps(flow) {
     return (flow.sequence || []).some(function(step) { return isVisibleInPhase(step); });
 }
 
+export function isFlowVisibleInPhase(flow) {
+    if (flow.phases && state.graph.phases) {
+        var currentPhaseId = state.graph.phases[state.selectedPhase]
+            ? state.graph.phases[state.selectedPhase].id : null;
+        if (!currentPhaseId) return false;
+        return flow.phases.indexOf(currentPhaseId) >= 0;
+    }
+    return flowHasVisibleSteps(flow);
+}
+
+export function getFlowPhaseRange(flow) {
+    if (!flow.phases || !state.graph.phases) return null;
+    var min = Infinity, max = -1;
+    flow.phases.forEach(function(pid) {
+        var idx = getPhaseIndex(pid);
+        if (idx >= 0) {
+            if (idx < min) min = idx;
+            if (idx > max) max = idx;
+        }
+    });
+    if (max < 0) return null;
+    return { min: min, max: max };
+}
+
 export function resolveActiveSequence() {
     var seq;
     if (state.selectedFlowId !== '__default__' && state.graph.flows) {
