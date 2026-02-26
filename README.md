@@ -202,6 +202,7 @@ Flows let you define multiple named animation paths through the same architectur
     {
         "id": "happy-path",
         "name": "Happy Path — Place Order",
+        "phases": ["processing"],
         "sequence": [
             { "from": "user", "to": "gw", "text": "POST /orders", "status": "ready" },
             { "from": "gw", "to": "svc", "text": "Forward request", "status": "ready" }
@@ -210,12 +211,15 @@ Flows let you define multiple named animation paths through the same architectur
     {
         "id": "error-path",
         "name": "Payment Failure",
+        "phases": ["processing"],
         "sequence": [...]
     }
 ]
 ```
 
 A dropdown appears in the header when flows are present. The root `"sequence"` array is used as the default. Each flow's sequence is independently filtered by the current phase.
+
+The optional `"phases"` array controls which phases a flow appears in. When present, the flow is only shown in the dropdown when the selected phase ID is in the list. When absent, the flow is shown whenever it has visible steps (backward compatible). Selecting a flow whose `phases` don't include the current phase automatically jumps the phase slider to the first matching phase.
 
 ## KPIs in Story Mode
 

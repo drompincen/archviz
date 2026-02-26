@@ -21,7 +21,9 @@
       "Bash(mvn dependency:tree:*)",
       "WebFetch(domain:central.sonatype.com)",
       "Bash(mvn test:*)",
-      "Bash(git -C:*)"
+      "Bash(git -C:*)",
+      "Bash(git push)",
+      "Bash(mvn -B -ntp verify -Pui-tests 2>&1)"
     ]
   }
 }

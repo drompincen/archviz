@@ -101,8 +101,13 @@ Flow
 {
   id: string,                 // unique flow identifier
   name: string,               // display name in the dropdown
+  phases?: string[],          // optional phase IDs where this flow is relevant
   sequence: SequenceStep[]    // array of steps (same format as root sequence)
 }
+- When phases is present, the flow only appears in the dropdown when the selected
+  phase ID is in the list. When absent, flow is shown when any step is visible.
+- Selecting a flow whose phases don't include the current phase jumps the slider
+  to the first phase in the list.
 - Each flow's sequence is independently filtered by the current phase.
 - The root "sequence" array is used when "Default Sequence" is selected.
 
