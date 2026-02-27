@@ -138,16 +138,10 @@ export function initUIInteractions() {
         }
     });
 
-    // KPI HUD toggle
+    // KPI HUD toggle — triggers a full re-render so renderKpiHud() evaluates
     if (dom.chkShowKpis) {
-        dom.chkShowKpis.addEventListener('change', function(e) {
-            var kpiHud = document.getElementById('kpi-hud');
-            if (!kpiHud) return;
-            if (!e.target.checked) {
-                kpiHud.classList.remove('visible');
-            } else if (document.body.classList.contains('story-active')) {
-                kpiHud.classList.add('visible');
-            }
+        dom.chkShowKpis.addEventListener('change', function() {
+            render();
         });
     }
 

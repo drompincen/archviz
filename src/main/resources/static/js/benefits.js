@@ -9,6 +9,11 @@ export function renderBenefitsPanel() {
         return;
     }
 
+    if (dom.chkShowKpis && !dom.chkShowKpis.checked) {
+        dom.benefitsPanel.classList.remove('visible');
+        return;
+    }
+
     var story = state.graph.story;
     var kpiMap = {};
     (story.kpis || []).forEach(function(k) { kpiMap[k.id] = k; });

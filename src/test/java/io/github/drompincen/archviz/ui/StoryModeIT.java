@@ -218,7 +218,34 @@ class StoryModeIT {
     }
 
     @Test
-    void kpiHudToggle_hidesAndShowsHud() {
+    void kpiToggle_hidesBenefitsPanelInArchView() {
+        // Exit story mode and trigger a render via phase dot click
+        page.locator("#btn-story-mode").dispatchEvent("click");
+        page.waitForFunction("!document.body.classList.contains('story-active')");
+        page.locator("#phase-dots .phase-dot[data-phase-idx='1']").dispatchEvent("click");
+        page.waitForFunction("document.getElementById('benefits-panel').classList.contains('visible')");
+
+        // Benefits panel should be visible (coffee-shop has benefits)
+        Locator benefitsPanel = page.locator("#benefits-panel");
+        assertThat(benefitsPanel).hasClass(java.util.regex.Pattern.compile(".*visible.*"));
+
+        // Uncheck KPI toggle — benefits panel should hide
+        page.locator("#btn-options").click();
+        page.locator("#chk-show-kpis").dispatchEvent("click");
+        page.waitForFunction("!document.getElementById('benefits-panel').classList.contains('visible')");
+
+        String cls = benefitsPanel.getAttribute("class");
+        assertFalse(cls != null && cls.contains("visible"),
+                "Benefits panel should be hidden when KPI toggle is unchecked");
+
+        // Re-check toggle — benefits panel should reappear
+        page.locator("#chk-show-kpis").dispatchEvent("click");
+        page.waitForFunction("document.getElementById('benefits-panel').classList.contains('visible')");
+        assertThat(benefitsPanel).hasClass(java.util.regex.Pattern.compile(".*visible.*"));
+    }
+
+    @Test
+    void kpiToggle_hidesHudInNarrativeMode() {
         // Navigate to vision slide where KPI HUD is visible
         page.locator(".narr-nav-btn[data-nav='1']").click();
         page.locator(".narr-slide.type-vision").waitFor();
@@ -226,7 +253,7 @@ class StoryModeIT {
         Locator kpiHud = page.locator("#kpi-hud");
         assertThat(kpiHud).hasClass(java.util.regex.Pattern.compile(".*visible.*"));
 
-        // Exit story mode to access options, uncheck KPI HUD, re-enter story
+        // Exit story mode, uncheck KPI toggle, re-enter story
         page.locator("#btn-story-mode").dispatchEvent("click");
         page.waitForFunction("!document.body.classList.contains('story-active')");
 
@@ -244,21 +271,6 @@ class StoryModeIT {
         String cls = kpiHud.getAttribute("class");
         assertFalse(cls != null && cls.contains("visible"),
                 "KPI HUD should be hidden when toggle is unchecked");
-
-        // Re-enable toggle
-        page.locator("#btn-story-mode").dispatchEvent("click");
-        page.waitForFunction("!document.body.classList.contains('story-active')");
-        page.locator("#btn-options").click();
-        page.locator("#chk-show-kpis").dispatchEvent("click");
-        page.waitForFunction("document.getElementById('chk-show-kpis').checked");
-
-        page.locator("#btn-story-mode").dispatchEvent("click");
-        page.locator("#narrative-view.visible").waitFor();
-        page.locator(".narr-nav-btn[data-nav='1']").click();
-        page.locator(".narr-slide.type-vision").waitFor();
-
-        // KPI HUD should be visible again
-        assertThat(kpiHud).hasClass(java.util.regex.Pattern.compile(".*visible.*"));
     }
 
     @Test
