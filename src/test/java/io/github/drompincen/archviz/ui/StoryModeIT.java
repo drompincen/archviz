@@ -218,6 +218,88 @@ class StoryModeIT {
     }
 
     @Test
+    void kpiHudToggle_hidesAndShowsHud() {
+        // Navigate to vision slide where KPI HUD is visible
+        page.locator(".narr-nav-btn[data-nav='1']").click();
+        page.locator(".narr-slide.type-vision").waitFor();
+
+        Locator kpiHud = page.locator("#kpi-hud");
+        assertThat(kpiHud).hasClass(java.util.regex.Pattern.compile(".*visible.*"));
+
+        // Exit story mode to access options, uncheck KPI HUD, re-enter story
+        page.locator("#btn-story-mode").dispatchEvent("click");
+        page.waitForFunction("!document.body.classList.contains('story-active')");
+
+        page.locator("#btn-options").click();
+        page.locator("#chk-show-kpis").dispatchEvent("click");
+        page.waitForFunction("!document.getElementById('chk-show-kpis').checked");
+
+        // Re-enter story mode and go to vision
+        page.locator("#btn-story-mode").dispatchEvent("click");
+        page.locator("#narrative-view.visible").waitFor();
+        page.locator(".narr-nav-btn[data-nav='1']").click();
+        page.locator(".narr-slide.type-vision").waitFor();
+
+        // KPI HUD should be hidden
+        String cls = kpiHud.getAttribute("class");
+        assertFalse(cls != null && cls.contains("visible"),
+                "KPI HUD should be hidden when toggle is unchecked");
+
+        // Re-enable toggle
+        page.locator("#btn-story-mode").dispatchEvent("click");
+        page.waitForFunction("!document.body.classList.contains('story-active')");
+        page.locator("#btn-options").click();
+        page.locator("#chk-show-kpis").dispatchEvent("click");
+        page.waitForFunction("document.getElementById('chk-show-kpis').checked");
+
+        page.locator("#btn-story-mode").dispatchEvent("click");
+        page.locator("#narrative-view.visible").waitFor();
+        page.locator(".narr-nav-btn[data-nav='1']").click();
+        page.locator(".narr-slide.type-vision").waitFor();
+
+        // KPI HUD should be visible again
+        assertThat(kpiHud).hasClass(java.util.regex.Pattern.compile(".*visible.*"));
+    }
+
+    @Test
+    void richText_rendersHtmlInStoryFields() {
+        // Navigate to problem slide which has the description field
+        assertThat(page.locator(".narr-slide.type-problem")).isVisible();
+
+        // Inject a mini story with HTML markup via the editor
+        page.locator("#btn-story-mode").dispatchEvent("click");
+        page.waitForFunction("!document.body.classList.contains('story-active')");
+
+        page.locator("#btn-options").click();
+        page.locator("#chk-show-editor").dispatchEvent("click");
+        page.locator("#left-sidebar").waitFor(new Locator.WaitForOptions()
+                .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+
+        String json = "{\"title\":\"Test\",\"nodes\":[{\"id\":\"a\",\"label\":\"A\",\"x\":10,\"y\":10}],"
+                + "\"sequence\":[],\"story\":{\"problem\":{\"headline\":\"<b>Bold</b> headline\","
+                + "\"description\":\"Line one<br>Line <u>two</u>\"},\"uiHints\":{\"initialView\":\"narrative\"}}}";
+        page.locator("#json-input").fill(json);
+        page.locator("#btn-update").click();
+        // Manually activate story mode (autoActivated is already set from first load)
+        page.locator("#btn-story-mode").dispatchEvent("click");
+        page.locator("#narrative-view.visible").waitFor();
+        page.locator(".narr-slide.type-problem").waitFor();
+
+        // Check that <b> was rendered as real HTML bold
+        Locator headline = page.locator(".narr-problem-headline");
+        assertEquals(1, headline.locator("b").count(),
+                "Bold tag should render as real <b> in headline");
+        assertThat(headline.locator("b")).containsText("Bold");
+
+        // Check that <br> and <u> were rendered in description
+        Locator desc = page.locator(".narr-problem-desc");
+        assertEquals(1, desc.locator("br").count(),
+                "<br> should render as real line break in description");
+        assertEquals(1, desc.locator("u").count(),
+                "<u> should render as real underline in description");
+    }
+
+    @Test
     void headerMinimal_inStoryMode() {
         // In story mode, body should have story-active class
         assertTrue(page.locator("body").evaluate("el => el.classList.contains('story-active')").toString().equals("true"),

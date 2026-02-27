@@ -138,6 +138,19 @@ export function initUIInteractions() {
         }
     });
 
+    // KPI HUD toggle
+    if (dom.chkShowKpis) {
+        dom.chkShowKpis.addEventListener('change', function(e) {
+            var kpiHud = document.getElementById('kpi-hud');
+            if (!kpiHud) return;
+            if (!e.target.checked) {
+                kpiHud.classList.remove('visible');
+            } else if (document.body.classList.contains('story-active')) {
+                kpiHud.classList.add('visible');
+            }
+        });
+    }
+
     // Light mode
     dom.chkLightMode.addEventListener('change', function(e) {
         document.body.classList.toggle('light-theme', e.target.checked);

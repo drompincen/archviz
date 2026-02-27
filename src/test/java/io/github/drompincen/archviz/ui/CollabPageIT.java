@@ -311,6 +311,55 @@ class CollabPageIT {
     }
 
     @Test
+    void jsonWithHashComments_parsesCorrectly() {
+        // Open editor
+        page.locator("#btn-options").click();
+        page.locator("#chk-show-editor").dispatchEvent("click");
+        page.locator("#left-sidebar").waitFor(new Locator.WaitForOptions()
+                .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+
+        // Paste JSON with # comments and multiline strings
+        String jsonWithComments = "{\n"
+                + "  # This is a hash comment\n"
+                + "  \"title\": \"Test\",\n"
+                + "  // This is a double-slash comment\n"
+                + "  \"nodes\": [\n"
+                + "    { \"id\": \"svc-a\", \"label\": \"Service\n"
+                + "A\", \"x\": 100, \"y\": 100 }\n"
+                + "  ],\n"
+                + "  \"sequence\": []\n"
+                + "}";
+        page.locator("#json-input").fill(jsonWithComments);
+        page.locator("#btn-update").click();
+
+        // Should render without error
+        String errorCls = page.locator("#error-msg").getAttribute("class");
+        assertFalse(errorCls != null && errorCls.contains("visible"),
+                "Error message should not be visible — JSON with comments should parse");
+
+        // Node should be rendered
+        page.waitForFunction("document.getElementById('node-svc-a') !== null");
+        assertEquals(1, page.locator("#node-svc-a").count(),
+                "Node svc-a should be rendered from commented JSON");
+    }
+
+    @Test
+    void flowDropdown_hasFixedWidth() {
+        loadCoffeeShop();
+        dismissStoryAndGoToPhase(0);
+
+        page.waitForFunction("document.getElementById('flow-selector').options.length > 1");
+
+        // Verify flow selector has constrained width via computed style
+        String minW = (String) page.locator("#flow-selector").evaluate(
+                "el => getComputedStyle(el).minWidth");
+        String maxW = (String) page.locator("#flow-selector").evaluate(
+                "el => getComputedStyle(el).maxWidth");
+        assertEquals("180px", minW, "Flow selector min-width should be 180px");
+        assertEquals("180px", maxW, "Flow selector max-width should be 180px");
+    }
+
+    @Test
     void flowSelector_syncsPhaseWhenFlowHasPhasesProperty() {
         loadCoffeeShop();
         dismissStoryAndGoToPhase(1);

@@ -272,7 +272,7 @@ function renderCurrentSlide() {
 function renderProblemSlide(problem, kpis) {
     var html = '<div class="narr-section-label">The Problem</div>';
 
-    html += '<div class="narr-problem-headline">' + escapeHtml(problem.headline) + '</div>';
+    html += '<div class="narr-problem-headline">' + renderRichText(problem.headline) + '</div>';
 
     if (problem.impactMetric) {
         var kpi = kpis.find(function(k) { return k.id === problem.impactMetric.kpiId; });
@@ -283,12 +283,12 @@ function renderProblemSlide(problem, kpis) {
         html += '</div>';
     }
 
-    html += '<div class="narr-problem-desc">' + escapeHtml(problem.description) + '</div>';
+    html += '<div class="narr-problem-desc">' + renderRichText(problem.description) + '</div>';
 
     if (problem.risks && problem.risks.length > 0) {
         html += '<div class="narr-risk-chips">';
         problem.risks.forEach(function(risk) {
-            html += '<div class="narr-risk-chip">' + escapeHtml(risk) + '</div>';
+            html += '<div class="narr-risk-chip">' + renderRichText(risk) + '</div>';
         });
         html += '</div>';
     }
@@ -319,8 +319,8 @@ function renderProblemSlide(problem, kpis) {
 function renderVisionSlide(vision, kpis) {
     var html = '<div class="narr-section-label">The Vision</div>';
 
-    html += '<div class="narr-vision-summary">' + escapeHtml(vision.summary) + '</div>';
-    html += '<div class="narr-vision-desc">' + escapeHtml(vision.description) + '</div>';
+    html += '<div class="narr-vision-summary">' + renderRichText(vision.summary) + '</div>';
+    html += '<div class="narr-vision-desc">' + renderRichText(vision.description) + '</div>';
 
     if (vision.kpiTargets && vision.kpiTargets.length > 0) {
         html += '<div class="narr-kpi-targets">';
@@ -372,7 +372,7 @@ function renderVisionSlide(vision, kpis) {
         vision.acceptanceCriteria.forEach(function(criterion) {
             html += '<div class="narr-acceptance-item">';
             html += '<span class="narr-acceptance-check">\u25CB</span>';
-            html += '<span>' + escapeHtml(criterion) + '</span>';
+            html += '<span>' + renderRichText(criterion) + '</span>';
             html += '</div>';
         });
         html += '</div>';
@@ -399,7 +399,7 @@ function renderPhaseSlide(phaseData, phaseIdx, story) {
     html += '</div>';
 
     if (phaseData.description) {
-        html += '<div class="narr-phase-desc">' + escapeHtml(phaseData.description) + '</div>';
+        html += '<div class="narr-phase-desc">' + renderRichText(phaseData.description) + '</div>';
     }
 
     // Idea cards for this phase
@@ -426,7 +426,7 @@ function renderPhaseSlide(phaseData, phaseIdx, story) {
             html += '<span class="narr-idea-confidence">' + escapeHtml(idea.confidence || '') + '</span>';
             html += '</div>';
 
-            html += '<div class="narr-idea-hypothesis">' + escapeHtml(idea.hypothesis) + '</div>';
+            html += '<div class="narr-idea-hypothesis">' + renderRichText(idea.hypothesis) + '</div>';
 
             if (idea.expectedKpiImpacts && idea.expectedKpiImpacts.length > 0) {
                 html += '<div class="narr-idea-impacts">';
@@ -587,6 +587,11 @@ function renderKpiHud() {
     }
 
     if (!narrativeActive) {
+        kpiHud.classList.remove('visible');
+        return;
+    }
+
+    if (dom.chkShowKpis && !dom.chkShowKpis.checked) {
         kpiHud.classList.remove('visible');
         return;
     }
@@ -872,4 +877,20 @@ function updateUrlStoryParam(active) {
 function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+var ALLOWED_TAGS = ['b', 'strong', 'i', 'em', 'u', 'br', 'ul', 'ol', 'li', 'p', 'sub', 'sup'];
+
+function renderRichText(str) {
+    if (!str) return '';
+    var escaped = escapeHtml(str);
+    ALLOWED_TAGS.forEach(function(tag) {
+        var openRe = new RegExp('&lt;' + tag + '(\\s[^&]*?)?&gt;', 'gi');
+        var closeRe = new RegExp('&lt;/' + tag + '&gt;', 'gi');
+        escaped = escaped.replace(openRe, '<' + tag + '>');
+        escaped = escaped.replace(closeRe, '</' + tag + '>');
+    });
+    // Self-closing <br/> and <br />
+    escaped = escaped.replace(/&lt;br\s*\/?&gt;/gi, '<br>');
+    return escaped;
 }

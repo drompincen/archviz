@@ -75,4 +75,5 @@ export function initDom() {
 
     dom.narrativeView = document.getElementById('narrative-view');
     dom.btnStoryMode = document.getElementById('btn-story-mode');
+    dom.chkShowKpis = document.getElementById('chk-show-kpis');
 }
