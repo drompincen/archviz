@@ -3,7 +3,7 @@
 import { state } from './state.js';
 
 export function stripJsonComments(jsonStr) {
-    return jsonStr.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g, function(m, g) { return g ? "" : m; });
+    return jsonStr.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|#.*|\/\*[\s\S]*?\*\/)/g, function(m, g) { return g ? "" : m; });
 }
 
 export function normalizeMultilineStrings(str) {

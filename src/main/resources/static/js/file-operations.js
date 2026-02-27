@@ -67,7 +67,9 @@ export function initFileOperations() {
             var reader = new FileReader();
             reader.onload = function(ev) {
                 try {
-                    var data = JSON.parse(ev.target.result);
+                    var cleaned = stripJsonComments(ev.target.result);
+                    cleaned = normalizeMultilineStrings(cleaned);
+                    var data = JSON.parse(cleaned);
                     if (!data.nodes || !Array.isArray(data.nodes)) {
                         alert('Invalid diagram JSON: must contain a "nodes" array.');
                         return;

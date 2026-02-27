@@ -138,6 +138,13 @@ export function initUIInteractions() {
         }
     });
 
+    // KPI HUD toggle — triggers a full re-render so renderKpiHud() evaluates
+    if (dom.chkShowKpis) {
+        dom.chkShowKpis.addEventListener('change', function() {
+            render();
+        });
+    }
+
     // Light mode
     dom.chkLightMode.addEventListener('change', function(e) {
         document.body.classList.toggle('light-theme', e.target.checked);
