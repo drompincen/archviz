@@ -182,3 +182,12 @@ body.light-theme .opt-item:hover { background: rgba(0,0,0,0.05); }
     font-size: 0.82rem; text-align: center;
 }
 body.light-theme .opt-item .opt-delay-input { background: #fff; color: #333; border-color: #ccc; }
+
+.opt-btn-sm {
+    padding: 2px 8px; border-radius: 3px; border: 1px solid #555;
+    background: #3e3e42; color: #ccc; font-size: 0.78rem; cursor: pointer;
+    font-weight: 600; line-height: 1.4;
+}
+.opt-btn-sm:hover { background: #505058; }
+body.light-theme .opt-btn-sm { background: #e0e0e0; border-color: #ccc; color: #333; }
+body.light-theme .opt-btn-sm:hover { background: #d0d0d0; }

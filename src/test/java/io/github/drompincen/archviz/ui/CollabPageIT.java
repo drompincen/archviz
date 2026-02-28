@@ -406,4 +406,39 @@ class CollabPageIT {
         assertTrue(phaseLabel.contains("Credits"),
                 "Phase should jump to Credits when selecting credits-reload from phase 3, got: " + phaseLabel);
     }
+
+    @Test
+    void fontSizeButtons_scaleNodeLabels() {
+        // Get initial font size of the first node label
+        page.waitForFunction("document.querySelectorAll('#nodes-container .node').length >= 3");
+        String initialSize = (String) page.evaluate(
+                "getComputedStyle(document.querySelector('.node-label')).fontSize");
+        double initialPx = Double.parseDouble(initialSize.replace("px", ""));
+
+        // Open options and click A+ three times
+        page.locator("#btn-options").click();
+        page.locator("#btn-font-up").click();
+        page.locator("#btn-font-up").click();
+        page.locator("#btn-font-up").click();
+
+        page.waitForFunction("document.querySelectorAll('#nodes-container .node').length >= 3");
+        String biggerSize = (String) page.evaluate(
+                "getComputedStyle(document.querySelector('.node-label')).fontSize");
+        double biggerPx = Double.parseDouble(biggerSize.replace("px", ""));
+        assertTrue(biggerPx > initialPx,
+                "Font should be larger after A+ clicks: " + biggerPx + " > " + initialPx);
+
+        // Click A- four times (net = -1 from original)
+        page.locator("#btn-font-down").click();
+        page.locator("#btn-font-down").click();
+        page.locator("#btn-font-down").click();
+        page.locator("#btn-font-down").click();
+
+        page.waitForFunction("document.querySelectorAll('#nodes-container .node').length >= 3");
+        String smallerSize = (String) page.evaluate(
+                "getComputedStyle(document.querySelector('.node-label')).fontSize");
+        double smallerPx = Double.parseDouble(smallerSize.replace("px", ""));
+        assertTrue(smallerPx < initialPx,
+                "Font should be smaller after net -1 scale: " + smallerPx + " < " + initialPx);
+    }
 }

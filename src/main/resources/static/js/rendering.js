@@ -216,14 +216,21 @@ export function render() {
             el.addEventListener('mousedown', handleDragStart);
             dom.container.appendChild(el);
 
+            // Apply user font-scale to node labels
+            var baseFontRem = 0.8 + state.nodeFontScale * 0.1;
+            if (baseFontRem < 0.5) baseFontRem = 0.5;
+            var lbl = el.querySelector('.node-label');
+            lbl.style.fontSize = baseFontRem + 'rem';
+
             // Adaptive label sizing — only when height is fixed (n.h is set)
             if (n.h) {
-                var lbl = el.querySelector('.node-label');
                 var ico = el.querySelector('.node-icon');
 
-                // Step 1: shrink font from 0.8rem to 0.65rem
+                // Step 1: shrink font to baseFontRem - 0.15rem
+                var shrunkRem = baseFontRem - 0.15;
+                if (shrunkRem < 0.5) shrunkRem = 0.5;
                 if (el.scrollHeight > el.clientHeight) {
-                    lbl.style.fontSize = '0.65rem';
+                    lbl.style.fontSize = shrunkRem + 'rem';
                 }
                 // Step 2: remove bold (600 → 400)
                 if (el.scrollHeight > el.clientHeight) {
