@@ -6,7 +6,7 @@
     border: 2px solid #555; border-radius: 6px; background: #2d2d2d;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: default;
     user-select: none; padding: 8px; box-sizing: border-box; z-index: 10;
-    transition: border-color 0.2s; overflow: hidden;
+    transition: border-color 0.2s;
 }
 body.light-theme .node { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
 body.is-editing .node { cursor: grab; }

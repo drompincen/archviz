@@ -15,7 +15,9 @@ export function renderSequenceView() {
     }
 
     var startX = 60;
-    var headerHeight = 60;
+    var titleText = state.graph.title || '';
+    var titleHeight = titleText ? 35 : 0;
+    var headerHeight = 60 + titleHeight;
     var rowHeight = 50;
 
     // Pre-compute adaptive sizing per label
@@ -64,11 +66,18 @@ export function renderSequenceView() {
         '<polygon points="0 0, 10 3.5, 0 7" fill="' + arrowFill + '" /></marker>';
 
     // Add clip paths for each participant header (using dynamic rectWidth)
+    var headerY = 10 + titleHeight;
     visibleNodes.forEach(function(node, index) {
         var x = startX + (index * colWidth) + (colWidth / 2);
-        svg += '<clipPath id="clip-seq-' + index + '"><rect x="' + (x - rectWidth / 2) + '" y="10" width="' + rectWidth + '" height="40" /></clipPath>';
+        svg += '<clipPath id="clip-seq-' + index + '"><rect x="' + (x - rectWidth / 2) + '" y="' + headerY + '" width="' + rectWidth + '" height="40" /></clipPath>';
     });
     svg += '</defs>';
+
+    // Draw title above the header boxes
+    if (titleText) {
+        var titleFill = document.body.classList.contains('light-theme') ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)';
+        svg += '<text x="' + startX + '" y="' + (titleHeight - 8) + '" fill="' + titleFill + '" font-size="14px" font-weight="300">' + titleText + '</text>';
+    }
 
     visibleNodes.forEach(function(node, index) {
         var x = startX + (index * colWidth) + (colWidth / 2);
@@ -77,18 +86,23 @@ export function renderSequenceView() {
 
         var statusSvg = "";
         if (node.status === 'ready') {
-            statusSvg = '<circle cx="' + (x + rectWidth / 2) + '" cy="10" r="8" class="seq-status-bg status-ready-svg" />' +
-                '<text x="' + (x + rectWidth / 2) + '" y="10" class="seq-status-text">\u2714</text>';
+            statusSvg = '<circle cx="' + (x + rectWidth / 2) + '" cy="' + headerY + '" r="8" class="seq-status-bg status-ready-svg" />' +
+                '<text x="' + (x + rectWidth / 2) + '" y="' + headerY + '" class="seq-status-text">\u2714</text>';
         } else if (node.status === 'wip') {
-            statusSvg = '<circle cx="' + (x + rectWidth / 2) + '" cy="10" r="8" class="seq-status-bg status-wip-svg" />' +
-                '<text x="' + (x + rectWidth / 2) + '" y="10" class="seq-status-text">\u23F3</text>';
+            statusSvg = '<circle cx="' + (x + rectWidth / 2) + '" cy="' + headerY + '" r="8" class="seq-status-bg status-wip-svg" />' +
+                '<text x="' + (x + rectWidth / 2) + '" y="' + headerY + '" class="seq-status-text">\u23F3</text>';
+        }
+
+        var styleAttr = '';
+        if (sizing.fontSize !== 12 || sizing.fontWeight !== 'bold') {
+            styleAttr = ' style="font-size:' + sizing.fontSize + 'px;font-weight:' + sizing.fontWeight + '"';
         }
 
         svg += '<g class="seq-node ' + tagClass + '">' +
-            '<rect x="' + (x - rectWidth / 2) + '" y="10" width="' + rectWidth + '" height="40" class="seq-head-rect" />' +
-            '<text x="' + x + '" y="35" class="seq-head-text" style="font-size:' + sizing.fontSize + 'px;font-weight:' + sizing.fontWeight + '" clip-path="url(#clip-seq-' + index + ')">' + sizing.label + '</text>' +
+            '<rect x="' + (x - rectWidth / 2) + '" y="' + headerY + '" width="' + rectWidth + '" height="40" class="seq-head-rect" />' +
+            '<text x="' + x + '" y="' + (headerY + 25) + '" class="seq-head-text"' + styleAttr + ' clip-path="url(#clip-seq-' + index + ')">' + sizing.label + '</text>' +
             statusSvg +
-            '<line x1="' + x + '" y1="50" x2="' + x + '" y2="' + svgHeight + '" class="seq-lifeline" />' +
+            '<line x1="' + x + '" y1="' + (headerY + 40) + '" x2="' + x + '" y2="' + svgHeight + '" class="seq-lifeline" />' +
             '</g>';
     });
 
