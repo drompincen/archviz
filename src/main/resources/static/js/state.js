@@ -15,7 +15,8 @@ export const state = {
     currentDiagramMeta: null,
     DIAGRAM_META: {},
     SAMPLE_JSONS: {},
-    storyMode: false
+    storyMode: false,
+    nodeFontScale: 0
 };
 
 export const dom = {};
@@ -76,4 +77,7 @@ export function initDom() {
     dom.narrativeView = document.getElementById('narrative-view');
     dom.btnStoryMode = document.getElementById('btn-story-mode');
     dom.chkShowKpis = document.getElementById('chk-show-kpis');
+
+    dom.btnFontDown = document.getElementById('btn-font-down');
+    dom.btnFontUp = document.getElementById('btn-font-up');
 }

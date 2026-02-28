@@ -146,6 +146,16 @@ export function initUIInteractions() {
         });
     }
 
+    // Font size +/- buttons
+    dom.btnFontUp.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (state.nodeFontScale < 5) { state.nodeFontScale++; render(); }
+    });
+    dom.btnFontDown.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (state.nodeFontScale > -3) { state.nodeFontScale--; render(); }
+    });
+
     // Light mode
     dom.chkLightMode.addEventListener('change', function(e) {
         document.body.classList.toggle('light-theme', e.target.checked);
