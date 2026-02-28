@@ -307,6 +307,21 @@ story.problem Object
   scope         Array   Optional. Node IDs affected by the problem (clickable).
   risks         Array   Optional. Risk statement strings.
 
+Rich Text in Story Fields
+
+  The following story text fields support inline HTML for formatting:
+
+    - problem.headline, problem.description, problem.risks[]
+    - vision.summary, vision.description, vision.acceptanceCriteria[]
+    - phases[].description
+    - ideaCards[].hypothesis
+
+  Allowed HTML tags: <b>, <strong>, <i>, <em>, <u>, <br>, <ul>, <ol>,
+  <li>, <p>, <sub>, <sup>. All other tags are escaped for safety.
+
+  Example:
+    "description": "Wait times average <b>8 minutes</b> during peak.<br>We have <u>zero customer data</u>."
+
 story.vision Object
 
   Property            Type    Description

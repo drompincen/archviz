@@ -359,6 +359,69 @@ class StoryModeIT {
     }
 
     @Test
+    void longLabel_fitsInsideNodeBox() {
+        // Exit story mode so we can access the editor and collab view
+        page.locator("#btn-story-mode").dispatchEvent("click");
+        page.waitForFunction("!document.body.classList.contains('story-active')");
+
+        // Open editor
+        page.locator("#btn-options").click();
+        page.locator("#chk-show-editor").dispatchEvent("click");
+        page.locator("#left-sidebar").waitFor(new Locator.WaitForOptions()
+                .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+
+        // Inject a diagram with a very long node label
+        String json = "{\"title\":\"Label Test\",\"nodes\":["
+                + "{\"id\":\"long\",\"label\":\"Very Long Service Name That Should Not Overflow The Node Box\","
+                + "\"x\":50,\"y\":50,\"w\":120,\"h\":80}],\"sequence\":[]}";
+        page.locator("#json-input").fill(json);
+        page.locator("#btn-update").click();
+        page.waitForFunction("document.querySelectorAll('#nodes-container .node').length >= 1");
+
+        // Verify the label's scrollWidth does not exceed the node's clientWidth
+        Boolean fits = (Boolean) page.evaluate(
+                "(() => { var node = document.querySelector('#nodes-container .node');"
+                        + "var label = node.querySelector('.node-label');"
+                        + "return label.scrollWidth <= node.clientWidth; })()");
+        assertTrue(fits, "Long label scrollWidth should not exceed node clientWidth");
+    }
+
+    @Test
+    void longLabel_fitsInSequenceBox() {
+        // Exit story mode
+        page.locator("#btn-story-mode").dispatchEvent("click");
+        page.waitForFunction("!document.body.classList.contains('story-active')");
+
+        // Open editor
+        page.locator("#btn-options").click();
+        page.locator("#chk-show-editor").dispatchEvent("click");
+        page.locator("#left-sidebar").waitFor(new Locator.WaitForOptions()
+                .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+
+        // Inject diagram with a long label + a sequence so both nodes exist
+        String json = "{\"title\":\"Seq Label Test\",\"nodes\":["
+                + "{\"id\":\"long\",\"label\":\"Very Long Service Name That Should Not Overflow\","
+                + "\"x\":50,\"y\":50,\"w\":120,\"h\":80},"
+                + "{\"id\":\"b\",\"label\":\"B\",\"x\":250,\"y\":50,\"w\":100,\"h\":70}],"
+                + "\"sequence\":[{\"from\":\"long\",\"to\":\"b\",\"text\":\"test\"}]}";
+        page.locator("#json-input").fill(json);
+        page.locator("#btn-update").click();
+        page.waitForFunction("document.querySelectorAll('#nodes-container .node').length >= 1");
+
+        // Switch to sequence view via the checkbox in the header
+        page.locator("#chk-sequence-mode").dispatchEvent("click");
+        page.waitForFunction("document.querySelector('#sequence-view svg') !== null");
+
+        // Verify font was shrunk below default 12px and clip-path is applied
+        Boolean fontShrunk = (Boolean) page.evaluate(
+                "(() => { var text = document.querySelector('.seq-head-text');"
+                        + "if (!text) return false;"
+                        + "var fs = parseFloat(text.style.fontSize);"
+                        + "return fs < 12 && text.hasAttribute('clip-path'); })()");
+        assertTrue(fontShrunk, "Long label should have shrunk font and clip-path in sequence view");
+    }
+
+    @Test
     void headerMinimal_inStoryMode() {
         // In story mode, body should have story-active class
         assertTrue(page.locator("body").evaluate("el => el.classList.contains('story-active')").toString().equals("true"),
