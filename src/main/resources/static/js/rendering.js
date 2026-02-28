@@ -161,9 +161,6 @@ export function render() {
         var notesText = (state.graph.notes || "").replace(/\\n/g, "\n");
         dom.notebook.textContent = notesText;
 
-        // Render benefits panel (story layer)
-        renderBenefitsPanel();
-
         // Render narrative controls if story exists
         renderNarrativeControls();
 
@@ -246,6 +243,9 @@ export function render() {
 
             state.nodeMap[n.id] = Object.assign({}, n, { el: el });
         });
+
+        // Render benefits panel after nodes/zones so it sees current layout
+        renderBenefitsPanel();
 
         updateConnections();
 
