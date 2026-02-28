@@ -218,6 +218,32 @@ export function render() {
             el.querySelector('.node-label').textContent = labelText;
             el.addEventListener('mousedown', handleDragStart);
             dom.container.appendChild(el);
+
+            // Adaptive label sizing — only when height is fixed (n.h is set)
+            if (n.h) {
+                var lbl = el.querySelector('.node-label');
+                var ico = el.querySelector('.node-icon');
+
+                // Step 1: shrink font from 0.8rem to 0.65rem
+                if (el.scrollHeight > el.clientHeight) {
+                    lbl.style.fontSize = '0.65rem';
+                }
+                // Step 2: remove bold (600 → 400)
+                if (el.scrollHeight > el.clientHeight) {
+                    lbl.style.fontWeight = '400';
+                }
+                // Step 3: shrink icon 24→16px
+                if (el.scrollHeight > el.clientHeight) {
+                    ico.style.width = '16px';
+                    ico.style.height = '16px';
+                    ico.style.marginBottom = '2px';
+                }
+                // Step 4: grow box to fit
+                if (el.scrollHeight > el.clientHeight) {
+                    el.style.height = 'auto';
+                }
+            }
+
             state.nodeMap[n.id] = Object.assign({}, n, { el: el });
         });
 

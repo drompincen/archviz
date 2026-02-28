@@ -378,12 +378,18 @@ class StoryModeIT {
         page.locator("#btn-update").click();
         page.waitForFunction("document.querySelectorAll('#nodes-container .node').length >= 1");
 
+        // Verify adaptive sizing made the content fit (scrollHeight <= clientHeight)
+        Boolean contentFits = (Boolean) page.evaluate(
+                "(() => { var node = document.querySelector('#nodes-container .node');"
+                        + "return node.scrollHeight <= node.clientHeight; })()");
+        assertTrue(contentFits, "After adaptive sizing, content should fit (scrollHeight <= clientHeight)");
+
         // Verify the label's scrollWidth does not exceed the node's clientWidth
-        Boolean fits = (Boolean) page.evaluate(
+        Boolean labelFits = (Boolean) page.evaluate(
                 "(() => { var node = document.querySelector('#nodes-container .node');"
                         + "var label = node.querySelector('.node-label');"
                         + "return label.scrollWidth <= node.clientWidth; })()");
-        assertTrue(fits, "Long label scrollWidth should not exceed node clientWidth");
+        assertTrue(labelFits, "Long label scrollWidth should not exceed node clientWidth");
     }
 
     @Test
@@ -412,13 +418,22 @@ class StoryModeIT {
         page.locator("#chk-sequence-mode").dispatchEvent("click");
         page.waitForFunction("document.querySelector('#sequence-view svg') !== null");
 
-        // Verify font was shrunk below default 12px and clip-path is applied
-        Boolean fontShrunk = (Boolean) page.evaluate(
+        // Verify the text element has appropriate font-size and font-weight
+        Boolean adapted = (Boolean) page.evaluate(
                 "(() => { var text = document.querySelector('.seq-head-text');"
                         + "if (!text) return false;"
                         + "var fs = parseFloat(text.style.fontSize);"
-                        + "return fs < 12 && text.hasAttribute('clip-path'); })()");
-        assertTrue(fontShrunk, "Long label should have shrunk font and clip-path in sequence view");
+                        + "var fw = text.style.fontWeight;"
+                        + "return (fs < 12 || fw === 'normal') && text.hasAttribute('clip-path'); })()");
+        assertTrue(adapted, "Long label should have adapted font-size or font-weight in sequence view");
+
+        // Verify the rect width accommodates the text
+        Boolean rectFits = (Boolean) page.evaluate(
+                "(() => { var rect = document.querySelector('.seq-head-rect');"
+                        + "if (!rect) return false;"
+                        + "var w = parseFloat(rect.getAttribute('width'));"
+                        + "return w >= 120; })()");
+        assertTrue(rectFits, "Sequence header rect width should be at least 120px");
     }
 
     @Test

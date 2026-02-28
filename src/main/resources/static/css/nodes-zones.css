@@ -17,7 +17,7 @@ body.is-editing .node:active { cursor: grabbing; border-color: var(--highlight);
 .node-label {
     font-weight: 600; font-size: 0.8rem; line-height: 1.2;
     white-space: pre-line; overflow-wrap: break-word; word-break: break-word;
-    overflow: hidden; max-width: 100%;
+    max-width: 100%;
 }
 
 .status-icon {
