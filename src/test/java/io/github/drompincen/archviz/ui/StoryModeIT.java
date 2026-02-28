@@ -278,7 +278,7 @@ class StoryModeIT {
         // Navigate to problem slide which has the description field
         assertThat(page.locator(".narr-slide.type-problem")).isVisible();
 
-        // Inject a mini story with HTML markup via the editor
+        // Inject story with HTML markup matching a real user's description
         page.locator("#btn-story-mode").dispatchEvent("click");
         page.waitForFunction("!document.body.classList.contains('story-active')");
 
@@ -288,8 +288,11 @@ class StoryModeIT {
                 .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
 
         String json = "{\"title\":\"Test\",\"nodes\":[{\"id\":\"a\",\"label\":\"A\",\"x\":10,\"y\":10}],"
-                + "\"sequence\":[],\"story\":{\"problem\":{\"headline\":\"<b>Bold</b> headline\","
-                + "\"description\":\"Line one<br>Line <u>two</u>\"},\"uiHints\":{\"initialView\":\"narrative\"}}}";
+                + "\"sequence\":[],\"story\":{\"problem\":{\"headline\":\"<b>Slow</b> & Manual Operations\","
+                + "\"description\":\"Bean & Byte serves 30 orders/hour with a cash register from 2009."
+                + " <br>62% of <b>payments</b> are cash (slow to count, impossible to audit)."
+                + " <u>We have zero customer data</u> — no emails, no purchase history.\"},"
+                + "\"uiHints\":{\"initialView\":\"narrative\"}}}";
         page.locator("#json-input").fill(json);
         page.locator("#btn-update").click();
         // Manually activate story mode (autoActivated is already set from first load)
@@ -297,18 +300,62 @@ class StoryModeIT {
         page.locator("#narrative-view.visible").waitFor();
         page.locator(".narr-slide.type-problem").waitFor();
 
-        // Check that <b> was rendered as real HTML bold
+        // Check that <b> was rendered as real HTML bold in headline
         Locator headline = page.locator(".narr-problem-headline");
         assertEquals(1, headline.locator("b").count(),
                 "Bold tag should render as real <b> in headline");
-        assertThat(headline.locator("b")).containsText("Bold");
+        assertThat(headline.locator("b")).containsText("Slow");
+        // & should render correctly (not double-escaped)
+        assertThat(headline).containsText("& Manual");
 
-        // Check that <br> and <u> were rendered in description
+        // Check that <br>, <b>, and <u> were rendered in description
         Locator desc = page.locator(".narr-problem-desc");
-        assertEquals(1, desc.locator("br").count(),
+        assertTrue(desc.locator("br").count() >= 1,
                 "<br> should render as real line break in description");
-        assertEquals(1, desc.locator("u").count(),
+        assertTrue(desc.locator("b").count() >= 1,
+                "<b> should render as real bold in description");
+        assertThat(desc.locator("b")).containsText("payments");
+        assertTrue(desc.locator("u").count() >= 1,
                 "<u> should render as real underline in description");
+        assertThat(desc.locator("u")).containsText("We have zero customer data");
+    }
+
+    @Test
+    void richText_worksWhenLoadedFromFile() {
+        // BeforeEach already loads coffee-shop with story=true, auto-starts on problem slide
+        assertThat(page.locator(".narr-slide.type-problem")).isVisible();
+
+        // Exit story mode so we can access the editor
+        page.locator("#btn-story-mode").dispatchEvent("click");
+        page.waitForFunction("!document.body.classList.contains('story-active')");
+
+        // Open editor
+        page.locator("#btn-options").click();
+        page.locator("#chk-show-editor").dispatchEvent("click");
+        page.locator("#left-sidebar").waitFor(new Locator.WaitForOptions()
+                .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE));
+
+        // Modify the description in the editor to include HTML tags
+        page.evaluate(
+                "var ta = document.getElementById('json-input');" +
+                "ta.value = ta.value.replace(" +
+                "  'The line averages 8 minutes during peak.'," +
+                "  'The line averages <b>8 minutes</b> during peak.<br>'" +
+                ");");
+        page.locator("#btn-update").click();
+
+        // Re-enter story mode (toggle back on)
+        page.locator("#btn-story-mode").dispatchEvent("click");
+        page.locator("#narrative-view.visible").waitFor();
+        page.locator(".narr-slide.type-problem").waitFor();
+
+        // Verify the HTML tags rendered
+        Locator desc = page.locator(".narr-problem-desc");
+        assertTrue(desc.locator("b").count() >= 1,
+                "<b> should render as real bold when loaded from file and edited");
+        assertThat(desc.locator("b")).containsText("8 minutes");
+        assertTrue(desc.locator("br").count() >= 1,
+                "<br> should render as real line break when loaded from file and edited");
     }
 
     @Test
