@@ -314,6 +314,18 @@ Vision targets for qualitative KPIs use `goalLabel` instead of min/max ranges:
 { "kpiId": "customer_satisfaction", "goalLabel": "▲ Strongly Improve", "horizon": "12 months" }
 ```
 
+### Rich text in story fields
+
+Story text fields support inline HTML so you can add emphasis, line breaks, and lists without leaving JSON. The renderer allows a safe subset of tags and escapes everything else.
+
+**Supported fields:** `problem.headline`, `problem.description`, `problem.risks[]`, `vision.summary`, `vision.description`, `vision.acceptanceCriteria[]`, `phases[].description`, `ideaCards[].hypothesis`
+
+**Allowed tags:** `<b>`, `<strong>`, `<i>`, `<em>`, `<u>`, `<br>`, `<ul>`, `<ol>`, `<li>`, `<p>`, `<sub>`, `<sup>`
+
+```json
+"description": "Wait times average <b>8 minutes</b> during peak.<br>We have <u>zero customer data</u>."
+```
+
 ### Example: coffee shop transformation
 
 The included `coffee-shop-transformation.json` tracks 6 KPIs across 4 phases:

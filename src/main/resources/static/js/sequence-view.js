@@ -26,12 +26,27 @@ export function renderSequenceView() {
 
     var svg = '<svg width="' + svgWidth + '" height="' + svgHeight + '" xmlns="http://www.w3.org/2000/svg">' +
         '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">' +
-        '<polygon points="0 0, 10 3.5, 0 7" fill="' + arrowFill + '" /></marker></defs>';
+        '<polygon points="0 0, 10 3.5, 0 7" fill="' + arrowFill + '" /></marker>';
+
+    // Add clip paths for each participant header
+    visibleNodes.forEach(function(node, index) {
+        var x = startX + (index * colWidth) + (colWidth / 2);
+        svg += '<clipPath id="clip-seq-' + index + '"><rect x="' + (x - 60) + '" y="10" width="120" height="40" /></clipPath>';
+    });
+    svg += '</defs>';
 
     visibleNodes.forEach(function(node, index) {
         var x = startX + (index * colWidth) + (colWidth / 2);
         var tagClass = node.tag ? 'tag-' + node.tag : 'tag-core';
         var label = (node.label || '').replace(/\\n/g, ' ');
+
+        // Shrink font for long labels so they fit the 120px-wide header
+        var fontSize = 12;
+        var maxTextWidth = 110;
+        var estCharWidth = 7.2;
+        if (label.length * estCharWidth > maxTextWidth) {
+            fontSize = Math.max(8, Math.floor(12 * maxTextWidth / (label.length * estCharWidth)));
+        }
 
         var statusSvg = "";
         if (node.status === 'ready') {
@@ -44,7 +59,7 @@ export function renderSequenceView() {
 
         svg += '<g class="seq-node ' + tagClass + '">' +
             '<rect x="' + (x - 60) + '" y="10" width="120" height="40" class="seq-head-rect" />' +
-            '<text x="' + x + '" y="35" class="seq-head-text">' + label + '</text>' +
+            '<text x="' + x + '" y="35" class="seq-head-text" style="font-size:' + fontSize + 'px" clip-path="url(#clip-seq-' + index + ')">' + label + '</text>' +
             statusSvg +
             '<line x1="' + x + '" y1="50" x2="' + x + '" y2="' + svgHeight + '" class="seq-lifeline" />' +
             '</g>';
