@@ -1,0 +1,100 @@
+{
+    "title": "MCP vs RAG vs AI Agents",
+
+    "sections": [
+        { "id": "sec-mcp",   "label": "MCP",      "description": "A standard way for LLMs to use tools", "icon": "gateway",  "color": "#2ecc71", "y": 0,   "height": 260 },
+        { "id": "sec-rag",   "label": "RAG",      "description": "LLMs augmented with retrieved knowledge", "icon": "database", "color": "#3498db", "y": 270, "height": 260 },
+        { "id": "sec-agent", "label": "AI Agent",  "description": "LLMs that take actions and make decisions", "icon": "agent",   "color": "#34495e", "y": 540, "height": 280 }
+    ],
+
+    "zones": [
+        { "id": "mcp-host",   "type": "group", "label": "MCP Host",                         "x": 100, "y": 20,  "w": 180, "h": 220, "borderColor": "#2ecc71", "bgColor": "rgba(46,204,113,0.06)" },
+        { "id": "kb",         "type": "group", "label": "Knowledge Base",                    "x": 250, "y": 370, "w": 250, "h": 140, "borderColor": "#3498db", "bgColor": "rgba(52,152,219,0.06)", "labelPosition": "top-center" },
+        { "id": "llms-zone",  "type": "group", "label": "LLMs",                              "x": 600, "y": 290, "w": 140, "h": 220, "borderColor": "#9b59b6", "bgColor": "rgba(155,89,182,0.06)", "labelPosition": "top-center" },
+        { "id": "tools-zone", "type": "group", "label": "Tools",                             "x": 580, "y": 600, "w": 170, "h": 180, "borderColor": "#e67e22", "bgColor": "rgba(230,126,34,0.06)", "labelPosition": "top-center" },
+        { "id": "agent-loop", "type": "group", "label": "Autonomous reasoning & action loop", "x": 100, "y": 660, "w": 200, "h": 120, "borderColor": "#34495e", "bgColor": "rgba(52,73,94,0.06)", "borderStyle": "dashed" }
+    ],
+
+    "nodes": [
+        { "id": "claude-desktop", "type": "default",  "tag": "new",       "label": "Claude\nDesktop",    "x": 120, "y": 40,  "w": 100, "h": 60 },
+        { "id": "ide",            "type": "default",  "tag": "core",      "label": "IDE",                "x": 120, "y": 120, "w": 100, "h": 50 },
+        { "id": "ai-tools",      "type": "agent",    "tag": "agent",     "label": "AI Tools",           "x": 120, "y": 185, "w": 100, "h": 50 },
+
+        { "id": "mcp-client-1",  "type": "service",  "tag": "new",       "label": "MCP\nClient",        "x": 310, "y": 30,  "w": 90,  "h": 55 },
+        { "id": "mcp-client-2",  "type": "service",  "tag": "new",       "label": "MCP\nClient",        "x": 310, "y": 100, "w": 90,  "h": 55 },
+        { "id": "mcp-client-3",  "type": "service",  "tag": "new",       "label": "MCP\nClient",        "x": 310, "y": 170, "w": 90,  "h": 55 },
+
+        { "id": "mcp-server-a",  "type": "service",  "tag": "core",      "label": "MCP\nServer A",      "x": 500, "y": 30,  "w": 100, "h": 55 },
+        { "id": "mcp-server-b",  "type": "service",  "tag": "core",      "label": "MCP\nServer B",      "x": 500, "y": 100, "w": 100, "h": 55 },
+        { "id": "mcp-server-c",  "type": "service",  "tag": "core",      "label": "MCP\nServer C",      "x": 500, "y": 170, "w": 100, "h": 55 },
+
+        { "id": "web-apis",      "type": "gateway",  "tag": "external",  "label": "Web APIs",           "x": 680, "y": 30,  "w": 100, "h": 55 },
+        { "id": "mcp-database",  "type": "database", "tag": "data",      "label": "Database",           "x": 680, "y": 100, "w": 100, "h": 55 },
+        { "id": "filesystem",    "type": "storage",  "tag": "core",      "label": "Filesystem",         "x": 680, "y": 170, "w": 100, "h": 55 },
+
+        { "id": "user",          "type": "user",     "tag": "external",  "label": "User",               "x": 110, "y": 340, "w": 80,  "h": 60 },
+        { "id": "retriever",     "type": "service",  "tag": "core",      "label": "Retriever",          "x": 330, "y": 290, "w": 100, "h": 60 },
+        { "id": "pdf",           "type": "storage",  "tag": "data",      "label": "PDF",                "x": 270, "y": 400, "w": 70,  "h": 55 },
+        { "id": "vector-db",     "type": "database", "tag": "data",      "label": "Vector\nDB",         "x": 355, "y": 400, "w": 70,  "h": 55 },
+        { "id": "code",          "type": "default",  "tag": "core",      "label": "Code",               "x": 440, "y": 400, "w": 70,  "h": 55 },
+        { "id": "gpt",           "type": "agent",    "tag": "agent",     "label": "GPT",                "x": 620, "y": 310, "w": 90,  "h": 50 },
+        { "id": "gemini",        "type": "agent",    "tag": "agent",     "label": "Gemini",             "x": 620, "y": 375, "w": 90,  "h": 50 },
+        { "id": "claude-llm",    "type": "agent",    "tag": "agent",     "label": "Claude",             "x": 620, "y": 440, "w": 90,  "h": 50 },
+        { "id": "runtime-kb",    "type": "service",  "tag": "new",       "label": "Runtime knowledge\nretrieval", "x": 580, "y": 490, "w": 140, "h": 45 },
+
+        { "id": "human-ctrl",    "type": "user",     "tag": "external",  "label": "Human\nControl",     "x": 130, "y": 560, "w": 90,  "h": 55 },
+        { "id": "autonomy",      "type": "default",  "tag": "core",      "label": "Autonomy\nLevel",    "x": 130, "y": 630, "w": 90,  "h": 50 },
+        { "id": "auto-action",   "type": "default",  "tag": "new",       "label": "Autonomous\nAction", "x": 130, "y": 700, "w": 100, "h": 50 },
+        { "id": "reactivity",    "type": "default",  "tag": "core",      "label": "Reactivity",         "x": 250, "y": 750, "w": 90,  "h": 50 },
+        { "id": "ai-agent",      "type": "agent",    "tag": "agent",     "label": "AI Agent",           "x": 350, "y": 640, "w": 100, "h": 60 },
+        { "id": "memory",        "type": "cache",    "tag": "data",      "label": "Memory",             "x": 480, "y": 560, "w": 80,  "h": 50 },
+        { "id": "environment",   "type": "default",  "tag": "external",  "label": "Environment",        "x": 400, "y": 750, "w": 110, "h": 50 },
+        { "id": "api-calls",     "type": "gateway",  "tag": "aws",       "label": "API Calls",          "x": 600, "y": 630, "w": 80,  "h": 50 },
+        { "id": "access-inet",   "type": "gateway",  "tag": "external",  "label": "Access\nInternet",   "x": 690, "y": 630, "w": 80,  "h": 50 },
+        { "id": "interpret-code","type": "default",  "tag": "core",      "label": "Interpret\nCode",    "x": 650, "y": 710, "w": 90,  "h": 50 }
+    ],
+
+    "connections": [
+        { "from": "claude-desktop", "to": "mcp-client-1", "style": "solid", "arrow": "forward", "color": "#2ecc71" },
+        { "from": "ide",            "to": "mcp-client-2", "style": "solid", "arrow": "forward", "color": "#2ecc71" },
+        { "from": "ai-tools",       "to": "mcp-client-3", "style": "solid", "arrow": "forward", "color": "#2ecc71" },
+
+        { "from": "mcp-client-1", "to": "mcp-server-a", "label": "MCP Protocol", "style": "dashed", "arrow": "both", "color": "#2ecc71" },
+        { "from": "mcp-client-2", "to": "mcp-server-b", "label": "MCP Protocol", "style": "dashed", "arrow": "both", "color": "#2ecc71" },
+        { "from": "mcp-client-3", "to": "mcp-server-c", "label": "MCP Protocol", "style": "dashed", "arrow": "both", "color": "#2ecc71" },
+
+        { "from": "mcp-server-a", "to": "web-apis",    "label": "Invokes Web APIs",   "style": "solid", "arrow": "forward", "color": "#555" },
+        { "from": "mcp-server-b", "to": "mcp-database","label": "Executes Queries",   "style": "solid", "arrow": "forward", "color": "#555" },
+        { "from": "mcp-server-c", "to": "filesystem",  "label": "Reads/Writes Files", "style": "solid", "arrow": "forward", "color": "#555" },
+
+        { "from": "user",      "to": "retriever",   "step": 1, "label": "User Query",              "style": "dashed", "arrow": "forward", "color": "#3498db" },
+        { "from": "retriever", "to": "vector-db",   "step": 2, "label": "Retriever fetches info",  "style": "dashed", "arrow": "forward", "color": "#3498db" },
+        { "from": "vector-db", "to": "retriever",   "step": 3, "label": "Return documents",        "style": "dashed", "arrow": "forward", "color": "#3498db" },
+        { "from": "retriever", "to": "gpt",         "step": 4, "label": "Query + retrieved docs",   "style": "dashed", "arrow": "forward", "color": "#9b59b6" },
+        { "from": "gpt",       "to": "user",        "step": 5, "label": "LLM generates response",  "style": "dashed", "arrow": "forward", "color": "#9b59b6" },
+        { "from": "gemini",    "to": "runtime-kb",  "style": "dotted", "arrow": "both", "color": "#9b59b6" },
+        { "from": "claude-llm","to": "runtime-kb",  "style": "dotted", "arrow": "both", "color": "#9b59b6" },
+
+        { "from": "human-ctrl",  "to": "autonomy",     "style": "solid",  "arrow": "forward", "color": "#34495e" },
+        { "from": "autonomy",    "to": "auto-action",  "style": "solid",  "arrow": "forward", "color": "#34495e" },
+        { "from": "ai-agent",    "to": "memory",       "label": "Access",           "style": "dashed", "arrow": "both",    "color": "#555" },
+        { "from": "ai-agent",    "to": "environment",  "label": "Actions",          "style": "dashed", "arrow": "forward", "color": "#555" },
+        { "from": "environment", "to": "ai-agent",     "label": "Observations",     "style": "dotted", "arrow": "forward", "color": "#555" },
+        { "from": "human-ctrl",  "to": "ai-agent",     "label": "Delegate tasks",   "style": "dashed", "arrow": "forward", "color": "#34495e" },
+        { "from": "ai-agent",    "to": "api-calls",    "label": "Tool Invocation",  "style": "solid",  "arrow": "forward", "color": "#e67e22" },
+        { "from": "api-calls",   "to": "access-inet",  "style": "solid",  "arrow": "forward", "color": "#e67e22" },
+        { "from": "api-calls",   "to": "interpret-code","style": "solid", "arrow": "forward", "color": "#e67e22" },
+        { "from": "auto-action", "to": "reactivity",   "style": "dashed", "arrow": "forward", "color": "#34495e" },
+        { "from": "reactivity",  "to": "ai-agent",     "style": "dashed", "arrow": "forward", "color": "#34495e" }
+    ],
+
+    "sequence": [
+        { "from": "user",      "to": "retriever",  "text": "[1] User sends query to retriever" },
+        { "from": "retriever", "to": "vector-db",  "text": "[2] Retriever fetches relevant info from knowledge base" },
+        { "from": "vector-db", "to": "retriever",  "text": "[3] Knowledge base returns documents" },
+        { "from": "retriever", "to": "gpt",        "text": "[4] Retriever sends query + context to LLM" },
+        { "from": "gpt",       "to": "user",       "text": "[5] LLM generates augmented response" }
+    ],
+
+    "notes": "MCP vs RAG vs AI Agents\n\nInspired by ByteByteGo infographic.\n\nMCP: Standardized tool & resource access for LLMs\nRAG: Augment LLM responses with retrieved knowledge\nAI Agent: Autonomous reasoning, tool use, and actions"
+}

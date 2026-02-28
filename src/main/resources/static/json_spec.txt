@@ -66,6 +66,10 @@ Defines the boxes (components) on the canvas.
                     the listed phase IDs is selected (can appear, then
                     disappear at later phases).
   skipSequence Boolean  Optional. true to hide from sequence diagram.
+  image     String  Optional. URL or relative path to a custom icon image
+                    (PNG, SVG, etc.). Replaces the default type-based SVG
+                    icon. Only relative paths and https:// URLs are allowed.
+                    Falls back to the type icon if the image fails to load.
 
 Supported Values for type (Icons)
 
@@ -107,19 +111,34 @@ Supported Values for tag (Colors)
 3. The connections Array
 ------------------------
 
-Draws static dashed lines between boxes representing network connectivity
-or data flow paths.
+Draws lines between boxes representing network connectivity or data flow
+paths. Supports arrow styles, labels, and numbered step badges.
 
   {
     "from": "order-svc",
     "to": "db",
+    "label": "REST API",
+    "step": 3,
+    "style": "solid",
+    "color": "#3498db",
+    "arrow": "forward",
+    "thickness": 2,
     "phase": "processing"
   }
 
-  from   (String)  The id of the source node.
-  to     (String)  The id of the destination node.
-  phase  (String)  Optional. Phase ID — connection only shown when that
-                   phase is selected.
+  Property   Type    Description
+  ---------  ------  -----------------------------------------------------------
+  from       String  Required. The id of the source node.
+  to         String  Required. The id of the destination node.
+  label      String  Optional. Text label displayed at the midpoint of the line.
+  step       Number  Optional. Numbered badge (circled) at 25% along the path.
+  style      String  Optional. Line style: "solid", "dashed" (default), "dotted".
+  color      String  Optional. CSS color for the line and arrowheads (e.g. "#3498db").
+  arrow      String  Optional. Arrowhead direction: "none" (default),
+                     "forward", "reverse", "both".
+  thickness  Number  Optional. Stroke width in pixels (default 2).
+  phase      String  Optional. Phase ID — connection only shown when that
+                     phase is selected.
 
 
 4. The sequence Array
@@ -171,17 +190,21 @@ Draws labeled infrastructure boundary boxes behind nodes.
     "phase": "skeleton"
   }
 
-  Property  Type    Description
-  --------  ------  -----------------------------------------------------------
-  id        String  Required. Unique identifier for the zone.
-  type      String  Visual style of the zone (see below).
-  label     String  Text displayed at the top-left of the zone.
-  x         Number  Horizontal position (pixels).
-  y         Number  Vertical position (pixels).
-  w         Number  Width in pixels.
-  h         Number  Height in pixels.
-  parent    String  Optional. ID of the parent zone (for render ordering).
-  phase     String  Optional. Phase ID — zone only appears at that phase.
+  Property       Type    Description
+  -------------  ------  -----------------------------------------------------------
+  id             String  Required. Unique identifier for the zone.
+  type           String  Visual style of the zone (see below).
+  label          String  Text displayed at the top-left of the zone.
+  x              Number  Horizontal position (pixels).
+  y              Number  Vertical position (pixels).
+  w              Number  Width in pixels.
+  h              Number  Height in pixels.
+  parent         String  Optional. ID of the parent zone (for render ordering).
+  phase          String  Optional. Phase ID — zone only appears at that phase.
+  labelPosition  String  Optional. "top-left" (default) or "top-center".
+  borderStyle    String  Optional. Override: "solid", "dashed", "dotted", "none".
+  bgColor        String  Optional. Override background color (CSS value).
+  borderColor    String  Optional. Override border color (CSS value).
 
 Supported Zone Types
 
@@ -197,6 +220,38 @@ Supported Zone Types
   az             Subtle blue dashed  Availability zone
   k8s-cluster    Blue solid          Kubernetes cluster
   namespace      Blue dashed         Kubernetes namespace
+  group          Subtle border       Generic sub-container / labeled group
+
+
+9. The sections Array (Optional)
+---------------------------------
+
+Draws horizontal section bands across the full canvas width, inspired by
+ByteByteGo-style infographic layouts. Sections render behind zones and
+nodes (z-index 0).
+
+  {
+    "id": "mcp",
+    "label": "MCP",
+    "description": "A standard way for LLMs to use tools",
+    "icon": "gateway",
+    "color": "#3498db",
+    "y": 0,
+    "height": 200
+  }
+
+  Property     Type    Description
+  -----------  ------  -----------------------------------------------------------
+  id           String  Required. Unique identifier for the section.
+  label        String  Large title text displayed in the colored sidebar.
+  description  String  Optional. Subtitle text below the label.
+  icon         String  Optional. Icon type from the ICONS map, or an image URL.
+  color        String  Accent color for the sidebar stripe (CSS hex/color).
+  y            Number  Vertical position (pixels) from the top edge.
+  height       Number  Height of the band in pixels.
+
+Sections are purely decorative — nodes and zones are still positioned by
+their own x,y coordinates. Sections provide visual grouping context.
 
 
 6. The phases Array (Optional)
@@ -432,18 +487,25 @@ story.uiHints Object
 Backward Compatibility
 ----------------------
 
-  Missing field     Behavior
-  ----------------  -----------------------------------------------
-  No phases         Phase slider hidden, everything visible
-  No zones          No boundary boxes rendered
-  No flows          Falls back to root sequence
-  No phases on flow Flow shown when any step is visible (step-scanning)
-  No phase on item  Item always visible regardless of selected phase
-  No zone on node   Node floats freely
-  No story          Story button has no highlight, story mode unavailable
-  No story.kpis     KPI HUD hidden during narrative
-  No story.benefits Benefits sidebar empty during narrative
-  No uiHints        Story mode must be activated manually or via ?story=true
+  Missing field         Behavior
+  --------------------  -----------------------------------------------
+  No phases             Phase slider hidden, everything visible
+  No zones              No boundary boxes rendered
+  No flows              Falls back to root sequence
+  No phases on flow     Flow shown when any step is visible (step-scanning)
+  No phase on item      Item always visible regardless of selected phase
+  No zone on node       Node floats freely
+  No story              Story button has no highlight, story mode unavailable
+  No story.kpis         KPI HUD hidden during narrative
+  No story.benefits     Benefits sidebar empty during narrative
+  No uiHints            Story mode must be activated manually or via ?story=true
+  No sections           No horizontal bands rendered
+  No conn.label/step    Connection renders as before (no labels/badges)
+  No conn.style         Defaults to "dashed" (backward compatible)
+  No conn.arrow         Defaults to "none" (no arrowheads, backward compatible)
+  No conn.color         Uses default CSS stroke color (#666)
+  No node.image         Uses the type-based SVG icon
+  No zone style fields  Uses the type-based CSS defaults
 
 
 Minimal Example

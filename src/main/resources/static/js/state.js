@@ -56,6 +56,7 @@ export function initDom() {
     dom.flowSelector = document.getElementById('flow-selector');
 
     dom.benefitsPanel = document.getElementById('benefits-panel');
+    dom.sectionsContainer = document.getElementById('sections-container');
 
     dom.resizer = document.getElementById('pane-resizer');
     dom.centerStage = document.getElementById('center-stage');

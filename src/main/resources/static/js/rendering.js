@@ -23,7 +23,9 @@ function deduplicateConnections(connections) {
     var seen = {};
     var result = [];
     connections.forEach(function(conn) {
-        var key = [conn.from, conn.to].sort().join('|');
+        // Include label/step in key so distinct labeled connections aren't merged
+        var pairKey = [conn.from, conn.to].sort().join('|');
+        var key = pairKey + ':' + (conn.label || '') + ':' + (conn.step != null ? conn.step : '');
         if (!seen[key]) {
             seen[key] = true;
             result.push(conn);
@@ -32,9 +34,55 @@ function deduplicateConnections(connections) {
     return result;
 }
 
+function ensureArrowMarkers() {
+    var defs = dom.svgLayer.querySelector('defs');
+    if (!defs) {
+        defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+        dom.svgLayer.insertBefore(defs, dom.svgLayer.firstChild);
+    }
+    return defs;
+}
+
+function getMarkerId(color, direction) {
+    var safeColor = (color || '#666').replace('#', '');
+    return 'arrow-' + direction + '-' + safeColor;
+}
+
+function ensureMarker(defs, color, direction) {
+    var id = getMarkerId(color, direction);
+    if (defs.querySelector('#' + id)) return id;
+    var marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+    marker.setAttribute("id", id);
+    marker.setAttribute("markerWidth", "8");
+    marker.setAttribute("markerHeight", "8");
+    marker.setAttribute("fill", color || '#666');
+    marker.setAttribute("orient", "auto-start-reverse");
+    if (direction === 'forward') {
+        marker.setAttribute("refX", "7");
+        marker.setAttribute("refY", "4");
+        marker.setAttribute("viewBox", "0 0 8 8");
+        marker.innerHTML = '<path d="M0,0 L8,4 L0,8 Z"/>';
+    } else {
+        marker.setAttribute("refX", "1");
+        marker.setAttribute("refY", "4");
+        marker.setAttribute("viewBox", "0 0 8 8");
+        marker.innerHTML = '<path d="M8,0 L0,4 L8,8 Z"/>';
+    }
+    defs.appendChild(marker);
+    return id;
+}
+
+function getPointOnPath(pathEl, t) {
+    var len = pathEl.getTotalLength();
+    var pt = pathEl.getPointAtLength(len * t);
+    return { x: pt.x, y: pt.y };
+}
+
 export function updateConnections() {
     dom.svgLayer.innerHTML = '';
     if (!state.graph.connections) return;
+
+    var defs = ensureArrowMarkers();
 
     var visibleConns = state.graph.connections.filter(function(conn) { return isVisibleInPhase(conn); });
     var dedupedConns = deduplicateConnections(visibleConns);
@@ -70,6 +118,15 @@ export function updateConnections() {
 
         occupiedMidpoints.push({ x: ctrlX, y: ctrlY });
 
+        // Resolve style properties with backwards-compatible defaults
+        var connStyle = conn.style || 'dashed';
+        var connColor = conn.color || null; // null = use CSS default
+        var connArrow = conn.arrow || 'none';
+        var strokeDasharray = '';
+        if (connStyle === 'dashed') strokeDasharray = '6,4';
+        else if (connStyle === 'dotted') strokeDasharray = '2,3';
+        // 'solid' → no dasharray
+
         var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         path.setAttribute("class", "connector");
 
@@ -78,7 +135,91 @@ export function updateConnections() {
         } else {
             path.setAttribute("d", "M" + c1.x + "," + c1.y + " Q" + ctrlX + "," + ctrlY + " " + c2.x + "," + c2.y);
         }
+
+        // Apply style overrides
+        if (strokeDasharray) {
+            path.setAttribute("stroke-dasharray", strokeDasharray);
+        } else {
+            path.removeAttribute("stroke-dasharray");
+            path.style.strokeDasharray = 'none';
+        }
+        if (connColor) {
+            path.style.stroke = connColor;
+        }
+        if (conn.thickness) {
+            path.style.strokeWidth = conn.thickness + 'px';
+        }
+
+        // Arrow markers
+        var markerColor = connColor || '#666';
+        if (connArrow === 'forward' || connArrow === 'both') {
+            var fwdId = ensureMarker(defs, markerColor, 'forward');
+            path.setAttribute("marker-end", "url(#" + fwdId + ")");
+        }
+        if (connArrow === 'reverse' || connArrow === 'both') {
+            var revId = ensureMarker(defs, markerColor, 'reverse');
+            path.setAttribute("marker-start", "url(#" + revId + ")");
+        }
+
         dom.svgLayer.appendChild(path);
+
+        // Connection label at midpoint
+        if (conn.label) {
+            var labelPt = getPointOnPath(path, 0.5);
+            var labelG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            labelG.setAttribute("class", "conn-label-group");
+
+            // Background rect for readability
+            var bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            bgRect.setAttribute("class", "conn-label-bg");
+
+            var labelText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            labelText.setAttribute("class", "conn-label");
+            labelText.setAttribute("x", labelPt.x);
+            labelText.setAttribute("y", labelPt.y - 8);
+            labelText.setAttribute("text-anchor", "middle");
+            labelText.setAttribute("dominant-baseline", "auto");
+            labelText.textContent = conn.label;
+            if (connColor) labelText.style.fill = connColor;
+
+            labelG.appendChild(bgRect);
+            labelG.appendChild(labelText);
+            dom.svgLayer.appendChild(labelG);
+
+            // Size background rect after text is in DOM
+            requestAnimationFrame(function() {
+                var bbox = labelText.getBBox();
+                bgRect.setAttribute("x", bbox.x - 4);
+                bgRect.setAttribute("y", bbox.y - 2);
+                bgRect.setAttribute("width", bbox.width + 8);
+                bgRect.setAttribute("height", bbox.height + 4);
+                bgRect.setAttribute("rx", "3");
+            });
+        }
+
+        // Step number badge at 25% along path
+        if (conn.step != null) {
+            var stepPt = getPointOnPath(path, 0.25);
+            var badgeColor = connColor || 'var(--highlight)';
+
+            var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("class", "conn-step-circle");
+            circle.setAttribute("cx", stepPt.x);
+            circle.setAttribute("cy", stepPt.y);
+            circle.setAttribute("r", "10");
+            circle.style.fill = badgeColor;
+
+            var stepText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            stepText.setAttribute("class", "conn-step-number");
+            stepText.setAttribute("x", stepPt.x);
+            stepText.setAttribute("y", stepPt.y);
+            stepText.setAttribute("text-anchor", "middle");
+            stepText.setAttribute("dominant-baseline", "central");
+            stepText.textContent = conn.step;
+
+            dom.svgLayer.appendChild(circle);
+            dom.svgLayer.appendChild(stepText);
+        }
     });
 }
 
@@ -120,6 +261,60 @@ function updateFlowDropdown() {
         dom.flowControls.style.display = 'none';
         state.selectedFlowId = '__default__';
     }
+}
+
+function renderSections() {
+    dom.sectionsContainer.innerHTML = '';
+    if (!state.graph.sections) return;
+
+    state.graph.sections.forEach(function(sec) {
+        var band = document.createElement('div');
+        band.className = 'section-band';
+        band.style.top = (sec.y + CONTENT_TOP) + 'px';
+        band.style.height = sec.height + 'px';
+
+        // Sidebar
+        var sidebar = document.createElement('div');
+        sidebar.className = 'section-sidebar';
+        sidebar.style.background = sec.color || '#555';
+
+        if (sec.icon) {
+            var iconWrap = document.createElement('div');
+            iconWrap.className = 'section-sidebar-icon';
+            var iconSvg = ICONS[sec.icon];
+            if (iconSvg) {
+                iconWrap.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor">' + iconSvg + '</svg>';
+            } else if (sec.icon.match(/^(https:\/\/|[a-zA-Z0-9_.\/\-]+)$/)) {
+                iconWrap.innerHTML = '<img src="' + sec.icon + '" alt="">';
+            }
+            sidebar.appendChild(iconWrap);
+        }
+
+        var labelEl = document.createElement('div');
+        labelEl.className = 'section-sidebar-label';
+        labelEl.textContent = sec.label || '';
+        sidebar.appendChild(labelEl);
+
+        if (sec.description) {
+            var descEl = document.createElement('div');
+            descEl.className = 'section-sidebar-desc';
+            descEl.textContent = sec.description;
+            sidebar.appendChild(descEl);
+        }
+
+        band.appendChild(sidebar);
+
+        // Content area
+        var content = document.createElement('div');
+        content.className = 'section-content';
+        if (sec.color) {
+            content.style.borderLeft = '2px solid ' + sec.color;
+            content.style.background = sec.color + '08'; // very faint tint
+        }
+        band.appendChild(content);
+
+        dom.sectionsContainer.appendChild(band);
+    });
 }
 
 export function render() {
@@ -164,6 +359,9 @@ export function render() {
         // Render narrative controls if story exists
         renderNarrativeControls();
 
+        // Render sections (horizontal bands behind everything)
+        renderSections();
+
         // Render zones
         dom.zonesContainer.innerHTML = '';
         (state.graph.zones || []).forEach(function(z) {
@@ -175,8 +373,18 @@ export function render() {
             zEl.style.top = (z.y + CONTENT_TOP) + 'px';
             zEl.style.width = z.w + 'px';
             zEl.style.height = z.h + 'px';
+
+            // Zone style overrides
+            if (z.bgColor) zEl.style.background = z.bgColor;
+            if (z.borderColor) zEl.style.borderColor = z.borderColor;
+            if (z.borderStyle) {
+                if (z.borderStyle === 'none') zEl.style.border = 'none';
+                else zEl.style.borderStyle = z.borderStyle;
+            }
+
             var labelEl = document.createElement('div');
             labelEl.className = 'zone-label';
+            if (z.labelPosition === 'top-center') labelEl.classList.add('label-top-center');
             labelEl.textContent = z.label || z.id;
             zEl.appendChild(labelEl);
             zEl.addEventListener('mousedown', handleZoneDragStart);
@@ -203,10 +411,23 @@ export function render() {
             if (n.status === 'ready') statusHtml = '<div class="status-icon status-ready" title="Ready">\u2714</div>';
             else if (n.status === 'wip') statusHtml = '<div class="status-icon status-wip" title="WIP">\u23F3</div>';
 
+            // Use <img> for custom image, otherwise SVG icon
+            var iconHtml;
+            if (n.image) {
+                var safeSrc = n.image;
+                // Only allow relative paths and https:// URLs
+                if (!/^(https:\/\/|[a-zA-Z0-9_.\/\-]+)$/.test(safeSrc)) safeSrc = '';
+                iconHtml = safeSrc
+                    ? '<img class="node-icon" src="' + safeSrc + '" onerror="this.outerHTML=\'<svg class=\\\'node-icon\\\' viewBox=\\\'0 0 24 24\\\'>' + (ICONS[n.type] || ICONS['default']).replace(/'/g, "\\'") + '</svg>\'">'
+                    : '<svg class="node-icon" viewBox="0 0 24 24">' + iconSvg + '</svg>';
+            } else {
+                iconHtml = '<svg class="node-icon" viewBox="0 0 24 24">' + iconSvg + '</svg>';
+            }
+
             el.innerHTML =
                 statusHtml +
                 '<div class="node-content-wrapper">' +
-                    '<svg class="node-icon" viewBox="0 0 24 24">' + iconSvg + '</svg>' +
+                    iconHtml +
                     '<div class="node-label"></div>' +
                 '</div>' +
                 '<div class="step-badges-container" id="badges-' + n.id + '"></div>';
