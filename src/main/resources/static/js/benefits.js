@@ -29,62 +29,17 @@ export function renderBenefitsPanel() {
         return;
     }
 
-    // Compute architecture bounding box to position panel intelligently
-    var panelWidth = 340; // 320px card + 20px margin
-    var canvasRect = dom.previewCanvas.getBoundingClientRect();
-    var canvasW = canvasRect.width;
-    var canvasH = canvasRect.height;
-
-    // Find rightmost and bottommost edge of all visible nodes + zones
-    var diagramRight = 0;
-    var diagramBottom = 0;
-    var nodeEls = dom.container.querySelectorAll('.node');
-    nodeEls.forEach(function(el) {
-        var r = parseInt(el.style.left) + el.offsetWidth;
-        var b = parseInt(el.style.top) + el.offsetHeight;
-        if (r > diagramRight) diagramRight = r;
-        if (b > diagramBottom) diagramBottom = b;
-    });
-    var zoneEls = dom.zonesContainer.querySelectorAll('.zone');
-    zoneEls.forEach(function(el) {
-        var r = parseInt(el.style.left) + el.offsetWidth;
-        var b = parseInt(el.style.top) + el.offsetHeight;
-        if (r > diagramRight) diagramRight = r;
-        if (b > diagramBottom) diagramBottom = b;
-    });
-
-    var spaceRight = canvasW - diagramRight;
-    var spaceBelow = canvasH - diagramBottom;
-
-    // Reset positioning
-    dom.benefitsPanel.style.top = '';
-    dom.benefitsPanel.style.bottom = '';
-    dom.benefitsPanel.style.left = '';
-    dom.benefitsPanel.style.right = '';
-    dom.benefitsPanel.style.transform = '';
-    dom.benefitsPanel.style.flexDirection = 'column';
-    dom.benefitsPanel.style.flexWrap = '';
-    dom.benefitsPanel.style.maxHeight = '';
-
-    if (spaceRight >= panelWidth + 20) {
-        // Place in the center of the gap to the right
-        var gapCenter = diagramRight + (spaceRight / 2);
-        dom.benefitsPanel.style.left = (gapCenter - 160) + 'px';
-        dom.benefitsPanel.style.top = '20px';
-        dom.benefitsPanel.style.maxHeight = 'calc(100% - 40px)';
-    } else if (spaceBelow >= 120) {
-        // Place below the diagram, horizontally centered
-        dom.benefitsPanel.style.top = (diagramBottom + 20) + 'px';
-        dom.benefitsPanel.style.left = '20px';
+    var nbWidget = dom.notebookWidget;
+    if (!nbWidget.classList.contains('hidden')) {
+        var nbRect = nbWidget.getBoundingClientRect();
+        var stageRect = dom.centerStage.getBoundingClientRect();
+        dom.benefitsPanel.style.top = (nbRect.bottom - stageRect.top + 10) + 'px';
         dom.benefitsPanel.style.right = '20px';
-        dom.benefitsPanel.style.flexDirection = 'row';
-        dom.benefitsPanel.style.flexWrap = 'wrap';
-        dom.benefitsPanel.style.maxHeight = (spaceBelow - 40) + 'px';
+        dom.benefitsPanel.style.bottom = '';
     } else {
-        // Fallback: bottom-right corner
-        dom.benefitsPanel.style.bottom = '20px';
+        dom.benefitsPanel.style.top = '20px';
         dom.benefitsPanel.style.right = '20px';
-        dom.benefitsPanel.style.maxHeight = 'calc(100% - 40px)';
+        dom.benefitsPanel.style.bottom = '';
     }
 
     var phaseGroups = {};
