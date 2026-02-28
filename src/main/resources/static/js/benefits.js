@@ -29,17 +29,42 @@ export function renderBenefitsPanel() {
         return;
     }
 
-    var nbWidget = dom.notebookWidget;
-    if (!nbWidget.classList.contains('hidden')) {
-        var nbRect = nbWidget.getBoundingClientRect();
-        var stageRect = dom.centerStage.getBoundingClientRect();
-        dom.benefitsPanel.style.top = (nbRect.bottom - stageRect.top + 10) + 'px';
-        dom.benefitsPanel.style.right = '20px';
-        dom.benefitsPanel.style.bottom = '';
-    } else {
+    // Find the rightmost edge of all visible nodes + zones
+    var diagramRight = 0;
+    dom.container.querySelectorAll('.node').forEach(function(el) {
+        var r = parseInt(el.style.left) + el.offsetWidth;
+        if (r > diagramRight) diagramRight = r;
+    });
+    dom.zonesContainer.querySelectorAll('.zone').forEach(function(el) {
+        var r = parseInt(el.style.left) + el.offsetWidth;
+        if (r > diagramRight) diagramRight = r;
+    });
+
+    var canvasW = dom.previewCanvas.clientWidth;
+    var spaceRight = canvasW - diagramRight;
+
+    // Auto-size card width: use available gap, clamped between 200–320px
+    var cardW = Math.min(320, Math.max(200, spaceRight - 40));
+
+    // Reset inline overrides
+    dom.benefitsPanel.style.left = '';
+    dom.benefitsPanel.style.right = '';
+    dom.benefitsPanel.style.top = '';
+    dom.benefitsPanel.style.bottom = '';
+    dom.benefitsPanel.style.width = cardW + 'px';
+
+    if (spaceRight >= cardW + 40) {
+        // Center panel in the gap between diagram edge and right margin
+        var gapLeft = diagramRight + (spaceRight - cardW) / 2;
+        dom.benefitsPanel.style.left = gapLeft + 'px';
+        dom.benefitsPanel.style.right = 'auto';
         dom.benefitsPanel.style.top = '20px';
+    } else {
+        // Not enough room to the right — anchor to bottom-right
+        dom.benefitsPanel.style.top = 'auto';
+        dom.benefitsPanel.style.bottom = '20px';
         dom.benefitsPanel.style.right = '20px';
-        dom.benefitsPanel.style.bottom = '';
+        dom.benefitsPanel.style.width = '280px';
     }
 
     var phaseGroups = {};

@@ -1,7 +1,7 @@
 /* ── Rendering: render, updateConnections, getNodeCenter ── */
 
 import { state, dom } from './state.js';
-import { ICONS } from './constants.js';
+import { ICONS, CONTENT_TOP } from './constants.js';
 import { stripJsonComments, normalizeMultilineStrings, isVisibleInPhase, resolveActiveSequence, isFlowVisibleInPhase } from './core-data.js';
 import { clearLog } from './logging.js';
 import { renderBenefitsPanel } from './benefits.js';
@@ -161,9 +161,6 @@ export function render() {
         var notesText = (state.graph.notes || "").replace(/\\n/g, "\n");
         dom.notebook.textContent = notesText;
 
-        // Render benefits panel (story layer)
-        renderBenefitsPanel();
-
         // Render narrative controls if story exists
         renderNarrativeControls();
 
@@ -175,7 +172,7 @@ export function render() {
             zEl.className = 'zone zone-' + (z.type || 'cloud');
             zEl.id = 'zone-' + z.id;
             zEl.style.left = z.x + 'px';
-            zEl.style.top = z.y + 'px';
+            zEl.style.top = (z.y + CONTENT_TOP) + 'px';
             zEl.style.width = z.w + 'px';
             zEl.style.height = z.h + 'px';
             var labelEl = document.createElement('div');
@@ -196,7 +193,7 @@ export function render() {
             el.id = 'node-' + n.id;
 
             el.style.left = n.x + 'px';
-            el.style.top = n.y + 'px';
+            el.style.top = (n.y + CONTENT_TOP) + 'px';
             el.style.width = n.w ? n.w + 'px' : '100px';
             el.style.height = n.h ? n.h + 'px' : 'auto';
 
@@ -218,8 +215,37 @@ export function render() {
             el.querySelector('.node-label').textContent = labelText;
             el.addEventListener('mousedown', handleDragStart);
             dom.container.appendChild(el);
+
+            // Adaptive label sizing — only when height is fixed (n.h is set)
+            if (n.h) {
+                var lbl = el.querySelector('.node-label');
+                var ico = el.querySelector('.node-icon');
+
+                // Step 1: shrink font from 0.8rem to 0.65rem
+                if (el.scrollHeight > el.clientHeight) {
+                    lbl.style.fontSize = '0.65rem';
+                }
+                // Step 2: remove bold (600 → 400)
+                if (el.scrollHeight > el.clientHeight) {
+                    lbl.style.fontWeight = '400';
+                }
+                // Step 3: shrink icon 24→16px
+                if (el.scrollHeight > el.clientHeight) {
+                    ico.style.width = '16px';
+                    ico.style.height = '16px';
+                    ico.style.marginBottom = '2px';
+                }
+                // Step 4: grow box to fit
+                if (el.scrollHeight > el.clientHeight) {
+                    el.style.height = 'auto';
+                }
+            }
+
             state.nodeMap[n.id] = Object.assign({}, n, { el: el });
         });
+
+        // Render benefits panel after nodes/zones so it sees current layout
+        renderBenefitsPanel();
 
         updateConnections();
 
