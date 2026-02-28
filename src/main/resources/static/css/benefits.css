@@ -1,20 +1,14 @@
 /* ── Benefits Panel ── */
 
 #benefits-panel {
-    position: absolute; top: 20px; right: 20px;
+    position: absolute;
     max-height: calc(100% - 40px);
     overflow: auto;
     z-index: 99; display: none; flex-direction: column;
-    flex-wrap: wrap; align-content: flex-end;
     gap: 10px;
     pointer-events: none;
 }
 #benefits-panel.visible { display: flex; }
-/* shift benefits below notebook when notebook is visible */
-#notebook-widget:not(.hidden) ~ #benefits-panel,
-#benefits-panel.below-notebook {
-    top: auto; bottom: 20px;
-}
 
 .benefit-card {
     pointer-events: auto;
