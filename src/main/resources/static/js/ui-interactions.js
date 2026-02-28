@@ -5,6 +5,7 @@ import { render, updateConnections } from './rendering.js';
 import { resetAnimation, togglePlay, fastForward } from './animation.js';
 import { getPhaseIndex, resolveActiveSequence, getFlowPhaseRange } from './core-data.js';
 import { renderSequenceView } from './sequence-view.js';
+import { CONTENT_TOP } from './constants.js';
 
 // ── Node drag ──
 var dragTarget = null, dragOffset = { x: 0, y: 0 };
@@ -37,7 +38,7 @@ function handleDragEnd() {
         var nodeItem = state.graph.nodes.find(function(n) { return n.id === id; });
         if (nodeItem) {
             nodeItem.x = parseInt(dragTarget.style.left);
-            nodeItem.y = parseInt(dragTarget.style.top);
+            nodeItem.y = parseInt(dragTarget.style.top) - CONTENT_TOP;
             dom.input.value = JSON.stringify(state.graph, null, 4);
         }
     }
@@ -77,7 +78,7 @@ function handleZoneDragEnd() {
         var zoneItem = (state.graph.zones || []).find(function(z) { return z.id === id; });
         if (zoneItem) {
             zoneItem.x = parseInt(zoneDragTarget.style.left);
-            zoneItem.y = parseInt(zoneDragTarget.style.top);
+            zoneItem.y = parseInt(zoneDragTarget.style.top) - CONTENT_TOP;
             dom.input.value = JSON.stringify(state.graph, null, 4);
         }
     }

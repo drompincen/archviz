@@ -1,7 +1,7 @@
 /* ── Rendering: render, updateConnections, getNodeCenter ── */
 
 import { state, dom } from './state.js';
-import { ICONS } from './constants.js';
+import { ICONS, CONTENT_TOP } from './constants.js';
 import { stripJsonComments, normalizeMultilineStrings, isVisibleInPhase, resolveActiveSequence, isFlowVisibleInPhase } from './core-data.js';
 import { clearLog } from './logging.js';
 import { renderBenefitsPanel } from './benefits.js';
@@ -175,7 +175,7 @@ export function render() {
             zEl.className = 'zone zone-' + (z.type || 'cloud');
             zEl.id = 'zone-' + z.id;
             zEl.style.left = z.x + 'px';
-            zEl.style.top = z.y + 'px';
+            zEl.style.top = (z.y + CONTENT_TOP) + 'px';
             zEl.style.width = z.w + 'px';
             zEl.style.height = z.h + 'px';
             var labelEl = document.createElement('div');
@@ -196,7 +196,7 @@ export function render() {
             el.id = 'node-' + n.id;
 
             el.style.left = n.x + 'px';
-            el.style.top = n.y + 'px';
+            el.style.top = (n.y + CONTENT_TOP) + 'px';
             el.style.width = n.w ? n.w + 'px' : '100px';
             el.style.height = n.h ? n.h + 'px' : 'auto';
 
