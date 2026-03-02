@@ -154,6 +154,9 @@ function showNarrative() {
 
     storySession = true;
 
+    // Apply font scale to narrative view
+    dom.narrativeView.style.fontSize = (1 + state.nodeFontScale * 0.1) + 'rem';
+
     // Add story-active class to body
     document.body.classList.add('story-active');
 

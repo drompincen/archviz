@@ -147,13 +147,17 @@ export function initUIInteractions() {
     }
 
     // Font size +/- buttons
+    function applyNarrativeFontScale() {
+        var nv = document.getElementById('narrative-view');
+        if (nv) nv.style.fontSize = (1 + state.nodeFontScale * 0.1) + 'rem';
+    }
     dom.btnFontUp.addEventListener('click', function(e) {
         e.stopPropagation();
-        if (state.nodeFontScale < 5) { state.nodeFontScale++; render(); }
+        if (state.nodeFontScale < 5) { state.nodeFontScale++; render(); applyNarrativeFontScale(); }
     });
     dom.btnFontDown.addEventListener('click', function(e) {
         e.stopPropagation();
-        if (state.nodeFontScale > -3) { state.nodeFontScale--; render(); }
+        if (state.nodeFontScale > -3) { state.nodeFontScale--; render(); applyNarrativeFontScale(); }
     });
 
     // Light mode

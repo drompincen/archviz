@@ -217,7 +217,7 @@ export function render() {
             dom.container.appendChild(el);
 
             // Apply user font-scale to node labels
-            var baseFontRem = 0.8 + state.nodeFontScale * 0.1;
+            var baseFontRem = 1.0 + state.nodeFontScale * 0.1;
             if (baseFontRem < 0.5) baseFontRem = 0.5;
             var lbl = el.querySelector('.node-label');
             lbl.style.fontSize = baseFontRem + 'rem';
