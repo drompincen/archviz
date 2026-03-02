@@ -1,0 +1,60 @@
+  <h2><span class="sn">5</span> Nodes &amp; Connections</h2>
+  <p class="sub">16 node types, 9 tag colors, statuses, and connection format</p>
+
+  <h3>16 Node Types</h3>
+  <table class="tbl" style="margin-bottom:14px">
+    <thead><tr><th>Type</th><th>Icon</th><th>Shape</th></tr></thead>
+    <tbody>
+      <tr><td><code>user</code> / <code>human</code></td><td>Person silhouette</td><td>Default rectangle</td></tr>
+      <tr><td><code>service</code></td><td>Stacked layers</td><td>Default rectangle</td></tr>
+      <tr><td><code>database</code></td><td>Cylinder</td><td>Bottom rounded</td></tr>
+      <tr><td><code>agent</code></td><td>Robot / AI</td><td>Default rectangle</td></tr>
+      <tr><td><code>gateway</code></td><td>Globe / network</td><td>Rounded (20px)</td></tr>
+      <tr><td><code>firewall</code></td><td>Shield</td><td>Double red border</td></tr>
+      <tr><td><code>lambda</code></td><td>Lambda function</td><td>Bottom rounded + orange accent</td></tr>
+      <tr><td><code>fargate</code></td><td>Container</td><td>Default rectangle</td></tr>
+      <tr><td><code>ec2</code></td><td>Server rack</td><td>Default rectangle</td></tr>
+      <tr><td><code>load-balancer</code></td><td>Balance arrows</td><td>Default rectangle</td></tr>
+      <tr><td><code>cdn</code></td><td>Dashed globe</td><td>Dashed rounded</td></tr>
+      <tr><td><code>cache</code></td><td>Dotted layers</td><td>Dotted rounded</td></tr>
+      <tr><td><code>queue</code></td><td>Item queue</td><td>Right pill</td></tr>
+      <tr><td><code>storage</code></td><td>Drive stack</td><td>Thick bottom border</td></tr>
+      <tr><td><code>dashboard</code></td><td>Grid panels</td><td>Top accent bar</td></tr>
+      <tr><td><code>vpn</code></td><td>Shield + check</td><td>Double border</td></tr>
+    </tbody>
+  </table>
+
+  <h3>9 Tag Colors</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+    <span class="badge red">legacy</span>
+    <span class="badge green">new</span>
+    <span class="badge blue">core</span>
+    <span class="badge purple">agent</span>
+    <span class="badge gray">external</span>
+    <span class="badge orange">aws</span>
+    <span class="badge teal">internal</span>
+    <span class="badge purple">observability</span>
+    <span class="badge cyan">data</span>
+  </div>
+
+  <h3>Node Status</h3>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="hl" style="margin:0"><span class="badge green">ready</span> &mdash; green checkmark, component is live</div>
+    <div class="hl warn" style="margin:0"><span class="badge yellow">wip</span> &mdash; orange hourglass, work in progress</div>
+  </div>
+
+  <h3>Optional Node Fields</h3>
+  <table class="tbl" style="margin-bottom:14px">
+    <thead><tr><th>Field</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>status</code></td><td><code>"ready"</code> (green check) or <code>"wip"</code> (orange hourglass)</td></tr>
+      <tr><td><code>skipSequence</code></td><td><code>true</code> to hide from sequence diagram</td></tr>
+      <tr><td><code>phase</code></td><td>String: visible from that phase onward. Array: visible only in listed phases.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Connection Format</h3>
+  <div class="term"><div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div></div><div class="term-body">
+{ <span class="p">"from"</span>: <span class="cmd">"order-svc"</span>, <span class="p">"to"</span>: <span class="cmd">"db"</span>, <span class="p">"phase"</span>: <span class="cmd">"processing"</span> }
+  </div></div>
+  <p>Connections draw static dashed lines between nodes. The optional <code>phase</code> field controls visibility.</p>

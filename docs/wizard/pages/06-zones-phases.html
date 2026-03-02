@@ -1,0 +1,40 @@
+  <h2><span class="sn">6</span> Zones &amp; Phases</h2>
+  <p class="sub">10 zone types for infrastructure boundaries + progressive reveal system</p>
+
+  <h3>10 Zone Types</h3>
+  <table class="tbl" style="margin-bottom:14px">
+    <thead><tr><th>Type</th><th>Style</th><th>Use for</th></tr></thead>
+    <tbody>
+      <tr><td><code>cloud</code></td><td>Blue dashed</td><td>Cloud provider boundary</td></tr>
+      <tr><td><code>on-prem</code></td><td>Gray solid</td><td>On-premises datacenter</td></tr>
+      <tr><td><code>vpc</code></td><td>Green dashed</td><td>Virtual private cloud</td></tr>
+      <tr><td><code>subnet</code></td><td>Green dotted</td><td>Subnet within a VPC</td></tr>
+      <tr><td><code>edge</code></td><td>Yellow dashed</td><td>Edge / CDN layer</td></tr>
+      <tr><td><code>dmz</code></td><td>Red solid</td><td>Demilitarized zone</td></tr>
+      <tr><td><code>region</code> / <code>az</code></td><td>Subtle blue</td><td>AWS region or availability zone</td></tr>
+      <tr><td><code>k8s-cluster</code></td><td>Blue solid</td><td>Kubernetes cluster</td></tr>
+      <tr><td><code>namespace</code></td><td>Blue dashed</td><td>Kubernetes namespace</td></tr>
+    </tbody>
+  </table>
+
+  <p>Zones support nesting via the <code>parent</code> field. Child zones render inside parent boundaries.</p>
+
+  <div class="term" style="margin-bottom:14px"><div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div></div><div class="term-body">
+<span class="p">"zones"</span>: [<br>
+&nbsp;&nbsp;{ <span class="p">"id"</span>: <span class="cmd">"cloud"</span>, <span class="p">"type"</span>: <span class="cmd">"cloud"</span>, <span class="p">"label"</span>: <span class="cmd">"AWS Cloud"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="p">"x"</span>: 200, <span class="p">"y"</span>: 10, <span class="p">"w"</span>: 800, <span class="p">"h"</span>: 500 },<br>
+&nbsp;&nbsp;{ <span class="p">"id"</span>: <span class="cmd">"vpc"</span>, <span class="p">"type"</span>: <span class="cmd">"vpc"</span>, <span class="p">"label"</span>: <span class="cmd">"VPC"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="p">"x"</span>: 220, <span class="p">"y"</span>: 40, <span class="p">"w"</span>: 760, <span class="p">"h"</span>: 460, <span class="p">"parent"</span>: <span class="cmd">"cloud"</span> }<br>
+]
+  </div></div>
+
+  <h3>Phase System</h3>
+  <p>Phases let you reveal architecture in layers &mdash; like building blueprints. A slider appears in the header when phases are defined.</p>
+
+  <div class="pipeline" style="margin-bottom:14px">
+    <div class="pl-step"><div class="pl-lbl">1</div><div class="pl-body"><div class="t">Skeleton</div><div class="d">Core API, database, key services &mdash; always visible</div></div></div>
+    <div class="pl-step"><div class="pl-lbl">2</div><div class="pl-body"><div class="t">Processing</div><div class="d">Queues, caches, workers &mdash; appear at phase 2+</div></div></div>
+    <div class="pl-step"><div class="pl-lbl">3</div><div class="pl-body"><div class="t">Observability</div><div class="d">CDN, monitoring, dashboards &mdash; appear at phase 3</div></div></div>
+  </div>
+
+  <div class="hl"><strong>Visibility rule:</strong> An item is visible when its phase index &le; the selected phase index. Items without a <code>phase</code> field are always visible. Array-valued phases allow items to appear and then disappear at later phases.</div>

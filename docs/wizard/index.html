@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ArchViz — Interactive Guide</title>
+<link rel="stylesheet" href="css/wizard.css"/>
+</head>
+<body>
+<canvas id="particles"></canvas>
+
+<div class="topbar">
+  <div class="brand" onclick="goHome()"><div class="logo"></div><div><div class="title">ARCHVIZ</div></div></div>
+  <div class="step-indicator" id="stepIndicator"></div>
+  <button class="home-btn" onclick="goHome()"><span style="font-size:20px">&#8962;</span> Topics</button>
+</div>
+
+<div class="bottombar" id="bottombar" style="display:none">
+  <button class="nav-btn" id="prevBtn" onclick="prevPage()">&#8592; Prev</button>
+  <div class="progress-dots" id="progressDots"></div>
+  <button class="nav-btn primary" id="nextBtn" onclick="nextPage()">Next &#8594;</button>
+</div>
+
+<!-- LANDING -->
+<div class="landing active" id="landingPage">
+  <div class="rings"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div></div>
+  <h1 class="hero-title">ArchViz</h1>
+  <p class="hero-sub">Animated, interactive architecture diagrams in the browser. Define nodes, connections, and sequences in JSON &mdash; watch the flow animate.</p>
+  <div class="stats-row">
+    <div class="stat"><div class="stat-val">16</div><div class="stat-lbl">Node Types</div></div>
+    <div class="stat"><div class="stat-val">9</div><div class="stat-lbl">Tag Colors</div></div>
+    <div class="stat"><div class="stat-val">10</div><div class="stat-lbl">Zone Types</div></div>
+    <div class="stat"><div class="stat-val">15</div><div class="stat-lbl">Examples</div></div>
+    <div class="stat"><div class="stat-val">6</div><div class="stat-lbl">Views</div></div>
+  </div>
+  <div class="topic-grid" id="topicGrid"></div>
+</div>
+
+<!-- DYNAMIC PAGE CONTAINER -->
+<div class="page" id="pageContainer"></div>
+
+<script src="js/wizard.js"></script>
+</body>
+</html>

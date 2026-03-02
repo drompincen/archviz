@@ -1,0 +1,41 @@
+  <h2><span class="sn">8</span> Story Mode</h2>
+  <p class="sub">Problem &rarr; Vision &rarr; Phases with KPIs, idea cards, and benefits</p>
+
+  <p>The <code>story</code> object adds a wizard-style narrative layer. When present, a "Story" button appears. Clicking it (or using <code>?story=true</code>) enters a slide-based walkthrough.</p>
+
+  <h3>Story Pipeline</h3>
+  <div class="pipeline" style="margin-bottom:14px">
+    <div class="pl-step"><div class="pl-lbl">1</div><div class="pl-body"><div class="t">Problem</div><div class="d">Headline, description, impact metric, evidence links, risks</div></div></div>
+    <div class="pl-step"><div class="pl-lbl">2</div><div class="pl-body"><div class="t">Vision</div><div class="d">Summary, description, KPI targets with confidence intervals</div></div></div>
+    <div class="pl-step"><div class="pl-lbl">3</div><div class="pl-body"><div class="t">Phase Slides</div><div class="d">Per-phase: owner, timebox, status, description, idea cards</div></div></div>
+    <div class="pl-step"><div class="pl-lbl">4</div><div class="pl-body"><div class="t">KPI HUD</div><div class="d">Live running totals update as you advance through phases</div></div></div>
+  </div>
+
+  <h3>Story Sub-Objects</h3>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card"><div class="card-h">problem</div><div class="card-b">headline, description, impactMetric {kpiId, value, unit}, evidence [{label, url}], scope [nodeIds], risks []</div></div>
+    <div class="card"><div class="card-h">vision</div><div class="card-b">summary, description, kpiTargets [{kpiId, min, max, confidence, horizon}], acceptanceCriteria []</div></div>
+    <div class="card"><div class="card-h">kpis</div><div class="card-b">id, label, unit, direction (higher/lower_is_better), baseline, current, format ("0", "0.1f", "$0.00", "qualitative")</div></div>
+    <div class="card"><div class="card-h">phases</div><div class="card-b">phaseRef, label, order, owner, timebox, status (completed/active/planned), description</div></div>
+    <div class="card"><div class="card-h">ideaCards</div><div class="card-b">id, title, owner, hypothesis, linkedNodes [], linkedFlows [], phases [], status, confidence, expectedKpiImpacts [{kpiId, delta, confidence}]</div></div>
+    <div class="card"><div class="card-h">benefits</div><div class="card-b">id, title, phaseId, kpiId, targetRange {min, max}, boundNodes [] &mdash; click to highlight nodes for 3s</div></div>
+  </div>
+
+  <h3>KPI Direction &amp; Colors</h3>
+  <div class="hl">Deltas are signed numbers. The KPI's <code>direction</code> field determines color: a positive delta on a "higher_is_better" KPI is <span class="badge green">green</span>, while a positive delta on a "lower_is_better" KPI is <span class="badge red">red</span>.</div>
+
+  <h3>Qualitative KPIs</h3>
+  <p>Use <code>"format": "qualitative"</code> for non-numeric metrics. Accumulated deltas map to labels:</p>
+  <table class="tbl" style="margin-bottom:14px">
+    <thead><tr><th>Value</th><th>Display</th></tr></thead>
+    <tbody>
+      <tr><td>&ge; 3</td><td>&#9650;&#9650; Strongly Improved</td></tr>
+      <tr><td>2</td><td>&#9650; Improved</td></tr>
+      <tr><td>1</td><td>&#9650; Slightly Improved</td></tr>
+      <tr><td>0</td><td>&mdash; No Change</td></tr>
+      <tr><td>-1</td><td>&#9660; Slightly Declined</td></tr>
+      <tr><td>&le; -3</td><td>&#9660;&#9660; Strongly Declined</td></tr>
+    </tbody>
+  </table>
+
+  <div class="hl blue"><strong>Rich text:</strong> Story text fields support <code>&lt;b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;u&gt;</code>, <code>&lt;br&gt;</code>, <code>&lt;ul&gt;</code>/<code>&lt;li&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;sub&gt;</code>, <code>&lt;sup&gt;</code> for inline formatting.</div>

@@ -1,0 +1,48 @@
+  <h2><span class="sn">9</span> Quick Start</h2>
+  <p class="sub">Get ArchViz running in 3 steps</p>
+
+  <div class="g2" style="margin-bottom:14px">
+    <div>
+      <h3>Option A: jbang (single command)</h3>
+      <div class="term"><div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div></div><div class="term-body">
+        <div><span class="c"># Install jbang (if needed)</span></div>
+        <div><span class="p">$ </span><span class="cmd">curl -Ls https://sh.jbang.dev | bash -s - app setup</span></div>
+        <div style="height:6px"></div>
+        <div><span class="c"># Run ArchViz</span></div>
+        <div><span class="p">$ </span><span class="cmd">jbang ArchViz.java</span></div>
+        <div style="height:6px"></div>
+        <div><span class="c"># Open http://localhost:8080/collab-animation.html</span></div>
+      </div></div>
+
+      <h3>Option B: Maven</h3>
+      <div class="term"><div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div></div><div class="term-body">
+        <div><span class="c"># Run directly</span></div>
+        <div><span class="p">$ </span><span class="cmd">mvn spring-boot:run</span></div>
+        <div style="height:6px"></div>
+        <div><span class="c"># Or build and run the JAR</span></div>
+        <div><span class="p">$ </span><span class="cmd">mvn package -DskipTests</span></div>
+        <div><span class="p">$ </span><span class="cmd">java -jar target/archviz-0.2.0.jar</span></div>
+      </div></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:10px"><div class="card-h">Prerequisites</div><div class="card-b">
+        <div><span style="color:var(--accent)">&#10003;</span> Java 17+</div>
+        <div style="color:var(--muted);margin-top:4px">DynamoDB is optional &mdash; defaults to in-memory storage</div>
+      </div></div>
+
+      <div class="card"><div class="card-h">URL Parameters</div><div class="card-b" style="padding:4px 12px">
+        <table class="tbl">
+          <tbody>
+            <tr><td><code>collab=&lt;file&gt;.json</code></td><td>Load a specific diagram</td></tr>
+            <tr><td><code>story=true</code></td><td>Auto-activate story mode</td></tr>
+          </tbody>
+        </table>
+      </div></div>
+
+      <div class="card" style="margin-top:10px"><div class="card-h">Adding Your Own Diagrams</div><div class="card-b">
+        Drop a <code>.json</code> file into <code>src/main/resources/static/json/</code> &mdash; it auto-appears in the dropdown. See pages 4&ndash;8 for the JSON format.
+      </div></div>
+    </div>
+  </div>
+
+  <div class="hl"><strong>Tip:</strong> Use <code>?collab=coffee-shop-transformation.json&amp;story=true</code> to jump straight into the most feature-rich example with full story mode.</div>

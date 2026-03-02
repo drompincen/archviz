@@ -3,3 +3,4 @@ target/
 dynamodb-local-metadata.json
 *.iml
 .idea/
+docs/sample/

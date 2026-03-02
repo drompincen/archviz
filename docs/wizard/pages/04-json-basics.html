@@ -1,0 +1,57 @@
+  <h2><span class="sn">4</span> JSON Basics</h2>
+  <p class="sub">The root object &mdash; everything starts here</p>
+
+  <div class="g2" style="margin-bottom:14px">
+    <div>
+      <div class="term"><div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div></div><div class="term-body">
+{<br>
+&nbsp;&nbsp;<span class="p">"title"</span>: <span class="cmd">"Simple Query Flow"</span>,<br>
+&nbsp;&nbsp;<span class="p">"notes"</span>: <span class="cmd">"Project notes here."</span>,<br>
+&nbsp;&nbsp;<span class="p">"nodes"</span>: [ ... ],<br>
+&nbsp;&nbsp;<span class="p">"connections"</span>: [ ... ],<br>
+&nbsp;&nbsp;<span class="p">"sequence"</span>: [ ... ],<br>
+&nbsp;&nbsp;<span class="c">// Optional sections:</span><br>
+&nbsp;&nbsp;<span class="p">"zones"</span>: [ ... ],<br>
+&nbsp;&nbsp;<span class="p">"phases"</span>: [ ... ],<br>
+&nbsp;&nbsp;<span class="p">"flows"</span>: [ ... ],<br>
+&nbsp;&nbsp;<span class="p">"story"</span>: { ... }<br>
+}
+      </div></div>
+    </div>
+    <div>
+      <table class="tbl">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><strong>title</strong></td><td>String</td><td>Displayed at top-left of the canvas</td></tr>
+          <tr><td><strong>notes</strong></td><td>String</td><td>Freeform project notes (use \n for breaks)</td></tr>
+          <tr><td><strong>nodes</strong></td><td>Array</td><td>Components on the canvas</td></tr>
+          <tr><td><strong>connections</strong></td><td>Array</td><td>Static lines between nodes</td></tr>
+          <tr><td><strong>sequence</strong></td><td>Array</td><td>Default animation steps</td></tr>
+          <tr><td>zones</td><td>Array</td><td>Infrastructure boundary boxes</td></tr>
+          <tr><td>phases</td><td>Array</td><td>Progressive reveal layers</td></tr>
+          <tr><td>flows</td><td>Array</td><td>Named animation sequences</td></tr>
+          <tr><td>story</td><td>Object</td><td>Narrative layer for presentations</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3>Minimal Working Example</h3>
+  <div class="term"><div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div></div><div class="term-body">
+{<br>
+&nbsp;&nbsp;<span class="p">"title"</span>: <span class="cmd">"Simple Query Flow"</span>,<br>
+&nbsp;&nbsp;<span class="p">"nodes"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="p">"id"</span>: <span class="cmd">"usr"</span>, <span class="p">"type"</span>: <span class="cmd">"user"</span>, <span class="p">"tag"</span>: <span class="cmd">"external"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="p">"label"</span>: <span class="cmd">"User"</span>, <span class="p">"x"</span>: 50, <span class="p">"y"</span>: 100, <span class="p">"w"</span>: 100, <span class="p">"h"</span>: 70 },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="p">"id"</span>: <span class="cmd">"db"</span>, <span class="p">"type"</span>: <span class="cmd">"database"</span>, <span class="p">"tag"</span>: <span class="cmd">"core"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="p">"label"</span>: <span class="cmd">"SQL DB"</span>, <span class="p">"x"</span>: 300, <span class="p">"y"</span>: 100, <span class="p">"w"</span>: 100, <span class="p">"h"</span>: 70 }<br>
+&nbsp;&nbsp;],<br>
+&nbsp;&nbsp;<span class="p">"connections"</span>: [ { <span class="p">"from"</span>: <span class="cmd">"usr"</span>, <span class="p">"to"</span>: <span class="cmd">"db"</span> } ],<br>
+&nbsp;&nbsp;<span class="p">"sequence"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="p">"from"</span>: <span class="cmd">"usr"</span>, <span class="p">"to"</span>: <span class="cmd">"db"</span>, <span class="p">"text"</span>: <span class="cmd">"Select * from Users"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="p">"from"</span>: <span class="cmd">"db"</span>, <span class="p">"to"</span>: <span class="cmd">"usr"</span>, <span class="p">"text"</span>: <span class="cmd">"Return Data"</span> }<br>
+&nbsp;&nbsp;]<br>
+}
+  </div></div>
+
+  <div class="hl">Only <strong>title</strong>, <strong>nodes</strong>, <strong>connections</strong>, and <strong>sequence</strong> are required. Everything else is optional and degrades gracefully.</div>

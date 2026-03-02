@@ -1,0 +1,43 @@
+  <h2><span class="sn">7</span> Sequence &amp; Flows</h2>
+  <p class="sub">Animation steps, popup notifications, and named flow sequences</p>
+
+  <h3>Sequence Step Format</h3>
+  <div class="term" style="margin-bottom:14px"><div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div></div><div class="term-body">
+{<br>
+&nbsp;&nbsp;<span class="p">"from"</span>: <span class="cmd">"gw"</span>,<br>
+&nbsp;&nbsp;<span class="p">"to"</span>: <span class="cmd">"order-svc"</span>,<br>
+&nbsp;&nbsp;<span class="p">"text"</span>: <span class="cmd">"Forward authorized request"</span>,<br>
+&nbsp;&nbsp;<span class="p">"status"</span>: <span class="cmd">"ready"</span>,<br>
+&nbsp;&nbsp;<span class="p">"phase"</span>: <span class="cmd">"processing"</span>,<br>
+&nbsp;&nbsp;<span class="p">"popUp"</span>: { <span class="p">"type"</span>: <span class="cmd">"amplify"</span>, <span class="p">"msg"</span>: <span class="cmd">"Order confirmed"</span> }<br>
+}
+  </div></div>
+
+  <h3>Popup Types</h3>
+  <table class="tbl" style="margin-bottom:14px">
+    <thead><tr><th>Type</th><th>Style</th><th>Use for</th></tr></thead>
+    <tbody>
+      <tr><td><code>amplify</code></td><td><span class="badge green">Green checkmark</span></td><td>Success confirmations</td></tr>
+      <tr><td><code>alert</code></td><td><span class="badge yellow">Amber triangle</span></td><td>Warnings</td></tr>
+      <tr><td><code>issue</code></td><td><span class="badge red">Red hexagon</span></td><td>Errors or failures</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Named Flows</h3>
+  <p>Flows define multiple animation paths through the same architecture. A dropdown appears when flows are present.</p>
+
+  <div class="term" style="margin-bottom:14px"><div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div></div><div class="term-body">
+<span class="p">"flows"</span>: [<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="p">"id"</span>: <span class="cmd">"happy-path"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="p">"name"</span>: <span class="cmd">"Happy Path &mdash; Place Order"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="p">"phases"</span>: [<span class="cmd">"processing"</span>],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="p">"sequence"</span>: [ ... ]<br>
+&nbsp;&nbsp;}<br>
+]
+  </div></div>
+
+  <h3>Phase Sync Behavior</h3>
+  <div class="hl">When you select a flow whose <code>phases</code> don't include the current phase, the phase slider <strong>automatically jumps</strong> to the first matching phase. Each flow's sequence is independently filtered by the current phase.</div>
+
+  <div class="hl blue"><strong>Backwards compatible:</strong> The root <code>sequence</code> array is used as "Default Sequence". Flows without a <code>phases</code> property use legacy behavior &mdash; shown whenever any of their steps are visible.</div>

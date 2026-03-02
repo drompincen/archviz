@@ -1,0 +1,36 @@
+  <h2><span class="sn">3</span> Architecture</h2>
+  <p class="sub">Spring Boot backend + vanilla ES module frontend &mdash; no build tools</p>
+
+  <h3>Module Stack</h3>
+  <div style="max-width:600px;margin:0 auto 14px">
+    <div class="arch" style="border-color:rgba(255,153,0,.4)"><div class="al">collab-animation.html</div><div class="ad">Slim HTML shell + module imports</div></div>
+    <div class="conn"></div>
+    <div class="arch"><div class="al">JS ES Modules (13 files)</div><div class="ad">state &rarr; rendering &rarr; animation &rarr; UI</div></div>
+    <div class="conn"></div>
+    <div class="arch"><div class="al">CSS Modules (6 files)</div><div class="ad">core, nodes-zones, sequence, widgets, benefits, narrative</div></div>
+    <div class="conn"></div>
+    <div class="arch"><div class="al">Spring Boot 3.3.1</div><div class="ad">Static file serving + JSON directory listing API</div></div>
+    <div class="conn"></div>
+    <div class="arch" style="border-color:rgba(46,204,113,.4)"><div class="al">DynamoDB (optional)</div><div class="ad">Persistent diagram storage &mdash; defaults to in-memory</div></div>
+  </div>
+
+  <h3>Frontend Module Dependency Graph</h3>
+  <div class="card" style="margin-bottom:14px"><div class="card-h">Entry Point: data-loading.js &rarr; init()</div><div class="card-b">
+    <div style="margin-bottom:8px"><strong>data-loading</strong> &rarr; rendering &rarr; {benefits, sequence-view, animation, narrative, ui-interactions}</div>
+    <div style="margin-bottom:8px"><strong>State singleton:</strong> <code>state.js</code> exports <code>state</code>, <code>dom</code>, <code>initDom()</code></div>
+    <div><strong>Circular dep:</strong> rendering &harr; ui-interactions (safe &mdash; only function refs, not called at load). narrative.js uses dynamic <code>import('./rendering.js')</code>.</div>
+  </div></div>
+
+  <h3>Technology</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:8px">
+    <span class="pill a">Java 17+</span>
+    <span class="pill a">Spring Boot 3.3.1</span>
+    <span class="pill a">Vanilla JS ES Modules</span>
+    <span class="pill a">Canvas API</span>
+    <span class="pill a">SVG (sequence)</span>
+    <span class="pill a">html2canvas + jsPDF</span>
+    <span class="pill a">DynamoDB SDK v2</span>
+    <span class="pill">No build tools</span>
+    <span class="pill">No framework</span>
+    <span class="pill">No npm</span>
+  </div>
