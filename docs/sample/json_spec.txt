@@ -1,0 +1,467 @@
+DROM Architecture Visualizer — JSON Specification
+===================================================
+
+This guide details the JSON specification used to configure the architecture
+visualizer. The JSON is divided into these sections: Metadata, Nodes,
+Connections, Sequence, Zones, Phases, Flows, and Story.
+
+
+1. Root Object
+--------------
+
+The root of the JSON object controls the global settings of the diagram.
+
+  {
+    "title": "Order Platform — Phased Architecture",
+    "notes": "Project notes here.\nUse \\n for line breaks.",
+    "phases": [ ... ],
+    "zones": [ ... ],
+    "nodes": [ ... ],
+    "connections": [ ... ],
+    "sequence": [ ... ],
+    "flows": [ ... ],
+    "story": { ... }
+  }
+
+  title   (String)  The text displayed at the top-left of the canvas.
+  notes   (String)  Freeform project notes displayed in the notebook widget.
+                    Use \n for line breaks.
+  story   (Object)  Optional. Narrative story layer for wizard-style
+                    presentations (see Section 8).
+
+
+2. The nodes Array
+------------------
+
+Defines the boxes (components) on the canvas.
+
+  {
+    "id": "order-svc",
+    "type": "fargate",
+    "tag": "core",
+    "label": "Order\nService",
+    "x": 560,
+    "y": 100,
+    "w": 130,
+    "h": 85,
+    "status": "ready",
+    "phase": "processing"
+  }
+
+  Property  Type    Description
+  --------  ------  -----------------------------------------------------------
+  id        String  Required. Unique identifier for the node.
+  label     String  Text displayed inside the box. Use \n for line breaks.
+  x         Number  Horizontal position (pixels) from the left edge.
+  y         Number  Vertical position (pixels) from the top edge.
+  w         Number  Width of the box in pixels.
+  h         Number  Height of the box in pixels.
+  type      String  Determines the icon shown inside the box (see below).
+  tag       String  Determines the color scheme (see below).
+  status    String  Optional. "ready" (green check) or "wip" (orange hourglass).
+  phase     String  Optional. Phase ID — node only appears when that phase
+            or      is selected. Omit to always show.
+            Array   String: visible from that phase onward (phase index <=
+                    selected). Array of strings: visible only when one of
+                    the listed phase IDs is selected (can appear, then
+                    disappear at later phases).
+  skipSequence Boolean  Optional. true to hide from sequence diagram.
+
+Supported Values for type (Icons)
+
+  Type            Icon                Shape
+  --------------  ------------------  ----------------------------
+  user / human    Person silhouette   Default rectangle
+  service         Stacked layers      Default rectangle
+  database        Cylinder            Bottom rounded
+  agent           Robot / AI          Default rectangle
+  gateway         Globe / network     Rounded (20px radius)
+  firewall        Shield              Double red border
+  lambda          Lambda function     Bottom rounded + orange accent
+  fargate         Container           Default rectangle
+  ec2             Server rack         Default rectangle
+  load-balancer   Balance arrows      Default rectangle
+  cdn             Dashed globe        Dashed rounded
+  cache           Dotted layers       Dotted rounded
+  queue           Item queue          Right pill
+  storage         Drive stack         Thick bottom border
+  dashboard       Grid panels         Top accent bar
+  vpn             Shield + check      Double border
+  default         Generic box         Default rectangle
+
+Supported Values for tag (Colors)
+
+  Tag            Color           Use for
+  -------------  --------------  ----------------------------------------
+  legacy         Red             Systems being deprecated
+  new            Green           New / target-state components
+  core           Blue            Standard infrastructure
+  agent          Purple          AI agents / LLMs
+  external       Gray (dashed)   Users or third-party systems
+  aws            Orange          AWS-managed services
+  internal       Teal            Internal / on-prem services
+  observability  Purple          Monitoring, logging, dashboards
+  data           Cyan            Databases, caches, data stores
+
+
+3. The connections Array
+------------------------
+
+Draws static dashed lines between boxes representing network connectivity
+or data flow paths.
+
+  {
+    "from": "order-svc",
+    "to": "db",
+    "phase": "processing"
+  }
+
+  from   (String)  The id of the source node.
+  to     (String)  The id of the destination node.
+  phase  (String)  Optional. Phase ID — connection only shown when that
+                   phase is selected.
+
+
+4. The sequence Array
+---------------------
+
+Defines the default animation steps. The "Play" button iterates through
+this list in order.
+
+  {
+    "from": "gw",
+    "to": "order-svc",
+    "text": "Forward authorized request",
+    "status": "ready",
+    "phase": "processing",
+    "popUp": { "type": "amplify", "msg": "Order confirmed" }
+  }
+
+  from    (String)  The id of the node where the particle starts.
+  to      (String)  The id of the node where the particle ends.
+                    A step number badge is added to this node on arrival.
+  text    (String)  Description logged in the bottom pane.
+  status  (String)  Optional. "ready" or "wip" — colors the log entry.
+  phase   (String)  Optional. Phase ID — step is skipped when that phase
+                    is not yet selected.
+  popUp   (Object)  Optional. A popup notification on step completion.
+
+  popUp.type (String):
+    "alert"   — Amber/yellow triangle. Use for warnings.
+    "issue"   — Red hexagon. Use for errors or failures.
+    "amplify" — Green circle with checkmark. Use for success.
+
+  popUp.msg (String): The message text displayed in the popup toast.
+
+
+5. The zones Array (Optional)
+-----------------------------
+
+Draws labeled infrastructure boundary boxes behind nodes.
+
+  {
+    "id": "vpc",
+    "type": "vpc",
+    "label": "VPC 10.0.0.0/16",
+    "x": 240,
+    "y": 40,
+    "w": 780,
+    "h": 520,
+    "parent": "cloud",
+    "phase": "skeleton"
+  }
+
+  Property  Type    Description
+  --------  ------  -----------------------------------------------------------
+  id        String  Required. Unique identifier for the zone.
+  type      String  Visual style of the zone (see below).
+  label     String  Text displayed at the top-left of the zone.
+  x         Number  Horizontal position (pixels).
+  y         Number  Vertical position (pixels).
+  w         Number  Width in pixels.
+  h         Number  Height in pixels.
+  parent    String  Optional. ID of the parent zone (for render ordering).
+  phase     String  Optional. Phase ID — zone only appears at that phase.
+
+Supported Zone Types
+
+  Type           Style               Use for
+  -------------  ------------------  ------------------------------------
+  cloud          Blue dashed         Cloud provider boundary
+  on-prem        Gray solid          On-premises datacenter
+  vpc            Green dashed        Virtual private cloud
+  subnet         Green dotted        Subnet within a VPC
+  edge           Yellow dashed       Edge / CDN layer
+  dmz            Red solid           Demilitarized zone
+  region         Subtle blue solid   AWS region
+  az             Subtle blue dashed  Availability zone
+  k8s-cluster    Blue solid          Kubernetes cluster
+  namespace      Blue dashed         Kubernetes namespace
+
+
+6. The phases Array (Optional)
+------------------------------
+
+Defines the progressive reveal layers. When present, a phase slider
+appears in the header. Items tagged with a phase ID only appear when
+the slider reaches that phase.
+
+  "phases": [
+    { "id": "skeleton", "label": "1 — Skeleton" },
+    { "id": "processing", "label": "2 — Processing" },
+    { "id": "observability", "label": "3 — Observability" }
+  ]
+
+  id     (String)  Unique phase identifier, referenced by nodes/zones/
+                   connections/sequence steps via the "phase" field.
+  label  (String)  Display label shown next to the slider.
+
+Visibility Rule:
+  An item is visible when its phase index <= the selected phase index.
+  Items without a "phase" field are always visible.
+
+
+7. The flows Array (Optional)
+-----------------------------
+
+Defines multiple named animation sequences over the same architecture.
+When present, a flow dropdown appears in the header.
+
+  "flows": [
+    {
+      "id": "happy-path",
+      "name": "Happy Path — Place Order",
+      "phases": ["processing"],
+      "sequence": [
+        { "from": "user", "to": "gw", "text": "POST /orders", "status": "ready" },
+        { "from": "gw", "to": "svc", "text": "Forward request", "status": "ready" }
+      ]
+    }
+  ]
+
+  id        (String)  Unique flow identifier.
+  name      (String)  Display name shown in the dropdown.
+  phases    (Array)   Optional. Array of phase IDs where this flow is relevant.
+                      When present, the flow appears in the dropdown only when
+                      the selected phase ID is in this list. When absent, the
+                      flow is shown whenever it has visible steps (legacy
+                      behavior via step-scanning).
+  sequence  (Array)   Array of step objects (same format as root sequence).
+
+Each flow's sequence is independently filtered by the current phase.
+The root "sequence" array is used when "Default Sequence" is selected.
+
+Phase Sync Behavior:
+  When a user selects a flow that has a "phases" property and the current
+  phase is not in the list, the phase slider automatically jumps to the
+  first phase in the flow's list. If the current phase is already in the
+  list, the slider stays put. Flows without "phases" use the legacy
+  behavior of jumping to the max phase found in their sequence steps.
+
+
+8. The story Object (Optional)
+-------------------------------
+
+Adds a wizard-style narrative layer for stakeholder presentations.
+When present, a "Story" button appears in the header. Clicking it (or
+using ?story=true in the URL) enters a slide-based walkthrough:
+Problem → Vision → Phase slides with initiative cards and KPI tracking.
+
+  "story": {
+    "storyId": "my-story-2026",
+    "version": 1,
+    "problem": { ... },
+    "vision": { ... },
+    "kpis": [ ... ],
+    "phases": [ ... ],
+    "ideaCards": [ ... ],
+    "benefits": [ ... ],
+    "bindings": [ ... ],
+    "uiHints": { ... }
+  }
+
+Top-Level Story Fields
+
+  Property    Type    Description
+  ----------  ------  -----------------------------------------------------------
+  storyId     String  Optional. Unique identifier for the story.
+  version     Number  Optional. Version number for tracking changes.
+  problem     Object  The problem statement slide.
+  vision      Object  The vision/target state slide.
+  kpis        Array   KPI definitions with baseline, current, direction, format.
+  phases      Array   Story-layer phases (distinct from root phases). Each has
+                      phaseRef, label, order, owner, timebox, status, description.
+  ideaCards   Array   Initiative/idea cards linked to phases and KPIs.
+  benefits    Array   Benefit cards grouped by phase, with KPI targets.
+  bindings    Array   Optional. Node-to-KPI bindings.
+  uiHints     Object  Optional. UI configuration (initialView, initialPhase).
+
+story.problem Object
+
+  Property      Type    Description
+  ------------  ------  -----------------------------------------------------------
+  headline      String  Short headline displayed at the top of the slide.
+  description   String  Detailed problem description.
+  impactMetric  Object  Optional. { kpiId, value, unit } — highlighted KPI badge.
+  evidence      Array   Optional. [{ label, url }] — links to supporting docs.
+  scope         Array   Optional. Node IDs affected by the problem (clickable).
+  risks         Array   Optional. Risk statement strings.
+
+Rich Text in Story Fields
+
+  The following story text fields support inline HTML for formatting:
+
+    - problem.headline, problem.description, problem.risks[]
+    - vision.summary, vision.description, vision.acceptanceCriteria[]
+    - phases[].description
+    - ideaCards[].hypothesis
+
+  Allowed HTML tags: <b>, <strong>, <i>, <em>, <u>, <br>, <ul>, <ol>,
+  <li>, <p>, <sub>, <sup>. All other tags are escaped for safety.
+
+  Example:
+    "description": "Wait times average <b>8 minutes</b> during peak.<br>We have <u>zero customer data</u>."
+
+story.vision Object
+
+  Property            Type    Description
+  ------------------  ------  -----------------------------------------------------------
+  summary             String  One-line vision summary.
+  description         String  Detailed vision description.
+  kpiTargets          Array   [{ kpiId, min, max, confidence, horizon }] — target ranges.
+  acceptanceCriteria  Array   Optional. Acceptance criteria strings.
+
+story.kpis Array
+
+  Property   Type    Description
+  ---------  ------  -----------------------------------------------------------
+  id         String  Unique KPI identifier (referenced by other story objects).
+  label      String  Display label.
+  unit       String  Unit string (e.g. "orders/hr", "%", "$").
+  direction  String  "higher_is_better" or "lower_is_better".
+  baseline   Number  Starting value (shown on problem slide).
+  current    Number  Current value (may equal baseline initially).
+  format     String  Optional. Display format: "0", "0.1f", "$0.00", "$0,0",
+                     or "qualitative" for non-numeric directional KPIs.
+
+Qualitative KPIs
+
+  When format is "qualitative", the KPI shows directional arrows and labels
+  instead of numeric values. Use this for metrics that can't or shouldn't be
+  quantified (e.g. "Customer Satisfaction", "Operational Complexity").
+
+  The baseline should be 0, and idea card deltas use small integers:
+
+    Accumulated value   Display
+    -----------------   -----------------------------
+    >= 3                ▲▲ Strongly Improved
+    2                   ▲ Improved
+    1                   ▲ Slightly Improved
+    0                   — No Change
+    -1                  ▼ Slightly Declined
+    -2                  ▼ Declined
+    <= -3               ▼▼ Strongly Declined
+
+  The direction field still controls color coding (green/red).
+
+  Vision targets for qualitative KPIs use goalLabel instead of min/max:
+
+    { "kpiId": "team_morale", "goalLabel": "▲ Strongly Improve", "horizon": "12 months" }
+
+  If goalLabel is omitted, a default is derived from direction
+  ("▲ Improve" or "▼ Reduce").
+
+  Example:
+
+    {
+        "id": "team_morale",
+        "label": "Team Morale",
+        "unit": "",
+        "direction": "higher_is_better",
+        "baseline": 0,
+        "current": 0,
+        "format": "qualitative"
+    }
+
+story.phases Array
+
+  Property     Type    Description
+  -----------  ------  -----------------------------------------------------------
+  phaseRef     String  References a root-level phase ID.
+  label        String  Display label for the story slide.
+  order        Number  Sort order (0-based).
+  owner        String  Optional. Responsible person/team.
+  timebox      String  Optional. Time estimate (e.g. "2026 Q2 (12 weeks)").
+  status       String  Optional. "completed", "active", or "planned".
+  description  String  Phase description shown on the slide.
+
+story.ideaCards Array
+
+  Property            Type    Description
+  ------------------  ------  -----------------------------------------------------------
+  id                  String  Unique idea identifier.
+  title               String  Idea title.
+  owner               String  Optional. Responsible person.
+  hypothesis          String  What we believe will happen if implemented.
+  linkedNodes         Array   Optional. Node IDs this idea affects (clickable chips).
+  linkedFlows         Array   Optional. Flow IDs this idea relates to.
+  phases              Array   Phase IDs where this idea is introduced.
+  status              String  "accepted", "rejected", or "proposed".
+  confidence          String  "high", "medium", or "low".
+  expectedKpiImpacts  Array   [{ kpiId, delta, confidence }] — projected KPI changes.
+
+story.benefits Array
+
+  Property     Type    Description
+  -----------  ------  -----------------------------------------------------------
+  id           String  Unique benefit identifier.
+  title        String  Benefit title shown on sidebar card.
+  phaseId      String  Phase where this benefit is realized.
+  kpiId        String  Optional. Linked KPI.
+  targetRange  Object  Optional. { min, max } — expected KPI range.
+  boundNodes   Array   Optional. Node IDs to highlight when card is clicked.
+
+story.uiHints Object
+
+  Property      Type    Description
+  ------------  ------  -----------------------------------------------------------
+  initialView   String  Optional. "narrative" to auto-start story mode.
+  initialPhase  String  Optional. Phase ID to set on the slider at story start.
+
+
+Backward Compatibility
+----------------------
+
+  Missing field     Behavior
+  ----------------  -----------------------------------------------
+  No phases         Phase slider hidden, everything visible
+  No zones          No boundary boxes rendered
+  No flows          Falls back to root sequence
+  No phases on flow Flow shown when any step is visible (step-scanning)
+  No phase on item  Item always visible regardless of selected phase
+  No zone on node   Node floats freely
+  No story          Story button has no highlight, story mode unavailable
+  No story.kpis     KPI HUD hidden during narrative
+  No story.benefits Benefits sidebar empty during narrative
+  No uiHints        Story mode must be activated manually or via ?story=true
+
+
+Minimal Example
+---------------
+
+  {
+    "title": "Simple Query Flow",
+    "nodes": [
+      { "id": "usr", "type": "user", "tag": "external",
+        "label": "User", "x": 50, "y": 100, "w": 100, "h": 70 },
+      { "id": "db", "type": "database", "tag": "core",
+        "label": "SQL DB", "x": 300, "y": 100, "w": 100, "h": 70 }
+    ],
+    "connections": [
+      { "from": "usr", "to": "db" }
+    ],
+    "sequence": [
+      { "from": "usr", "to": "db", "text": "Select * from Users" },
+      { "from": "db", "to": "usr", "text": "Return Data" }
+    ]
+  }

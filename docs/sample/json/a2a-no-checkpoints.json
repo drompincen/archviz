@@ -1,0 +1,34 @@
+{
+    "title": "Travel Booking \u2014 Without Checkpoints",
+    "notes": "Scenario: Corporate Travel Booking (No Runtime Fabric)\n\nA employee requests a trip: NYC \u2192 London, 3 nights, rental car.\nFour agents handle it by calling each other directly.\n\nWhat goes wrong:\n- Payment agent crashes after flight and hotel are already booked\n- No record of what succeeded \u2014 agents retry blindly\n- Flight gets skipped on retry (agent assumes it failed), hotel gets double-booked\n- Customer is charged twice for the hotel, has no flight, and gets two conflicting confirmation emails\n- Support team cannot trace what happened \u2014 each agent only has its own local logs\n\nThis is the emergent spaghetti problem described in the Agent Runtime Fabric paper.",
+    "nodes": [
+        { "id": "employee", "type": "user", "tag": "external", "label": "Employee\n(Traveler)", "x": 50, "y": 220, "w": 110, "h": 70 },
+        { "id": "booking", "type": "agent", "tag": "agent", "label": "Booking\nAgent", "x": 230, "y": 220, "w": 120, "h": 70 },
+        { "id": "flight", "type": "agent", "tag": "agent", "label": "Flight\nAgent", "x": 430, "y": 100, "w": 120, "h": 70 },
+        { "id": "hotel", "type": "agent", "tag": "agent", "label": "Hotel\nAgent", "x": 430, "y": 220, "w": 120, "h": 70 },
+        { "id": "payment", "type": "agent", "tag": "agent", "label": "Payment\nAgent", "x": 430, "y": 340, "w": 120, "h": 70 },
+        { "id": "notify", "type": "service", "tag": "core", "label": "Notification\nService", "x": 660, "y": 220, "w": 120, "h": 70 }
+    ],
+    "connections": [
+        { "from": "employee", "to": "booking" },
+        { "from": "booking", "to": "flight" },
+        { "from": "booking", "to": "hotel" },
+        { "from": "booking", "to": "payment" },
+        { "from": "booking", "to": "notify" }
+    ],
+    "sequence": [
+        { "from": "employee", "to": "booking", "text": "Book trip: NYC \u2192 London, 3 nights, rental car" },
+        { "from": "booking", "to": "flight", "text": "Book flight NYC \u2192 LHR" },
+        { "from": "flight", "to": "booking", "text": "Flight confirmed: BA117, Seat 14A", "popUp": { "type": "amplify", "msg": "Flight is booked and paid. Seat 14A held. But no checkpoint was saved \u2014 nobody downstream knows this succeeded." } },
+        { "from": "booking", "to": "hotel", "text": "Book hotel: 3 nights Marriott London" },
+        { "from": "hotel", "to": "booking", "text": "Hotel confirmed: Marriott, Conf #M-7829", "popUp": { "type": "amplify", "msg": "Hotel booked and charged \u00a3540 to corporate card. Still no checkpoint \u2014 this state only lives in the Hotel Agent's memory." } },
+        { "from": "booking", "to": "payment", "text": "Charge corporate card for total bundle" },
+        { "from": "payment", "to": "booking", "text": "TIMEOUT: Payment gateway unreachable", "popUp": { "type": "alert", "msg": "Payment Agent crashes. The Booking Agent has no checkpoint to consult \u2014 it doesn't know the flight and hotel already succeeded. It only knows the overall job failed." } },
+        { "from": "booking", "to": "flight", "text": "Blind retry: re-book flight", "popUp": { "type": "alert", "msg": "ZOMBIE RETRY: Booking Agent retries everything from scratch. Flight Agent sees a new request \u2014 original seat 14A is now taken. New booking created for seat 22C. Employee now has TWO flights." } },
+        { "from": "booking", "to": "hotel", "text": "Blind retry: re-book hotel", "popUp": { "type": "alert", "msg": "DOUBLE BOOKING: Hotel Agent creates a second reservation (Conf #M-8104). Corporate card charged another \u00a3540. Employee now has two hotel rooms for the same dates." } },
+        { "from": "booking", "to": "payment", "text": "Retry payment for new bookings" },
+        { "from": "payment", "to": "booking", "text": "Payment processed (for duplicates)", "popUp": { "type": "alert", "msg": "Payment finally goes through \u2014 but it's charging for the DUPLICATE bookings. Original charges are still on the card too. Total overcharge: \u00a31,080 + duplicate flight." } },
+        { "from": "booking", "to": "notify", "text": "Send confirmation email" },
+        { "from": "notify", "to": "employee", "text": "Two conflicting confirmations sent", "popUp": { "type": "alert", "msg": "Employee receives two emails with different confirmation numbers, different seats, and sees three charges on their corporate card. Support cannot trace what happened \u2014 each agent only has its own logs. Manual cleanup takes 4 hours." } }
+    ]
+}

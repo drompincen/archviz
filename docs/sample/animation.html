@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Agent Runtime Architecture - Interactive</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* --- CONTROLS UI --- */
+        .controls {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .btn {
+            background: #1e293b;
+            border: 1px solid #3b82f6;
+            color: #60a5fa;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #3b82f6;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: #475569;
+            color: #94a3b8;
+            background: #1e293b;
+            box-shadow: none;
+        }
+
+        .status-log {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: #94a3b8;
+            min-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: color 0.3s;
+            z-index: 10;
+        }
+
+        .status-log.active { color: #4ade80; border-color: #4ade80; }
+        .status-log.error { color: #f87171; border-color: #f87171; }
+        .status-log.warn { color: #fbbf24; border-color: #fbbf24; }
+
+        /* --- DIAGRAM CONTAINER --- */
+        .diagram-container {
+            position: relative;
+            background: #1e293b;
+            padding: 60px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 60px;
+            align-items: center;
+            max-width: 1200px;
+            width: 90%;
+            transition: filter 0.3s;
+        }
+
+        /* Connecting Lines */
+        .diagram-container::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 100px;
+            right: 100px;
+            height: 4px;
+            background: #475569;
+            z-index: 0;
+            transform: translateY(-50%);
+        }
+
+        .node {
+            position: relative;
+            background: #0f172a;
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            z-index: 1;
+            min-width: 160px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: zoom-in;
+        }
+
+        .node:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        /* Active State Animation */
+        .node.active-node {
+            border-color: #4ade80;
+            box-shadow: 0 0 30px rgba(74, 222, 128, 0.3);
+            transform: scale(1.05);
+        }
+        .node.error-node {
+            border-color: #f87171;
+            box-shadow: 0 0 30px rgba(248, 113, 113, 0.3);
+        }
+        .node.warn-node {
+            border-color: #fbbf24;
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.3);
+        }
+
+        .node-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            transition: background 0.3s;
+        }
+
+        .node h3 { margin: 0 0 8px 0; font-size: 18px; color: #ffffff; }
+        .node p { margin: 0; font-size: 14px; color: #94a3b8; font-family: 'JetBrains Mono', monospace; }
+
+        /* Hint for double click */
+        .hint {
+            position: absolute;
+            bottom: -25px;
+            font-size: 10px;
+            color: #64748b;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .node:hover .hint { opacity: 1; }
+
+        /* Node Specific Colors */
+        .node.integration .node-icon { color: #f472b6; border: 2px solid rgba(244, 114, 182, 0.3); }
+        .node.compute .node-icon { color: #fb923c; border: 2px solid rgba(251, 146, 60, 0.3); }
+        .node.database .node-icon { color: #60a5fa; border: 2px solid rgba(96, 165, 250, 0.3); }
+        .node.management .node-icon { color: #a78bfa; border: 2px solid rgba(167, 139, 250, 0.3); }
+
+        /* Arrows between nodes */
+        .arrow {
+            position: absolute;
+            top: 50%;
+            right: -40px;
+            transform: translateY(-50%);
+            color: #475569;
+            font-size: 20px;
+            background: #1e293b;
+            padding: 0 10px;
+        }
+        
+        /* Specialized Layout Logic */
+        .col-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+        }
+
+        .vertical-line {
+            position: absolute;
+            width: 4px;
+            background: #475569;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 0;
+        }
+        .vl-top { top: -40px; height: 40px; }
+        .vl-bottom { bottom: -40px; height: 40px; }
+
+        /* --- ANIMATION PARTICLES --- */
+        .packet {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff, 0 0 20px #4ade80;
+            z-index: 100;
+            display: none; /* Hidden by default */
+            pointer-events: none;
+            transition: transform 0.5s linear;
+        }
+        
+        .pulse-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%; height: 100%;
+            border-radius: 12px;
+            border: 2px solid rgba(74, 222, 128, 0.5);
+            animation: pulse 1.5s infinite;
+            pointer-events: none;
+            display: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+
+        /* --- DETAIL MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            width: 800px;
+            max-width: 90%;
+            padding: 40px;
+            box-shadow: 0 50px 100px -20px rgba(0,0,0,0.8);
+            transform: scale(0.9);
+            transition: transform 0.3s;
+            position: relative;
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px; right: 20px;
+            color: #94a3b8;
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .close-btn:hover { color: #fff; }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 20px;
+        }
+
+        .detail-icon {
+            font-size: 32px;
+            width: 60px; height: 60px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .detail-title h2 { margin: 0; font-size: 24px; color: #fff; }
+        .detail-title p { margin: 5px 0 0; color: #94a3b8; }
+
+        .detail-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .code-block {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+            overflow-x: auto;
+        }
+
+        .code-comment { color: #64748b; }
+        .code-key { color: #60a5fa; }
+        .code-val { color: #4ade80; }
+
+        .flow-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+        .flow-step {
+            background: #334155;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #fff;
+            width: 100%;
+            text-align: center;
+            border: 1px solid #475569;
+        }
+        .flow-arrow { color: #64748b; }
+
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <button class="btn" onclick="runScenario('happyPath')" id="btn-happy">
+            <i class="fa-solid fa-play"></i> Run Happy Path
+        </button>
+        <button class="btn" onclick="runScenario('retry')" id="btn-retry">
+            <i class="fa-solid fa-rotate-right"></i> Simulate Retry
+        </button>
+        <button class="btn" onclick="runScenario('idempotency')" id="btn-idem">
+            <i class="fa-solid fa-fingerprint"></i> Check Idempotency
+        </button>
+    </div>
+
+    <div class="diagram-container" id="container">
+        <!-- The moving packet -->
+        <div class="packet" id="packet"></div>
+
+        <!-- Step 1: Ingest -->
+        <div class="node integration" id="node-eventbridge" ondblclick="openModal('eb')">
+            <div class="node-icon"><i class="fa-solid fa-circle-nodes"></i></div>
+            <h3>EventBridge</h3>
+            <p>Ingestion Bus</p>
+            <i class="fa-solid fa-chevron-right arrow"></i>
+            <div class="hint">Double-click for details</div>
+        </div>
+
+        <!-- Step 2: Orchestrate -->
+        <div class="node integration" id="node-sfn" ondblclick="openModal('sfn')">
+            <div class="node-icon"><i class="fa-solid fa-bolt"></i></div>
+            <h3>Step Functions</h3>
+            <p>Orchestrator</p>
+            <i class="fa-solid fa-chevron-right arrow"></i>
+            <div class="hint">Double-click for details</div>
+        </div>
+
+        <!-- Step 3: Buffer -->
+        <div class="node integration" id="node-sqs" ondblclick="openModal('sqs')">
+            <div class="node-icon"><i class="fa-solid fa-layer-group"></i></div>
+            <h3>SQS</h3>
+            <p>Work Buffer</p>
+            <i class="fa-solid fa-chevron-right arrow"></i>
+            <div class="hint">Double-click for details</div>
+        </div>
+
+        <!-- Step 4: Execute & Persist -->
+        <div class="col-group">
+            
+            <!-- Management (Top) -->
+            <div class="node management" id="node-cloudwatch" ondblclick="openModal('cw')" style="margin-bottom: 20px;">
+                <div class="vertical-line vl-bottom"></div>
+                <div class="node-icon" style="width: 50px; height: 50px; font-size: 24px;"><i class="fa-solid fa-eye"></i></div>
+                <h3 style="font-size: 16px;">CloudWatch</h3>
+                <p style="font-size: 12px;">Trace/Log</p>
+                <div class="hint">Dbl-Click</div>
+            </div>
+
+            <!-- Compute (Center) -->
+            <div class="node compute" id="node-fargate" ondblclick="openModal('fargate')">
+                <div class="node-icon"><i class="fa-solid fa-server"></i></div>
+                <h3>Fargate</h3>
+                <p>Agent Worker</p>
+                <div class="pulse-ring" id="fargate-pulse"></div>
+                <div class="hint">Double-click for details</div>
+            </div>
+
+            <!-- Database (Bottom) -->
+            <div class="node database" id="node-dynamo" ondblclick="openModal('ddb')" style="margin-top: 20px;">
+                <div class="vertical-line vl-top"></div>
+                <div class="node-icon" style="width: 50px; height: 50px; font-size: 24px;"><i class="fa-solid fa-database"></i></div>
+                <h3 style="font-size: 16px;">DynamoDB</h3>
+                <p style="font-size: 12px;">Locking</p>
+                <div class="hint">Dbl-Click</div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="status-log" id="statusLog">Ready. Select a scenario OR Double-click a component for details.</div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content" id="modalContent">
+            <i class="fa-solid fa-xmark close-btn" onclick="closeModal()"></i>
+            <div id="modalBody">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nodes = {
+            eb: document.getElementById('node-eventbridge'),
+            sfn: document.getElementById('node-sfn'),
+            sqs: document.getElementById('node-sqs'),
+            fargate: document.getElementById('node-fargate'),
+            cw: document.getElementById('node-cloudwatch'),
+            ddb: document.getElementById('node-dynamo')
+        };
+        const packet = document.getElementById('packet');
+        const statusLog = document.getElementById('statusLog');
+        const btns = document.querySelectorAll('.btn');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalBody = document.getElementById('modalBody');
+
+        let isRunning = false;
+
+        // --- DETAIL DATA ---
+        const details = {
+            eb: {
+                icon: '<i class="fa-solid fa-circle-nodes" style="color: #f472b6;"></i>',
+                title: 'EventBridge (The Signal)',
+                desc: 'Decouples ingestion from execution. Uses Rules to route specific business events to the correct State Machine.',
+                left: `
+                    <h4>Event Pattern (JSON)</h4>
+                    <div class="code-block">
+                        {<br>
+                        &nbsp;&nbsp;<span class="code-key">"source"</span>: <span class="code-val">"com.fintech.kyc"</span>,<br>
+                        &nbsp;&nbsp;<span class="code-key">"detail-type"</span>: <span class="code-val">"KYC_Requested"</span>,<br>
+                        &nbsp;&nbsp;<span class="code-key">"detail"</span>: {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-key">"userId"</span>: <span class="code-val">"u-12345"</span>,<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-key">"tier"</span>: <span class="code-val">"platinum"</span><br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                `,
+                right: `
+                    <h4>Rule Routing</h4>
+                    <div class="flow-diagram">
+                        <div class="flow-step">Rule: <span style="color:#f472b6">KYC_Start_Rule</span></div>
+                        <i class="fa-solid fa-arrow-down flow-arrow"></i>
+                        <div class="flow-step">Target: <span style="color:#fb923c">Step Functions (AgentOrchestrator)</span></div>
+                        <i class="fa-solid fa-arrow-down flow-arrow"></i>
+                        <div class="flow-step">InputTransformer: Pass only <code>detail.userId</code></div>
+                    </div>
+                `
+            },
+            sfn: {
+                icon: '<i class="fa-solid fa-bolt" style="color: #f472b6;"></i>',
+                title: 'Step Functions (The Brain)',
+                desc: 'Manages state, retries, and the "Wait for Callback" pattern. It pauses execution while the Agent works asynchronously.',
+                left: `
+                    <h4>State Machine Def (ASL)</h4>
+                    <div class="code-block">
+                        <span class="code-comment"># The Task Token Pattern</span><br>
+                        "ProcessWork": {<br>
+                        &nbsp;&nbsp;"Type": "Task",<br>
+                        &nbsp;&nbsp;"Resource": "arn:aws:states:::sqs:sendMessage<span class="code-val">.waitForTaskToken</span>",<br>
+                        &nbsp;&nbsp;"Parameters": {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;"QueueUrl": "...",<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;"MessageBody": {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"TaskToken.$": "$$.Task.Token",<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Input.$": "$" <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                `,
+                right: `
+                    <h4>Orchestration Flow</h4>
+                    <div class="flow-diagram">
+                        <div class="flow-step">Start Execution</div>
+                        <i class="fa-solid fa-arrow-down flow-arrow"></i>
+                        <div class="flow-step">Resolve Dependencies (Lambda)</div>
+                        <i class="fa-solid fa-arrow-down flow-arrow"></i>
+                        <div class="flow-step" style="border-color: #f472b6">Push to SQS & <b>WAIT</b></div>
+                        <div style="font-size:10px; color:#64748b; margin: -5px 0;">(Paused for Agent)</div>
+                        <i class="fa-solid fa-arrow-down flow-arrow"></i>
+                        <div class="flow-step">Receive TaskSuccess</div>
+                        <i class="fa-solid fa-arrow-down flow-arrow"></i>
+                        <div class="flow-step">End / Loop</div>
+                    </div>
+                `
+            },
+            sqs: {
+                icon: '<i class="fa-solid fa-layer-group" style="color: #f472b6;"></i>',
+                title: 'SQS (The Buffer)',
+                desc: 'Protects downstream agents from traffic spikes. Provides visibility timeouts to handle agent crashes automatically.',
+                left: `
+                    <h4>Queue Configuration</h4>
+                    <div class="code-block">
+                        <span class="code-key">QueueName</span>: <span class="code-val">Agent-Work-Queue</span><br>
+                        <span class="code-key">VisibilityTimeout</span>: <span class="code-val">300s</span><br>
+                        <span class="code-comment"># If agent dies, msg reappears after 300s</span><br><br>
+                        <span class="code-key">RedrivePolicy</span>: {<br>
+                        &nbsp;&nbsp;"deadLetterTargetArn": "arn:..DLQ",<br>
+                        &nbsp;&nbsp;"maxReceiveCount": <span class="code-val">3</span><br>
+                        }
+                    </div>
+                `,
+                right: `
+                    <h4>Reliability Mechanics</h4>
+                    <div class="flow-diagram">
+                        <div class="flow-step">Message Enqueued</div>
+                        <i class="fa-solid fa-arrow-down flow-arrow"></i>
+                        <div class="flow-step">Agent Polls & Locks (Invisible)</div>
+                        <i class="fa-solid fa-arrow-down flow-arrow"></i>
+                        <div style="display:flex; gap:10px; width:100%">
+                            <div class="flow-step" style="border-color:#f87171">Crash?</div>
+                            <div class="flow-step" style="border-color:#4ade80">Success?</div>
+                        </div>
+                        <div style="display:flex; gap:10px; width:100%">
+                            <div class="flow-step">Timeout & Retry</div>
+                            <div class="flow-step">Delete Msg</div>
+                        </div>
+                    </div>
+                `
+            },
+            fargate: {
+                icon: '<i class="fa-solid fa-server" style="color: #fb923c;"></i>',
+                title: 'Fargate (The Worker)',
+                desc: 'Runs the Agent code in a container. It pulls work, calls the LLM, and reports back to Step Functions.',
+                left: `
+                    <h4>Agent Loop Logic</h4>
+                    <div class="code-block">
+                        <span class="code-key">while</span> (true):<br>
+                        &nbsp;&nbsp;msg = sqs.receive_message()<br>
+                        &nbsp;&nbsp;token = msg.body.TaskToken<br>
+                        <br>
+                        &nbsp;&nbsp;<span class="code-comment"># Idempotency Check</span><br>
+                        &nbsp;&nbsp;<span class="code-key">if</span> dynamo.exists(msg.id): continue<br>
+                        <br>
+                        &nbsp;&nbsp;<span class="code-comment"># AI Processing</span><br>
+                        &nbsp;&nbsp;result = agent.run(msg.input)<br>
+                        <br>
+                        &nbsp;&nbsp;<span class="code-key">if</span> result.success:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;sfn.send_task_success(token, result)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;sqs.delete_message(msg)
+                    </div>
+                `,
+                right: `
+                    <h4>Component Stack</h4>
+                    <div class="flow-diagram">
+                        <div class="flow-step" style="background: #1e293b">Docker Container</div>
+                        <div class="flow-step" style="background: #0f172a; margin-top:-5px">Python / Node Agent SDK</div>
+                        <div class="flow-step" style="background: #0f172a; margin-top:-5px">LLM Tools (Bedrock/Anthropic)</div>
+                        <div class="flow-step" style="background: #0f172a; margin-top:-5px">AWS SDK (Boto3)</div>
+                    </div>
+                `
+            },
+            ddb: {
+                icon: '<i class="fa-solid fa-database" style="color: #60a5fa;"></i>',
+                title: 'DynamoDB (The Lock)',
+                desc: 'Ensures exactly-once processing (Idempotency) and stores the audit trail of what the agent decided.',
+                left: `
+                    <h4>Table Schema</h4>
+                    <div class="code-block">
+                        <span class="code-key">PK</span>: <span class="code-val">JobId#12345</span><br>
+                        <span class="code-key">SK</span>: <span class="code-val">Step#Verification</span><br>
+                        <br>
+                        <span class="code-key">Attributes</span>:<br>
+                        &nbsp;&nbsp;status: "COMPLETED"<br>
+                        &nbsp;&nbsp;agent_decision: "APPROVED"<br>
+                        &nbsp;&nbsp;timestamp: 167888221<br>
+                        &nbsp;&nbsp;ttl: 167900000
+                    </div>
+                `,
+                right: `
+                    <h4>Conditional Write</h4>
+                    <div class="flow-diagram">
+                        <div class="flow-step">Agent attempts Write</div>
+                        <i class="fa-solid fa-arrow-down flow-arrow"></i>
+                        <div class="flow-step">Condition: <br><code>attribute_not_exists(PK)</code></div>
+                        <i class="fa-solid fa-arrow-down flow-arrow"></i>
+                        <div style="display:flex; gap:10px; width:100%">
+                            <div class="flow-step" style="border-color:#4ade80">Success<br>(Do Work)</div>
+                            <div class="flow-step" style="border-color:#f87171">Fail<br>(Skip Work)</div>
+                        </div>
+                    </div>
+                `
+            },
+            cw: {
+                icon: '<i class="fa-solid fa-eye" style="color: #a78bfa;"></i>',
+                title: 'CloudWatch / X-Ray',
+                desc: 'Provides end-to-end distributed tracing. Links the EventBridge Trigger to the Step Function Execution to the Fargate Logs.',
+                left: `
+                    <h4>Trace Segment</h4>
+                    <div class="code-block">
+                        <span class="code-key">TraceId</span>: 1-64a...<br>
+                        <span class="code-key">Segments</span>: [<br>
+                        &nbsp;&nbsp;{ name: "EventBridge", time: 0.1s },<br>
+                        &nbsp;&nbsp;{ name: "StepFunctions", time: 0.2s },<br>
+                        &nbsp;&nbsp;{ name: "Fargate", time: 2.5s, <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;annotations: { <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Model": "Claude-3",<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Tokens": 450<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;}<br>
+                        ]
+                    </div>
+                `,
+                right: `
+                    <h4>Dashboard Metrics</h4>
+                    <div class="flow-diagram">
+                        <div class="flow-step">Agent_Duration_Seconds</div>
+                        <div class="flow-step">Token_Usage_Count</div>
+                        <div class="flow-step">Tool_Use_Failure_Rate</div>
+                        <div class="flow-step">Idempotency_Hit_Count</div>
+                    </div>
+                `
+            }
+        };
+
+        // --- FUNCTIONS ---
+
+        function openModal(nodeId) {
+            const data = details[nodeId];
+            if(!data) return;
+
+            modalBody.innerHTML = `
+                <div class="detail-header">
+                    <div class="detail-icon">${data.icon}</div>
+                    <div class="detail-title">
+                        <h2>${data.title}</h2>
+                        <p>${data.desc}</p>
+                    </div>
+                </div>
+                <div class="detail-body">
+                    <div>${data.left}</div>
+                    <div>${data.right}</div>
+                </div>
+            `;
+            modalOverlay.classList.add('active');
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+        }
+
+        // Close on background click
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+
+        // Existing helper functions
+        function setStatus(msg, type = 'normal') {
+            statusLog.innerText = msg;
+            statusLog.className = 'status-log ' + type;
+        }
+
+        function highlightNode(nodeId, type = 'active-node', duration = 1000) {
+            const node = nodes[nodeId];
+            node.classList.add(type);
+            setTimeout(() => node.classList.remove(type), duration);
+        }
+
+        function getCenter(element) {
+            const rect = element.getBoundingClientRect();
+            const containerRect = document.getElementById('container').getBoundingClientRect();
+            return {
+                x: rect.left + rect.width / 2 - containerRect.left,
+                y: rect.top + rect.height / 2 - containerRect.top
+            };
+        }
+
+        async function movePacket(fromId, toId, duration = 800) {
+            const start = getCenter(nodes[fromId]);
+            const end = getCenter(nodes[toId]);
+            
+            // Initial Position
+            packet.style.transition = 'none';
+            packet.style.display = 'block';
+            packet.style.left = `${start.x}px`;
+            packet.style.top = `${start.y}px`;
+            
+            // Force reflow
+            void packet.offsetWidth; 
+
+            // Move
+            packet.style.transition = `all ${duration}ms cubic-bezier(0.45, 0, 0.55, 1)`;
+            packet.style.left = `${end.x}px`;
+            packet.style.top = `${end.y}px`;
+
+            return new Promise(resolve => setTimeout(resolve, duration));
+        }
+
+        async function pulseNode(nodeId, color = '#4ade80') {
+            highlightNode(nodeId);
+            return new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        function toggleBtns(disable) {
+            btns.forEach(b => b.disabled = disable);
+            isRunning = disable;
+        }
+
+        // --- SCENARIOS ---
+
+        async function runScenario(type) {
+            if(isRunning) return;
+            toggleBtns(true);
+
+            try {
+                // 1. Ingest
+                setStatus("EventBridge receives signal...");
+                await pulseNode('eb');
+                await movePacket('eb', 'sfn');
+
+                // 2. Orchestrate
+                setStatus("Step Functions: Waiting for Agent...");
+                await pulseNode('sfn');
+                await movePacket('sfn', 'sqs');
+
+                // 3. Buffer
+                setStatus("SQS: Buffered (Visibility Window Started)");
+                await pulseNode('sqs');
+                await movePacket('sqs', 'fargate');
+
+                // 4. Execution Start
+                setStatus("Fargate: Agent Working...");
+                nodes['fargate'].classList.add('active-node');
+
+                if (type === 'happyPath') {
+                    // Check Lock
+                    setStatus("Fargate: Checking Idempotency Lock...");
+                    await movePacket('fargate', 'ddb', 400);
+                    await pulseNode('ddb');
+                    setStatus("DynamoDB: Lock Acquired.");
+                    await movePacket('ddb', 'fargate', 400);
+
+                    // Execute
+                    await new Promise(r => setTimeout(r, 800)); // processing simulation
+
+                    // Log Trace
+                    setStatus("Fargate: Sending Trace & Success...");
+                    await movePacket('fargate', 'cw', 400);
+                    await pulseNode('cw');
+                    await movePacket('cw', 'fargate', 400);
+
+                    setStatus("Success! Callback sent to Step Functions.", "active");
+                } 
+                else if (type === 'retry') {
+                    // Fail
+                    setStatus("Fargate: Error! (Process Crashed)", "error");
+                    nodes['fargate'].classList.remove('active-node');
+                    nodes['fargate'].classList.add('error-node');
+                    await new Promise(r => setTimeout(r, 1000));
+
+                    // Return to Queue
+                    setStatus("SQS: Visibility Timeout Expired. Re-queueing...", "warn");
+                    await movePacket('fargate', 'sqs');
+                    nodes['fargate'].classList.remove('error-node');
+                    
+                    await new Promise(r => setTimeout(r, 500));
+                    setStatus("SQS: Redrive attempt 2/3...", "warn");
+                    await pulseNode('sqs');
+                    
+                    // Re-drive
+                    await movePacket('sqs', 'fargate');
+                    nodes['fargate'].classList.add('active-node');
+                    setStatus("Fargate: Retry Successful.", "active");
+                    await new Promise(r => setTimeout(r, 800));
+                }
+                else if (type === 'idempotency') {
+                     // Check Lock
+                    setStatus("Fargate: Checking Idempotency Lock...", "warn");
+                    await movePacket('fargate', 'ddb', 400);
+                    
+                    nodes['ddb'].classList.add('warn-node');
+                    setStatus("DynamoDB: Lock Exists! (Duplicate Event)", "warn");
+                    await new Promise(r => setTimeout(r, 1000));
+                    nodes['ddb'].classList.remove('warn-node');
+
+                    await movePacket('ddb', 'fargate', 400);
+                    setStatus("Fargate: Discarding Duplicate.", "active");
+                }
+
+                nodes['fargate'].classList.remove('active-node');
+                packet.style.display = 'none';
+
+            } catch (e) {
+                console.error(e);
+            }
+
+            toggleBtns(false);
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,559 @@
+{
+    "title": "FreshFleet Local Delivery Co-op — Digital Transformation",
+    "notes": "Project: FreshFleet Delivery Co-op Modernization\nTeam: Operations + Technology\nSponsor: Board of Directors / General Manager\n\nThis story walks stakeholders through the transformation\nof a 12-driver phone-and-whiteboard delivery co-op into\na tech-enabled, GPS-tracked, AI-optimized fleet.\n\nPresentation order:\n  1. Problem — why the current system is losing to competitors\n  2. Vision — where we're headed (22+ deliveries/driver/day)\n  3. Roadmap — four phases of delivery\n  4. Phase drill-down — architecture at each stage\n\nUse the Phase slider to reveal architecture layers.\nSwitch Flows to see different dispatch scenarios.",
+
+    "phases": [
+        { "id": "legacy",      "label": "0 — Legacy (Today)" },
+        { "id": "driver-app",  "label": "1 — Driver App" },
+        { "id": "optimization","label": "2 — AI Optimization" },
+        { "id": "predictive",  "label": "3 — Predictive Fleet" }
+    ],
+
+    "zones": [
+        { "id": "depot", "type": "on-prem", "label": "Depot & Warehouse", "x": 10, "y": 10, "w": 340, "h": 620 },
+        { "id": "cloud", "type": "cloud", "label": "AWS Cloud", "x": 370, "y": 10, "w": 780, "h": 620, "phase": "driver-app" },
+        { "id": "vpc", "type": "vpc", "label": "VPC — Production", "x": 390, "y": 50, "w": 740, "h": 560, "parent": "cloud", "phase": "driver-app" },
+        { "id": "public-subnet", "type": "subnet", "label": "Public Subnet", "x": 410, "y": 85, "w": 290, "h": 250, "parent": "vpc", "phase": "driver-app" },
+        { "id": "private-subnet", "type": "subnet", "label": "Private Subnet", "x": 410, "y": 350, "w": 290, "h": 240, "parent": "vpc", "phase": "driver-app" },
+        { "id": "data-layer", "type": "subnet", "label": "Data Layer", "x": 720, "y": 85, "w": 390, "h": 505, "parent": "vpc", "phase": "driver-app" }
+    ],
+
+    "nodes": [
+        { "id": "customer", "type": "human", "tag": "external", "label": "Customer\n(waiting)", "x": 30, "y": 60, "w": 120, "h": 75 },
+        { "id": "dispatcher", "type": "user", "tag": "legacy", "label": "Dispatcher\n(phone + radio)", "x": 170, "y": 140, "w": 140, "h": 80 },
+        { "id": "whiteboard", "type": "storage", "tag": "legacy", "label": "Whiteboard\nSchedule", "x": 170, "y": 260, "w": 130, "h": 65 },
+        { "id": "phone-line", "type": "service", "tag": "legacy", "label": "Phone\nLine", "x": 170, "y": 60, "w": 120, "h": 60 },
+        { "id": "driver", "type": "user", "tag": "core", "label": "Driver\n(12 co-op)", "x": 60, "y": 350, "w": 120, "h": 80 },
+        { "id": "paper-manifest", "type": "storage", "tag": "legacy", "label": "Paper\nManifest", "x": 60, "y": 470, "w": 120, "h": 65 },
+        { "id": "warehouse", "type": "service", "tag": "core", "label": "Warehouse\nLoading Dock", "x": 60, "y": 560, "w": 140, "h": 60 },
+
+        { "id": "driver-mobile", "type": "service", "tag": "new", "label": "Driver\nMobile App", "x": 200, "y": 400, "w": 130, "h": 75, "status": "ready", "phase": "driver-app" },
+        { "id": "dispatch-svc", "type": "fargate", "tag": "core", "label": "Dispatch\nService", "x": 430, "y": 370, "w": 130, "h": 85, "status": "ready", "phase": "driver-app" },
+        { "id": "api-gw", "type": "gateway", "tag": "aws", "label": "API\nGateway", "x": 430, "y": 100, "w": 130, "h": 85, "status": "ready", "phase": "driver-app" },
+        { "id": "tracking-db", "type": "database", "tag": "data", "label": "Tracking\nDB", "x": 740, "y": 100, "w": 130, "h": 80, "status": "ready", "phase": "driver-app" },
+        { "id": "gps-stream", "type": "queue", "tag": "aws", "label": "Kinesis\nGPS Stream", "x": 430, "y": 240, "w": 130, "h": 70, "phase": "driver-app" },
+        { "id": "notify-fn", "type": "lambda", "tag": "aws", "label": "Notification\nLambda", "x": 570, "y": 240, "w": 120, "h": 75, "status": "wip", "phase": "driver-app" },
+        { "id": "customer-portal", "type": "service", "tag": "new", "label": "Customer\nPortal", "x": 570, "y": 100, "w": 120, "h": 80, "status": "ready", "phase": "driver-app" },
+
+        { "id": "route-engine", "type": "agent", "tag": "agent", "label": "AI Route\nEngine", "x": 740, "y": 220, "w": 130, "h": 85, "status": "wip", "phase": "optimization" },
+        { "id": "traffic-api", "type": "service", "tag": "external", "label": "Traffic\nAPI", "x": 900, "y": 100, "w": 120, "h": 70, "phase": "optimization" },
+        { "id": "rating-svc", "type": "fargate", "tag": "new", "label": "Rating\nService", "x": 740, "y": 340, "w": 130, "h": 80, "status": "ready", "phase": "optimization" },
+        { "id": "delivery-cache", "type": "cache", "tag": "data", "label": "Delivery\nCache", "x": 900, "y": 220, "w": 130, "h": 70, "phase": "optimization" },
+
+        { "id": "demand-forecast", "type": "agent", "tag": "agent", "label": "Demand\nForecaster", "x": 900, "y": 340, "w": 130, "h": 80, "status": "wip", "phase": "predictive" },
+        { "id": "fleet-planner", "type": "agent", "tag": "agent", "label": "Fleet\nPlanner", "x": 900, "y": 460, "w": 130, "h": 80, "status": "wip", "phase": "predictive" },
+        { "id": "analytics-dash", "type": "dashboard", "tag": "observability", "label": "Operations\nDashboard", "x": 740, "y": 460, "w": 140, "h": 80, "phase": "predictive" },
+        { "id": "business-db", "type": "database", "tag": "data", "label": "Business\nIntel DB", "x": 570, "y": 460, "w": 130, "h": 80, "phase": "predictive" }
+    ],
+
+    "connections": [
+        { "from": "customer", "to": "phone-line" },
+        { "from": "phone-line", "to": "dispatcher" },
+        { "from": "dispatcher", "to": "whiteboard" },
+        { "from": "dispatcher", "to": "driver" },
+        { "from": "driver", "to": "paper-manifest" },
+        { "from": "driver", "to": "warehouse" },
+
+        { "from": "customer", "to": "customer-portal", "phase": "driver-app" },
+        { "from": "customer-portal", "to": "api-gw", "phase": "driver-app" },
+        { "from": "driver-mobile", "to": "api-gw", "phase": "driver-app" },
+        { "from": "api-gw", "to": "dispatch-svc", "phase": "driver-app" },
+        { "from": "dispatch-svc", "to": "tracking-db", "phase": "driver-app" },
+        { "from": "driver-mobile", "to": "gps-stream", "phase": "driver-app" },
+        { "from": "gps-stream", "to": "tracking-db", "phase": "driver-app" },
+        { "from": "gps-stream", "to": "notify-fn", "phase": "driver-app" },
+        { "from": "notify-fn", "to": "customer-portal", "phase": "driver-app" },
+        { "from": "dispatch-svc", "to": "driver-mobile", "phase": "driver-app" },
+
+        { "from": "dispatch-svc", "to": "route-engine", "phase": "optimization" },
+        { "from": "route-engine", "to": "traffic-api", "phase": "optimization" },
+        { "from": "route-engine", "to": "delivery-cache", "phase": "optimization" },
+        { "from": "route-engine", "to": "driver-mobile", "phase": "optimization" },
+        { "from": "tracking-db", "to": "rating-svc", "phase": "optimization" },
+        { "from": "rating-svc", "to": "delivery-cache", "phase": "optimization" },
+
+        { "from": "tracking-db", "to": "analytics-dash", "phase": "predictive" },
+        { "from": "delivery-cache", "to": "analytics-dash", "phase": "predictive" },
+        { "from": "analytics-dash", "to": "demand-forecast", "phase": "predictive" },
+        { "from": "demand-forecast", "to": "fleet-planner", "phase": "predictive" },
+        { "from": "fleet-planner", "to": "dispatch-svc", "phase": "predictive" },
+        { "from": "analytics-dash", "to": "business-db", "phase": "predictive" },
+        { "from": "demand-forecast", "to": "business-db", "phase": "predictive" }
+    ],
+
+    "sequence": [
+        { "from": "customer", "to": "phone-line", "text": "\"Hi, I need a package picked up from Oak Street\" (phone call)", "status": "ready" },
+        { "from": "phone-line", "to": "dispatcher", "text": "Dispatcher takes order, writes on sticky note", "status": "wip" },
+        { "from": "dispatcher", "to": "whiteboard", "text": "Adds pickup to whiteboard — already 18 stops listed", "status": "wip" },
+        { "from": "dispatcher", "to": "driver", "text": "Radios driver: \"Add Oak St to your run\"", "status": "wip", "popUp": { "type": "alert", "msg": "Driver already en route — no way to optimize insert" } },
+        { "from": "driver", "to": "paper-manifest", "text": "Scribbles address on paper route sheet", "status": "wip" },
+        { "from": "driver", "to": "warehouse", "text": "Drives back to warehouse for the package", "status": "wip", "popUp": { "type": "issue", "msg": "Unnecessary return trip — 25 min wasted" } }
+    ],
+
+    "flows": [
+        {
+            "id": "legacy-dispatch",
+            "name": "Legacy — Phone Dispatch",
+            "sequence": [
+                { "from": "customer", "to": "phone-line", "text": "\"I need a delivery to 42 Elm Street by 3pm\"", "status": "ready" },
+                { "from": "phone-line", "to": "dispatcher", "text": "Dispatcher writes address and deadline on paper", "status": "wip" },
+                { "from": "dispatcher", "to": "whiteboard", "text": "Adds delivery to whiteboard grid — row 14 of 22", "status": "wip", "popUp": { "type": "alert", "msg": "Whiteboard full — dispatcher erasing completed stops" } },
+                { "from": "dispatcher", "to": "driver", "text": "Radios driver: \"New stop — 42 Elm, before 3pm\"", "status": "wip" },
+                { "from": "driver", "to": "paper-manifest", "text": "Adds to paper route sheet — now 16 stops, no order", "status": "wip" },
+                { "from": "driver", "to": "warehouse", "text": "Drives to warehouse to load package", "status": "wip" },
+                { "from": "warehouse", "to": "driver", "text": "Searches shelves — finds box after 8 minutes", "status": "wip", "popUp": { "type": "issue", "msg": "No barcode system — manual shelf search" } }
+            ]
+        },
+        {
+            "id": "legacy-where-is-it",
+            "name": "Legacy — Where Is My Package?",
+            "sequence": [
+                { "from": "customer", "to": "phone-line", "text": "\"Where's my package? I've been waiting since noon!\"", "status": "ready" },
+                { "from": "phone-line", "to": "dispatcher", "text": "Dispatcher takes call — third \"where is it\" in 20 min", "status": "wip", "popUp": { "type": "alert", "msg": "28% of all calls are status checks — ties up dispatch" } },
+                { "from": "dispatcher", "to": "driver", "text": "Radios driver: \"What's your ETA for 19 Pine Ave?\"", "status": "wip" },
+                { "from": "driver", "to": "dispatcher", "text": "\"Uhh... maybe 45 minutes? Stuck in traffic on Main St\"", "status": "wip", "popUp": { "type": "issue", "msg": "Driver guessing — no GPS, no route plan" } },
+                { "from": "dispatcher", "to": "phone-line", "text": "Relays vague ETA back to customer", "status": "wip" },
+                { "from": "phone-line", "to": "customer", "text": "\"Should be about 45 minutes\" — customer frustrated", "status": "wip", "popUp": { "type": "issue", "msg": "Customer waited at home all day — considering competitor" } }
+            ]
+        },
+        {
+            "id": "app-delivery",
+            "name": "Phase 1 — App-Based Delivery",
+            "sequence": [
+                { "from": "customer", "to": "customer-portal", "text": "Submit delivery request via web portal", "status": "ready", "phase": "driver-app" },
+                { "from": "customer-portal", "to": "api-gw", "text": "POST /deliveries {pickup: Oak St, drop: Elm St}", "status": "ready", "phase": "driver-app" },
+                { "from": "api-gw", "to": "dispatch-svc", "text": "Find nearest available driver", "status": "ready", "phase": "driver-app" },
+                { "from": "dispatch-svc", "to": "tracking-db", "text": "INSERT delivery #2847, status: assigned", "status": "ready", "phase": "driver-app" },
+                { "from": "dispatch-svc", "to": "driver-mobile", "text": "Push assignment: \"New stop — 42 Elm St\"", "status": "ready", "phase": "driver-app", "popUp": { "type": "amplify", "msg": "Driver gets turn-by-turn — no guessing" } },
+                { "from": "driver-mobile", "to": "gps-stream", "text": "GPS ping every 10 seconds: {lat, lng, speed}", "status": "ready", "phase": "driver-app" },
+                { "from": "gps-stream", "to": "tracking-db", "text": "UPDATE position for driver #7", "status": "ready", "phase": "driver-app" },
+                { "from": "gps-stream", "to": "notify-fn", "text": "Geofence trigger: driver within 0.5 mi", "status": "ready", "phase": "driver-app" },
+                { "from": "notify-fn", "to": "customer-portal", "text": "\"Your driver is 3 minutes away!\"", "status": "ready", "phase": "driver-app", "popUp": { "type": "amplify", "msg": "Customer gets live ETA — no phone call needed" } }
+            ]
+        },
+        {
+            "id": "optimized-route",
+            "name": "Phase 2 — AI-Optimized Multi-Stop",
+            "sequence": [
+                { "from": "dispatch-svc", "to": "route-engine", "text": "Optimize 18-stop route for driver #4", "status": "ready", "phase": "optimization" },
+                { "from": "route-engine", "to": "traffic-api", "text": "GET /traffic?region=downtown&time=14:00", "status": "ready", "phase": "optimization" },
+                { "from": "traffic-api", "to": "route-engine", "text": "Main St congested — suggest Oak Ave bypass", "status": "ready", "phase": "optimization" },
+                { "from": "route-engine", "to": "delivery-cache", "text": "Cache optimized route: 18 stops in 4.2 hours", "status": "ready", "phase": "optimization", "popUp": { "type": "amplify", "msg": "AI saves 1.5 hrs vs driver's paper route" } },
+                { "from": "route-engine", "to": "driver-mobile", "text": "Push re-optimized route with live traffic", "status": "ready", "phase": "optimization" },
+                { "from": "driver-mobile", "to": "gps-stream", "text": "Completion ping: delivered #2847 at 14:23", "status": "ready", "phase": "optimization" },
+                { "from": "gps-stream", "to": "notify-fn", "text": "Delivery confirmed — trigger customer notification", "status": "ready", "phase": "optimization" },
+                { "from": "notify-fn", "to": "customer-portal", "text": "\"Delivered! Rate your experience (1-5 stars)\"", "status": "ready", "phase": "optimization" },
+                { "from": "customer-portal", "to": "rating-svc", "text": "POST /ratings {delivery: 2847, stars: 5}", "status": "ready", "phase": "optimization", "popUp": { "type": "amplify", "msg": "Ratings drive accountability + bonus pool" } }
+            ]
+        },
+        {
+            "id": "demand-planning",
+            "name": "Phase 3 — Predictive Demand",
+            "sequence": [
+                { "from": "tracking-db", "to": "analytics-dash", "text": "Stream: 264 deliveries today, 12 drivers active", "status": "ready", "phase": "predictive" },
+                { "from": "delivery-cache", "to": "analytics-dash", "text": "Stream: avg 22.1 deliveries/driver, 97% on-time", "status": "ready", "phase": "predictive" },
+                { "from": "analytics-dash", "to": "demand-forecast", "text": "Predict tomorrow: Thursday + rain + month-end", "status": "ready", "phase": "predictive" },
+                { "from": "demand-forecast", "to": "fleet-planner", "text": "Forecast: 310 deliveries, need 14 drivers", "status": "ready", "phase": "predictive", "popUp": { "type": "amplify", "msg": "AI predicts surge 24hrs ahead — no scramble" } },
+                { "from": "fleet-planner", "to": "dispatch-svc", "text": "Auto-schedule: call in 2 reserve drivers, adjust shifts", "status": "ready", "phase": "predictive" },
+                { "from": "demand-forecast", "to": "business-db", "text": "Log forecast + actuals for model retraining", "status": "ready", "phase": "predictive" },
+                { "from": "analytics-dash", "to": "business-db", "text": "Dynamic pricing: +15% surge for same-day rush", "status": "ready", "phase": "predictive", "popUp": { "type": "amplify", "msg": "Surge pricing captures value during peak demand" } }
+            ]
+        }
+    ],
+
+    "story": {
+        "storyId": "freshfleet-digital-2026",
+        "version": 1,
+        "createdAt": "2026-01-15T09:00:00Z",
+        "updatedAt": "2026-02-23T15:00:00Z",
+        "createdBy": "gm@freshfleet.coop",
+
+        "problem": {
+            "headline": "Our drivers deliver 14/day while the competitor's app does 22",
+            "description": "FreshFleet is a 12-driver delivery co-op serving a mid-size city. Orders come in by phone, dispatching is done on a whiteboard, drivers navigate with paper route sheets, and customers call asking \"where's my package?\" A larger competitor with a slick app is eating our market share. We're losing 2-3 regular accounts per month. Drivers spend 35% of their day on wasted miles — returning to depot, backtracking, sitting in avoidable traffic. The dispatcher spends more time answering \"where is it?\" calls than actually dispatching. Paper manifests have caused 3-4 lost packages per month ($2K/month in claims). Customers wait at home all day because we can't give them a delivery window.",
+            "impactMetric": {
+                "kpiId": "deliveries_per_driver",
+                "value": 14,
+                "unit": "deliveries/driver/day"
+            },
+            "evidence": [
+                { "label": "Driver ride-along time study (Jan 2026)", "url": "driver-ridealong-time-study-jan2026.pdf", "addedAt": "2026-01-18T10:00:00Z", "addedBy": "ops@freshfleet.coop" },
+                { "label": "Customer churn analysis — lost accounts (Q4 2025)", "url": "customer-churn-q4-2025.csv", "addedAt": "2026-01-20T08:00:00Z", "addedBy": "gm@freshfleet.coop" },
+                { "label": "Dispatcher call log audit — 28% status inquiries", "url": "dispatcher-call-log-audit-jan2026.xlsx", "addedAt": "2026-01-22T14:00:00Z", "addedBy": "dispatch@freshfleet.coop" },
+                { "label": "Competitor app feature comparison", "url": "competitor-app-benchmark-2026.pdf", "addedAt": "2026-02-01T09:00:00Z", "addedBy": "gm@freshfleet.coop" }
+            ],
+            "scope": ["dispatcher", "whiteboard", "paper-manifest", "phone-line"],
+            "risks": [
+                "Market share erosion: losing 2-3 commercial accounts per month to app-based competitor",
+                "Revenue leakage: lost packages cost $2K/month in claims and goodwill credits",
+                "Driver burnout: 35% wasted miles → higher fuel costs, lower morale, turnover risk",
+                "Customer churn: 15% late delivery rate → NPS score of 18 (industry avg 42)"
+            ]
+        },
+
+        "vision": {
+            "summary": "22+ deliveries/driver/day, real-time tracking, sub-3% late rate — $650K+ annual revenue",
+            "description": "Transform FreshFleet from a phone-and-whiteboard operation into a tech-enabled delivery fleet where drivers follow AI-optimized routes, customers track packages in real time, and demand forecasting keeps the fleet right-sized. The co-op's advantage — local knowledge, personal relationships, driver-ownership — gets amplified by technology instead of undermined by it. We keep the human touch and add the digital backbone.",
+            "kpiTargets": [
+                { "kpiId": "deliveries_per_driver", "min": 20, "max": 24, "confidence": "high", "horizon": "12 months" },
+                { "kpiId": "late_delivery_pct", "min": 1, "max": 3, "confidence": "high", "horizon": "9 months" },
+                { "kpiId": "where_calls_pct", "min": 0, "max": 3, "confidence": "high", "horizon": "6 months" },
+                { "kpiId": "lost_packages", "min": 0, "max": 0, "confidence": "medium", "horizon": "6 months" },
+                { "kpiId": "annual_revenue", "min": 580000, "max": 680000, "confidence": "medium", "horizon": "12 months" },
+                { "kpiId": "customer_rating", "min": 4.5, "max": 4.8, "confidence": "medium", "horizon": "12 months" }
+            ],
+            "acceptanceCriteria": [
+                "Sustained 20+ deliveries/driver/day average for 30 consecutive days",
+                "Late delivery rate below 3% for 60 consecutive days",
+                "\"Where is it?\" calls drop below 5% of inbound volume",
+                "Zero lost packages for 90 consecutive days via barcode scanning",
+                "Customer rating above 4.5 stars across 500+ ratings",
+                "Annual revenue run rate exceeds $600K for 3 consecutive months"
+            ]
+        },
+
+        "kpis": [
+            {
+                "id": "deliveries_per_driver",
+                "label": "Deliveries / Driver / Day",
+                "unit": "#",
+                "direction": "higher_is_better",
+                "baseline": 14,
+                "current": 14,
+                "format": "0"
+            },
+            {
+                "id": "late_delivery_pct",
+                "label": "Late Delivery Rate",
+                "unit": "%",
+                "direction": "lower_is_better",
+                "baseline": 15,
+                "current": 15,
+                "format": "0"
+            },
+            {
+                "id": "where_calls_pct",
+                "label": "\"Where Is It?\" Calls",
+                "unit": "%",
+                "direction": "lower_is_better",
+                "baseline": 28,
+                "current": 28,
+                "format": "0"
+            },
+            {
+                "id": "lost_packages",
+                "label": "Lost Packages / Month",
+                "unit": "#",
+                "direction": "lower_is_better",
+                "baseline": 4,
+                "current": 4,
+                "format": "0"
+            },
+            {
+                "id": "annual_revenue",
+                "label": "Annual Revenue",
+                "unit": "$",
+                "direction": "higher_is_better",
+                "baseline": 380000,
+                "current": 380000,
+                "format": "$0,0"
+            },
+            {
+                "id": "customer_rating",
+                "label": "Customer Rating",
+                "unit": "stars",
+                "direction": "higher_is_better",
+                "baseline": 3.2,
+                "current": 3.2,
+                "format": "0.1f"
+            }
+        ],
+
+        "phases": [
+            {
+                "phaseRef": "legacy",
+                "label": "Legacy Baseline (Today)",
+                "owner": "gm@freshfleet.coop",
+                "timebox": "Current State",
+                "status": "completed",
+                "description": "Phone orders, whiteboard dispatch, paper route sheets, no GPS, no customer visibility. 12 drivers averaging 14 deliveries/day. Dispatcher drowning in \"where is it?\" calls. Competitor with app is winning accounts.",
+                "order": 0
+            },
+            {
+                "phaseRef": "driver-app",
+                "label": "Driver Mobile App + Digital Dispatch",
+                "owner": "tech@freshfleet.coop",
+                "timebox": "2026 Q2 (10 weeks)",
+                "status": "active",
+                "description": "Deploy driver mobile app with GPS tracking and turn-by-turn navigation. Replace whiteboard with digital dispatch service. Launch customer portal with live tracking map. Push notifications for delivery ETA. Barcode scanning eliminates lost packages. This is the table-stakes move to match the competitor.",
+                "order": 1
+            },
+            {
+                "phaseRef": "optimization",
+                "label": "AI Route Optimization + Ratings",
+                "owner": "tech@freshfleet.coop",
+                "timebox": "2026 Q3 (8 weeks)",
+                "status": "planned",
+                "description": "AI route engine optimizes multi-stop routes using real-time traffic data. Dynamic re-routing when traffic or new stops change the picture. Accurate delivery time predictions replace guesswork. Customer rating system drives accountability and feeds bonus pool. This is where we leap past the competitor.",
+                "order": 2
+            },
+            {
+                "phaseRef": "predictive",
+                "label": "Predictive Fleet & Business Intelligence",
+                "owner": "ops@freshfleet.coop",
+                "timebox": "2026 Q4 (8 weeks)",
+                "status": "planned",
+                "description": "Demand forecasting predicts next-day volume using day-of-week, weather, seasonal patterns. Fleet planner auto-schedules driver shifts and calls in reserves. Dynamic pricing captures value during surge periods. Operations dashboard gives the board real-time business intelligence. This turns data into decisions.",
+                "order": 3
+            }
+        ],
+
+        "ideaCards": [
+            {
+                "id": "idea-driver-app",
+                "title": "Driver Mobile App with GPS",
+                "owner": "tech@freshfleet.coop",
+                "hypothesis": "If drivers have a mobile app with turn-by-turn navigation, barcode scanning for package handoff, and digital manifests, we eliminate paper errors, reduce wasted miles by 30%, and increase deliveries/driver from 14 to 18+ per day.",
+                "linkedNodes": ["driver-mobile", "gps-stream", "dispatch-svc"],
+                "linkedFlows": ["app-delivery"],
+                "phases": ["driver-app"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "deliveries_per_driver", "delta": 4, "confidence": "high" },
+                    { "kpiId": "lost_packages", "delta": -3, "confidence": "high" },
+                    { "kpiId": "late_delivery_pct", "delta": -5, "confidence": "medium" },
+                    { "kpiId": "annual_revenue", "delta": 85000, "confidence": "medium" }
+                ],
+                "comments": [
+                    { "author": "gm@freshfleet.coop", "text": "This is survival. The competitor already has this — we're playing catch-up.", "timestamp": "2026-02-03T10:00:00Z" },
+                    { "author": "driver-rep@freshfleet.coop", "text": "Drivers are on board IF the app doesn't micromanage. We want navigation help, not surveillance.", "timestamp": "2026-02-04T14:00:00Z" }
+                ],
+                "evidenceLinks": [
+                    { "label": "Driver ride-along: 35% wasted miles on paper routes", "url": "driver-ridealong-time-study-jan2026.pdf", "addedAt": "2026-02-02T11:00:00Z", "addedBy": "ops@freshfleet.coop" }
+                ]
+            },
+            {
+                "id": "idea-digital-dispatch",
+                "title": "Digital Dispatch System",
+                "owner": "tech@freshfleet.coop",
+                "hypothesis": "Replacing the whiteboard with a digital dispatch service that auto-assigns deliveries to the nearest available driver cuts dispatcher workload by 60% and eliminates assignment errors (currently 5/week).",
+                "linkedNodes": ["dispatch-svc", "api-gw"],
+                "linkedFlows": ["app-delivery"],
+                "phases": ["driver-app"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "deliveries_per_driver", "delta": 2, "confidence": "medium" },
+                    { "kpiId": "where_calls_pct", "delta": -10, "confidence": "high" },
+                    { "kpiId": "late_delivery_pct", "delta": -3, "confidence": "medium" }
+                ],
+                "comments": [
+                    { "author": "dispatch@freshfleet.coop", "text": "Please! I spend half my day on the phone saying \"I don't know where your package is.\"", "timestamp": "2026-02-05T09:00:00Z" }
+                ],
+                "evidenceLinks": []
+            },
+            {
+                "id": "idea-gps-tracking",
+                "title": "Real-Time GPS Tracking + Customer Portal",
+                "owner": "tech@freshfleet.coop",
+                "hypothesis": "Live GPS tracking with a customer-facing portal eliminates 90%+ of \"where is it?\" calls (currently 28% of all inbound calls). Customers see a live map with ETA, get push notifications at key milestones.",
+                "linkedNodes": ["customer-portal", "gps-stream", "tracking-db", "notify-fn"],
+                "linkedFlows": ["app-delivery"],
+                "phases": ["driver-app"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "where_calls_pct", "delta": -25, "confidence": "high" },
+                    { "kpiId": "customer_rating", "delta": 0.8, "confidence": "medium" },
+                    { "kpiId": "annual_revenue", "delta": 45000, "confidence": "medium" }
+                ],
+                "comments": [
+                    { "author": "gm@freshfleet.coop", "text": "This alone might save us. Customers don't mind waiting — they mind not knowing.", "timestamp": "2026-02-06T10:00:00Z" }
+                ],
+                "evidenceLinks": [
+                    { "label": "Dispatcher call log: 28% status inquiries", "url": "dispatcher-call-log-audit-jan2026.xlsx", "addedAt": "2026-02-03T08:00:00Z", "addedBy": "dispatch@freshfleet.coop" }
+                ]
+            },
+            {
+                "id": "idea-route-optimization",
+                "title": "AI Route Optimization Engine",
+                "owner": "tech@freshfleet.coop",
+                "hypothesis": "An AI route engine using real-time traffic + delivery windows + package priority can plan 18-stop routes that are 25-35% faster than driver intuition. Combined with dynamic re-routing, we expect 22+ deliveries/driver/day and under 3% late rate.",
+                "linkedNodes": ["route-engine", "traffic-api", "delivery-cache"],
+                "linkedFlows": ["optimized-route"],
+                "phases": ["optimization"],
+                "status": "proposed",
+                "confidence": "medium",
+                "expectedKpiImpacts": [
+                    { "kpiId": "deliveries_per_driver", "delta": 4, "confidence": "medium" },
+                    { "kpiId": "late_delivery_pct", "delta": -5, "confidence": "medium" },
+                    { "kpiId": "customer_rating", "delta": 0.5, "confidence": "medium" },
+                    { "kpiId": "annual_revenue", "delta": 95000, "confidence": "medium" }
+                ],
+                "comments": [
+                    { "author": "driver-rep@freshfleet.coop", "text": "Some drivers know the city cold. Let us override routes when we know better.", "timestamp": "2026-02-10T11:00:00Z" },
+                    { "author": "tech@freshfleet.coop", "text": "Agreed — AI suggests, driver decides. Manual override always available.", "timestamp": "2026-02-10T14:00:00Z" }
+                ],
+                "evidenceLinks": [
+                    { "label": "Route optimization vendor comparison", "url": "route-optimization-vendor-comparison-2026.pdf", "addedAt": "2026-02-08T10:00:00Z", "addedBy": "tech@freshfleet.coop" }
+                ]
+            },
+            {
+                "id": "idea-demand-forecasting",
+                "title": "Demand Forecasting + Fleet Planning",
+                "owner": "ops@freshfleet.coop",
+                "hypothesis": "An ML model trained on historical volume + day-of-week + weather + seasonal patterns predicts next-day demand within 10% accuracy, enabling proactive shift scheduling. Eliminates the Friday panic scramble and Monday driver surplus.",
+                "linkedNodes": ["demand-forecast", "fleet-planner", "analytics-dash"],
+                "linkedFlows": ["demand-planning"],
+                "phases": ["predictive"],
+                "status": "proposed",
+                "confidence": "low",
+                "expectedKpiImpacts": [
+                    { "kpiId": "deliveries_per_driver", "delta": 2, "confidence": "low" },
+                    { "kpiId": "annual_revenue", "delta": 65000, "confidence": "low" },
+                    { "kpiId": "customer_rating", "delta": 0.3, "confidence": "low" }
+                ],
+                "comments": [
+                    { "author": "ops@freshfleet.coop", "text": "Start with simple heuristics: day-of-week + weather. We don't need deep learning for 300 deliveries/day.", "timestamp": "2026-02-15T11:00:00Z" }
+                ],
+                "evidenceLinks": []
+            },
+            {
+                "id": "idea-customer-portal",
+                "title": "Customer Self-Service Portal",
+                "owner": "tech@freshfleet.coop",
+                "hypothesis": "A web portal where customers submit delivery requests, track packages, rate service, and view delivery history will reduce phone calls by 70% and improve customer retention by making FreshFleet feel as modern as the competitor.",
+                "linkedNodes": ["customer-portal", "api-gw", "rating-svc"],
+                "linkedFlows": ["app-delivery", "optimized-route"],
+                "phases": ["driver-app", "optimization"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "where_calls_pct", "delta": -20, "confidence": "high" },
+                    { "kpiId": "customer_rating", "delta": 0.6, "confidence": "medium" },
+                    { "kpiId": "annual_revenue", "delta": 30000, "confidence": "medium" }
+                ],
+                "comments": [],
+                "evidenceLinks": []
+            }
+        ],
+
+        "benefits": [
+            {
+                "id": "benefit-deliveries",
+                "phaseId": "driver-app",
+                "title": "Deliveries jump from 14 to 18+ per driver per day",
+                "kpiId": "deliveries_per_driver",
+                "baseline": 14,
+                "targetRange": { "min": 17, "max": 20 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["driver-mobile", "dispatch-svc", "gps-stream"],
+                "boundFlows": ["app-delivery"]
+            },
+            {
+                "id": "benefit-no-lost-packages",
+                "phaseId": "driver-app",
+                "title": "Lost packages drop from 4/month to near zero",
+                "kpiId": "lost_packages",
+                "baseline": 4,
+                "targetRange": { "min": 0, "max": 1 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["driver-mobile", "tracking-db"],
+                "boundFlows": ["app-delivery"]
+            },
+            {
+                "id": "benefit-where-calls",
+                "phaseId": "driver-app",
+                "title": "\"Where is it?\" calls drop from 28% to under 5%",
+                "kpiId": "where_calls_pct",
+                "baseline": 28,
+                "targetRange": { "min": 1, "max": 5 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["customer-portal", "notify-fn", "gps-stream"],
+                "boundFlows": ["app-delivery"]
+            },
+            {
+                "id": "benefit-on-time",
+                "phaseId": "optimization",
+                "title": "Late delivery rate drops from 15% to under 3%",
+                "kpiId": "late_delivery_pct",
+                "baseline": 15,
+                "targetRange": { "min": 1, "max": 3 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["route-engine", "traffic-api", "delivery-cache"],
+                "boundFlows": ["optimized-route"]
+            },
+            {
+                "id": "benefit-rating",
+                "phaseId": "optimization",
+                "title": "Customer rating rises from 3.2 to 4.5+ stars",
+                "kpiId": "customer_rating",
+                "baseline": 3.2,
+                "targetRange": { "min": 4.5, "max": 4.8 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["rating-svc", "customer-portal", "route-engine"],
+                "boundFlows": ["optimized-route"]
+            },
+            {
+                "id": "benefit-revenue",
+                "phaseId": "predictive",
+                "title": "Annual revenue grows from $380K to $650K+",
+                "kpiId": "annual_revenue",
+                "baseline": 380000,
+                "targetRange": { "min": 580000, "max": 680000 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["analytics-dash", "demand-forecast", "fleet-planner", "dispatch-svc"],
+                "boundFlows": ["app-delivery", "optimized-route", "demand-planning"]
+            }
+        ],
+
+        "bindings": [
+            { "ideaId": "idea-driver-app", "nodeId": "driver-mobile", "benefitId": "benefit-deliveries" },
+            { "ideaId": "idea-driver-app", "nodeId": "gps-stream", "benefitId": "benefit-deliveries" },
+            { "ideaId": "idea-driver-app", "nodeId": "driver-mobile", "benefitId": "benefit-no-lost-packages" },
+            { "ideaId": "idea-digital-dispatch", "nodeId": "dispatch-svc", "benefitId": "benefit-deliveries" },
+            { "ideaId": "idea-digital-dispatch", "nodeId": "dispatch-svc", "benefitId": "benefit-where-calls" },
+            { "ideaId": "idea-gps-tracking", "nodeId": "customer-portal", "benefitId": "benefit-where-calls" },
+            { "ideaId": "idea-gps-tracking", "nodeId": "notify-fn", "benefitId": "benefit-where-calls" },
+            { "ideaId": "idea-gps-tracking", "nodeId": "tracking-db", "benefitId": "benefit-no-lost-packages" },
+            { "ideaId": "idea-route-optimization", "nodeId": "route-engine", "benefitId": "benefit-on-time" },
+            { "ideaId": "idea-route-optimization", "nodeId": "route-engine", "benefitId": "benefit-rating" },
+            { "ideaId": "idea-route-optimization", "nodeId": "route-engine", "benefitId": "benefit-revenue" },
+            { "ideaId": "idea-customer-portal", "nodeId": "customer-portal", "benefitId": "benefit-rating" },
+            { "ideaId": "idea-customer-portal", "nodeId": "rating-svc", "benefitId": "benefit-rating" },
+            { "ideaId": "idea-demand-forecasting", "nodeId": "demand-forecast", "benefitId": "benefit-revenue" },
+            { "ideaId": "idea-demand-forecasting", "nodeId": "fleet-planner", "benefitId": "benefit-revenue" },
+            { "ideaId": "idea-demand-forecasting", "nodeId": "analytics-dash", "benefitId": "benefit-revenue" }
+        ],
+
+        "auditLog": [
+            { "timestamp": "2026-01-15T09:00:00Z", "actor": "gm@freshfleet.coop", "action": "story.created", "targetId": "freshfleet-digital-2026", "from": null, "to": null, "evidenceUrl": null, "note": "Board voted unanimously after losing 3 accounts to competitor in December" },
+            { "timestamp": "2026-02-03T10:30:00Z", "actor": "gm@freshfleet.coop", "action": "idea.status_change", "targetId": "idea-driver-app", "from": "proposed", "to": "accepted", "evidenceUrl": "driver-ridealong-time-study-jan2026.pdf", "note": "Time study proves 35% wasted miles — this is the #1 fix" },
+            { "timestamp": "2026-02-03T10:45:00Z", "actor": "tech@freshfleet.coop", "action": "idea.status_change", "targetId": "idea-digital-dispatch", "from": "proposed", "to": "accepted", "evidenceUrl": null, "note": "Bundled with driver app — same deployment phase" },
+            { "timestamp": "2026-02-06T10:00:00Z", "actor": "gm@freshfleet.coop", "action": "idea.status_change", "targetId": "idea-gps-tracking", "from": "proposed", "to": "accepted", "evidenceUrl": "dispatcher-call-log-audit-jan2026.xlsx", "note": "28% of calls are status checks — this eliminates them" },
+            { "timestamp": "2026-02-06T11:00:00Z", "actor": "tech@freshfleet.coop", "action": "idea.status_change", "targetId": "idea-customer-portal", "from": "proposed", "to": "accepted", "evidenceUrl": "competitor-app-benchmark-2026.pdf", "note": "Must match competitor's customer experience to stop account losses" }
+        ],
+
+        "uiHints": {
+            "initialView": "narrative",
+            "initialPhase": "legacy",
+            "autoTransitionToCollab": true,
+            "narrativeLayout": "vertical",
+            "ideaOverlayDefault": false,
+            "benefitLanesDefault": false
+        }
+    }
+}

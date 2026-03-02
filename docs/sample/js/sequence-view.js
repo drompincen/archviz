@@ -1,0 +1,134 @@
+/* ── Sequence view rendering ── */
+
+import { state, dom } from './state.js';
+import { isVisibleInPhase } from './core-data.js';
+
+export function renderSequenceView() {
+    var allNodes = state.graph.nodes || [];
+    var visibleNodes = allNodes.filter(function(n) { return !n.skipSequence && isVisibleInPhase(n); });
+    var sequence = state.activeSequence;
+    state.sequenceGroups = [];
+
+    if (visibleNodes.length === 0) {
+        dom.sequenceView.innerHTML = "<div style='padding:20px; color:#aaa;'>No visible nodes for sequence.</div>";
+        return;
+    }
+
+    var startX = 60;
+    var titleText = state.graph.title || '';
+    var titleHeight = titleText ? 35 : 0;
+    var headerHeight = 60 + titleHeight;
+    var rowHeight = 50;
+
+    // Pre-compute adaptive sizing per label
+    var labelSizing = [];
+    var maxNeededWidth = 0;
+
+    visibleNodes.forEach(function(node) {
+        var label = (node.label || '').replace(/\\n/g, ' ');
+        var fontSize = 12;
+        var fontWeight = 'bold';
+        var charWidth = fontSize * 0.6; // bold char width estimate
+
+        var textWidth = label.length * charWidth;
+
+        // Step 1: shrink font down to 8px (bold)
+        if (textWidth > 110) {
+            fontSize = Math.max(8, Math.floor(12 * 110 / textWidth));
+            charWidth = fontSize * 0.6;
+            textWidth = label.length * charWidth;
+        }
+
+        // Step 2: drop bold → narrower chars
+        if (textWidth > 110) {
+            fontWeight = 'normal';
+            charWidth = fontSize * 0.51;
+            textWidth = label.length * charWidth;
+        }
+
+        if (textWidth > maxNeededWidth) maxNeededWidth = textWidth;
+
+        labelSizing.push({ label: label, fontSize: fontSize, fontWeight: fontWeight, textWidth: textWidth });
+    });
+
+    // Compute dynamic column/rect width based on widest label
+    var rectWidth = Math.max(120, Math.round(maxNeededWidth + 10));
+    if (rectWidth > 200) rectWidth = 200;
+    var colWidth = Math.max(160, rectWidth + 40);
+
+    var svgWidth = startX + (visibleNodes.length * colWidth);
+    var svgHeight = headerHeight + (sequence.length * rowHeight) + 50;
+
+    var arrowFill = document.body.classList.contains('light-theme') ? '#555' : '#d4d4d4';
+
+    var svg = '<svg width="' + svgWidth + '" height="' + svgHeight + '" xmlns="http://www.w3.org/2000/svg">' +
+        '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">' +
+        '<polygon points="0 0, 10 3.5, 0 7" fill="' + arrowFill + '" /></marker>';
+
+    // Add clip paths for each participant header (using dynamic rectWidth)
+    var headerY = 10 + titleHeight;
+    visibleNodes.forEach(function(node, index) {
+        var x = startX + (index * colWidth) + (colWidth / 2);
+        svg += '<clipPath id="clip-seq-' + index + '"><rect x="' + (x - rectWidth / 2) + '" y="' + headerY + '" width="' + rectWidth + '" height="40" /></clipPath>';
+    });
+    svg += '</defs>';
+
+    // Draw title above the header boxes
+    if (titleText) {
+        var titleFill = document.body.classList.contains('light-theme') ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)';
+        svg += '<text x="' + startX + '" y="' + (titleHeight - 8) + '" fill="' + titleFill + '" font-size="14px" font-weight="300">' + titleText + '</text>';
+    }
+
+    visibleNodes.forEach(function(node, index) {
+        var x = startX + (index * colWidth) + (colWidth / 2);
+        var tagClass = node.tag ? 'tag-' + node.tag : 'tag-core';
+        var sizing = labelSizing[index];
+
+        var statusSvg = "";
+        if (node.status === 'ready') {
+            statusSvg = '<circle cx="' + (x + rectWidth / 2) + '" cy="' + headerY + '" r="8" class="seq-status-bg status-ready-svg" />' +
+                '<text x="' + (x + rectWidth / 2) + '" y="' + headerY + '" class="seq-status-text">\u2714</text>';
+        } else if (node.status === 'wip') {
+            statusSvg = '<circle cx="' + (x + rectWidth / 2) + '" cy="' + headerY + '" r="8" class="seq-status-bg status-wip-svg" />' +
+                '<text x="' + (x + rectWidth / 2) + '" y="' + headerY + '" class="seq-status-text">\u23F3</text>';
+        }
+
+        var styleAttr = '';
+        if (sizing.fontSize !== 12 || sizing.fontWeight !== 'bold') {
+            styleAttr = ' style="font-size:' + sizing.fontSize + 'px;font-weight:' + sizing.fontWeight + '"';
+        }
+
+        svg += '<g class="seq-node ' + tagClass + '">' +
+            '<rect x="' + (x - rectWidth / 2) + '" y="' + headerY + '" width="' + rectWidth + '" height="40" class="seq-head-rect" />' +
+            '<text x="' + x + '" y="' + (headerY + 25) + '" class="seq-head-text"' + styleAttr + ' clip-path="url(#clip-seq-' + index + ')">' + sizing.label + '</text>' +
+            statusSvg +
+            '<line x1="' + x + '" y1="' + (headerY + 40) + '" x2="' + x + '" y2="' + svgHeight + '" class="seq-lifeline" />' +
+            '</g>';
+    });
+
+    sequence.forEach(function(step, index) {
+        var srcIndex = visibleNodes.findIndex(function(n) { return n.id === step.from; });
+        var tgtIndex = visibleNodes.findIndex(function(n) { return n.id === step.to; });
+
+        var y = headerHeight + (index * rowHeight) + 30;
+        var groupId = 'seq-step-' + index;
+        state.sequenceGroups[index] = groupId;
+
+        if (srcIndex !== -1 && tgtIndex !== -1) {
+            var x1 = startX + (srcIndex * colWidth) + (colWidth / 2);
+            var x2 = startX + (tgtIndex * colWidth) + (colWidth / 2);
+            var labelX = (x1 + x2) / 2;
+            var labelText = '[' + (index + 1) + '] ' + step.text;
+
+            svg += '<g id="' + groupId + '" style="opacity: 0; transition: opacity 0.5s ease-in-out;">' +
+                '<line x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '" class="seq-arrow" />' +
+                '<text x="' + labelX + '" y="' + (y - 6) + '" class="seq-arrow-label">' + labelText + '</text>' +
+                '</g>';
+        } else {
+            state.sequenceGroups[index] = null;
+        }
+    });
+
+    svg += '</svg>';
+    dom.sequenceView.innerHTML = svg;
+}

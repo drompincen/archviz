@@ -1,0 +1,32 @@
+{
+    "title": "OAuth2 Authentication Flow",
+    "notes": "Project: Identity Platform\nTeam: Security Engineering\n\nFlow:\n1. User initiates login via SPA\n2. Auth server issues tokens\n3. API Gateway validates JWT\n4. Session stored in Redis\n\nStatus: Production",
+    "nodes": [
+        { "id": "user", "type": "user", "tag": "external", "label": "End User", "x": 50, "y": 220, "w": 100, "h": 70 },
+        { "id": "spa", "type": "service", "tag": "core", "label": "SPA\nFrontend", "x": 240, "y": 220, "w": 120, "h": 80, "status": "ready" },
+        { "id": "auth", "type": "service", "tag": "agent", "label": "Auth\nServer", "x": 450, "y": 100, "w": 120, "h": 80, "status": "ready" },
+        { "id": "idp", "type": "service", "tag": "external", "label": "Identity\nProvider", "x": 450, "y": 340, "w": 120, "h": 70 },
+        { "id": "gateway", "type": "service", "tag": "core", "label": "API\nGateway", "x": 670, "y": 220, "w": 120, "h": 80, "status": "ready" },
+        { "id": "session", "type": "database", "tag": "new", "label": "Redis\nSessions", "x": 670, "y": 80, "w": 110, "h": 70, "status": "ready", "skipSequence": true },
+        { "id": "api", "type": "service", "tag": "core", "label": "Backend\nAPI", "x": 880, "y": 220, "w": 120, "h": 80, "status": "ready" }
+    ],
+    "connections": [
+        { "from": "user", "to": "spa" },
+        { "from": "spa", "to": "auth" },
+        { "from": "auth", "to": "idp" },
+        { "from": "spa", "to": "gateway" },
+        { "from": "gateway", "to": "session" },
+        { "from": "gateway", "to": "api" }
+    ],
+    "sequence": [
+        { "from": "user", "to": "spa", "text": "Click 'Sign In'", "status": "ready" },
+        { "from": "spa", "to": "auth", "text": "Redirect to /authorize", "status": "ready" },
+        { "from": "auth", "to": "idp", "text": "Verify credentials via OIDC", "status": "ready" },
+        { "from": "idp", "to": "auth", "text": "Return ID token", "status": "ready" },
+        { "from": "auth", "to": "spa", "text": "Issue access + refresh tokens", "status": "ready" },
+        { "from": "spa", "to": "gateway", "text": "API call with Bearer token", "status": "ready" },
+        { "from": "gateway", "to": "session", "text": "Validate & cache session", "status": "ready" },
+        { "from": "gateway", "to": "api", "text": "Forward authenticated request", "status": "ready" },
+        { "from": "api", "to": "spa", "text": "Return protected resource", "status": "ready" }
+    ]
+}

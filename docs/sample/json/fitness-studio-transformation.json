@@ -1,0 +1,556 @@
+{
+    "title": "IronCore Fitness Studio — Digital Transformation",
+    "notes": "Project: IronCore Fitness Digital Transformation\nTeam: Operations + Technology\nSponsor: Studio Owner / GM\n\nThis story walks stakeholders through the modernization\nof a paper-based community fitness studio into a\ndigital-first, app-driven, AI-optimized business.\n\nPresentation order:\n  1. Problem — why the current system bleeds members\n  2. Vision — where we're headed (churn to 8%, $480K rev)\n  3. Roadmap — four phases of delivery\n  4. Phase drill-down — architecture at each stage\n\nUse the Phase slider to reveal architecture layers.\nSwitch Flows to see different operational scenarios.",
+
+    "phases": [
+        { "id": "legacy",          "label": "0 — Legacy (Today)" },
+        { "id": "member-app",      "label": "1 — Member App" },
+        { "id": "smart-scheduling", "label": "2 — Smart Scheduling" },
+        { "id": "retention-ai",    "label": "3 — Retention AI" }
+    ],
+
+    "zones": [
+        { "id": "studio-building", "type": "on-prem", "label": "Studio Building", "x": 10, "y": 10, "w": 340, "h": 620 },
+        { "id": "cloud", "type": "cloud", "label": "AWS Cloud", "x": 370, "y": 10, "w": 780, "h": 620, "phase": "member-app" },
+        { "id": "vpc", "type": "vpc", "label": "VPC — Production", "x": 390, "y": 50, "w": 740, "h": 560, "parent": "cloud", "phase": "member-app" },
+        { "id": "public-subnet", "type": "subnet", "label": "Public Subnet", "x": 410, "y": 85, "w": 290, "h": 250, "parent": "vpc", "phase": "member-app" },
+        { "id": "private-subnet", "type": "subnet", "label": "Private Subnet", "x": 410, "y": 350, "w": 290, "h": 240, "parent": "vpc", "phase": "member-app" },
+        { "id": "data-layer", "type": "subnet", "label": "Data Layer", "x": 720, "y": 85, "w": 390, "h": 505, "parent": "vpc", "phase": "member-app" }
+    ],
+
+    "nodes": [
+        { "id": "member", "type": "human", "tag": "external", "label": "Gym\nMember", "x": 30, "y": 80, "w": 120, "h": 75 },
+        { "id": "front-desk", "type": "user", "tag": "legacy", "label": "Front Desk\nStaff", "x": 170, "y": 80, "w": 130, "h": 80 },
+        { "id": "paper-signin", "type": "storage", "tag": "legacy", "label": "Paper\nSign-in Sheet", "x": 170, "y": 200, "w": 130, "h": 70 },
+        { "id": "billing-spreadsheet", "type": "storage", "tag": "legacy", "label": "Billing\nSpreadsheet", "x": 30, "y": 200, "w": 120, "h": 70 },
+        { "id": "trainer", "type": "user", "tag": "core", "label": "Trainer\n(3 on staff)", "x": 80, "y": 320, "w": 130, "h": 80 },
+        { "id": "wall-schedule", "type": "storage", "tag": "legacy", "label": "Wall\nSchedule", "x": 30, "y": 460, "w": 120, "h": 65 },
+        { "id": "studio-room", "type": "service", "tag": "core", "label": "Studio\nRoom", "x": 170, "y": 320, "w": 130, "h": 80 },
+
+        { "id": "mobile-app", "type": "gateway", "tag": "new", "label": "Member\nMobile App", "x": 30, "y": 540, "w": 120, "h": 70, "status": "ready", "phase": "member-app" },
+        { "id": "api-gw", "type": "gateway", "tag": "aws", "label": "API\nGateway", "x": 430, "y": 100, "w": 130, "h": 85, "status": "ready", "phase": "member-app" },
+        { "id": "booking-svc", "type": "fargate", "tag": "core", "label": "Booking\nService", "x": 430, "y": 230, "w": 130, "h": 85, "status": "ready", "phase": "member-app" },
+        { "id": "billing-svc", "type": "fargate", "tag": "new", "label": "Billing\nService", "x": 430, "y": 370, "w": 130, "h": 85, "status": "ready", "phase": "member-app" },
+        { "id": "member-db", "type": "database", "tag": "data", "label": "Member\nDB", "x": 740, "y": 100, "w": 130, "h": 80, "status": "ready", "phase": "member-app" },
+        { "id": "payment-gw", "type": "service", "tag": "external", "label": "Stripe\nPayment GW", "x": 570, "y": 100, "w": 120, "h": 80, "phase": "member-app" },
+        { "id": "checkin-fn", "type": "lambda", "tag": "aws", "label": "QR\nCheck-in", "x": 570, "y": 230, "w": 120, "h": 80, "status": "ready", "phase": "member-app" },
+        { "id": "notify-svc", "type": "lambda", "tag": "aws", "label": "Push\nNotify", "x": 430, "y": 470, "w": 130, "h": 75, "status": "wip", "phase": "member-app" },
+
+        { "id": "demand-engine", "type": "agent", "tag": "agent", "label": "Demand\nEngine", "x": 740, "y": 320, "w": 140, "h": 85, "status": "wip", "phase": "smart-scheduling" },
+        { "id": "schedule-optimizer", "type": "agent", "tag": "agent", "label": "Schedule\nOptimizer", "x": 900, "y": 320, "w": 130, "h": 85, "status": "wip", "phase": "smart-scheduling" },
+        { "id": "waitlist-queue", "type": "queue", "tag": "aws", "label": "Waitlist\nQueue", "x": 570, "y": 370, "w": 120, "h": 70, "phase": "smart-scheduling" },
+        { "id": "class-cache", "type": "cache", "tag": "data", "label": "Class\nCache", "x": 740, "y": 220, "w": 130, "h": 70, "phase": "smart-scheduling" },
+
+        { "id": "churn-predictor", "type": "agent", "tag": "agent", "label": "Churn\nPredictor", "x": 900, "y": 100, "w": 130, "h": 80, "status": "wip", "phase": "retention-ai" },
+        { "id": "nudge-engine", "type": "agent", "tag": "agent", "label": "Nudge\nEngine", "x": 900, "y": 220, "w": 130, "h": 80, "status": "wip", "phase": "retention-ai" },
+        { "id": "analytics-dash", "type": "dashboard", "tag": "observability", "label": "Analytics\nDashboard", "x": 740, "y": 470, "w": 140, "h": 80, "phase": "retention-ai" },
+        { "id": "engagement-db", "type": "database", "tag": "data", "label": "Engagement\nDB", "x": 900, "y": 470, "w": 130, "h": 80, "phase": "retention-ai" }
+    ],
+
+    "connections": [
+        { "from": "member", "to": "front-desk" },
+        { "from": "front-desk", "to": "paper-signin" },
+        { "from": "front-desk", "to": "billing-spreadsheet" },
+        { "from": "front-desk", "to": "wall-schedule" },
+        { "from": "member", "to": "trainer" },
+        { "from": "trainer", "to": "studio-room" },
+        { "from": "trainer", "to": "wall-schedule" },
+
+        { "from": "mobile-app", "to": "api-gw", "phase": "member-app" },
+        { "from": "member", "to": "mobile-app", "phase": "member-app" },
+        { "from": "api-gw", "to": "booking-svc", "phase": "member-app" },
+        { "from": "api-gw", "to": "payment-gw", "phase": "member-app" },
+        { "from": "booking-svc", "to": "member-db", "phase": "member-app" },
+        { "from": "booking-svc", "to": "billing-svc", "phase": "member-app" },
+        { "from": "billing-svc", "to": "payment-gw", "phase": "member-app" },
+        { "from": "billing-svc", "to": "member-db", "phase": "member-app" },
+        { "from": "api-gw", "to": "checkin-fn", "phase": "member-app" },
+        { "from": "checkin-fn", "to": "member-db", "phase": "member-app" },
+        { "from": "booking-svc", "to": "notify-svc", "phase": "member-app" },
+        { "from": "payment-gw", "to": "billing-svc", "phase": "member-app" },
+
+        { "from": "booking-svc", "to": "waitlist-queue", "phase": "smart-scheduling" },
+        { "from": "booking-svc", "to": "class-cache", "phase": "smart-scheduling" },
+        { "from": "member-db", "to": "demand-engine", "phase": "smart-scheduling" },
+        { "from": "demand-engine", "to": "schedule-optimizer", "phase": "smart-scheduling" },
+        { "from": "schedule-optimizer", "to": "class-cache", "phase": "smart-scheduling" },
+        { "from": "waitlist-queue", "to": "notify-svc", "phase": "smart-scheduling" },
+
+        { "from": "member-db", "to": "churn-predictor", "phase": "retention-ai" },
+        { "from": "churn-predictor", "to": "nudge-engine", "phase": "retention-ai" },
+        { "from": "nudge-engine", "to": "notify-svc", "phase": "retention-ai" },
+        { "from": "nudge-engine", "to": "engagement-db", "phase": "retention-ai" },
+        { "from": "engagement-db", "to": "analytics-dash", "phase": "retention-ai" },
+        { "from": "member-db", "to": "analytics-dash", "phase": "retention-ai" }
+    ],
+
+    "sequence": [
+        { "from": "member", "to": "front-desk", "text": "Walk in, grab pen, sign paper sheet", "status": "wip" },
+        { "from": "front-desk", "to": "paper-signin", "text": "Log name + time on lined paper", "status": "wip", "popUp": { "type": "alert", "msg": "No attendance data — can't track engagement" } },
+        { "from": "member", "to": "trainer", "text": "\"What class is on right now?\"", "status": "wip" },
+        { "from": "trainer", "to": "wall-schedule", "text": "Check printed schedule on wall", "status": "wip" },
+        { "from": "trainer", "to": "member", "text": "\"Spin at 6pm — hope there's a bike left\"", "status": "wip", "popUp": { "type": "issue", "msg": "No booking — class may be overcrowded or empty" } }
+    ],
+
+    "flows": [
+        {
+            "id": "legacy-walkin",
+            "name": "Legacy — Walk-in Class",
+            "sequence": [
+                { "from": "member", "to": "front-desk", "text": "Walk in, grab pen, sign paper sheet", "status": "wip" },
+                { "from": "front-desk", "to": "paper-signin", "text": "Log name + time on lined paper", "status": "wip", "popUp": { "type": "alert", "msg": "No attendance data — can't track engagement" } },
+                { "from": "member", "to": "trainer", "text": "\"What class is on right now?\"", "status": "wip" },
+                { "from": "trainer", "to": "wall-schedule", "text": "Check printed schedule on wall", "status": "wip" },
+                { "from": "trainer", "to": "studio-room", "text": "Walk member to room — headcount by eyeball", "status": "wip" },
+                { "from": "trainer", "to": "member", "text": "\"Spin at 6pm — hope there's a bike left\"", "status": "wip", "popUp": { "type": "issue", "msg": "No booking — class may be overcrowded or empty" } }
+            ]
+        },
+        {
+            "id": "legacy-billing",
+            "name": "Legacy — Monthly Billing",
+            "sequence": [
+                { "from": "front-desk", "to": "billing-spreadsheet", "text": "Open Excel — 400 rows of member dues", "status": "wip" },
+                { "from": "front-desk", "to": "billing-spreadsheet", "text": "Manually charge each card one at a time", "status": "wip", "popUp": { "type": "alert", "msg": "4 hours of tedious manual work every month" } },
+                { "from": "billing-spreadsheet", "to": "front-desk", "text": "17 cards declined — expired or wrong number", "status": "wip", "popUp": { "type": "issue", "msg": "$800/mo in missed payments — some never recovered" } },
+                { "from": "front-desk", "to": "member", "text": "Chase declined members by phone — awkward", "status": "wip" },
+                { "from": "front-desk", "to": "billing-spreadsheet", "text": "Update spreadsheet — hope nothing got skipped", "status": "wip", "popUp": { "type": "alert", "msg": "No audit trail — errors undetectable" } }
+            ]
+        },
+        {
+            "id": "app-booking",
+            "name": "Phase 1 — App Class Booking",
+            "sequence": [
+                { "from": "member", "to": "mobile-app", "text": "Open IronCore app — browse class schedule", "status": "ready", "phase": "member-app" },
+                { "from": "mobile-app", "to": "api-gw", "text": "GET /classes?date=tuesday&time=6pm", "status": "ready", "phase": "member-app" },
+                { "from": "api-gw", "to": "booking-svc", "text": "Check availability for Spin class", "status": "ready", "phase": "member-app" },
+                { "from": "booking-svc", "to": "member-db", "text": "Query: 3 bikes remaining out of 20", "status": "ready", "phase": "member-app" },
+                { "from": "member-db", "to": "booking-svc", "text": "Available — reserve seat", "status": "ready", "phase": "member-app" },
+                { "from": "booking-svc", "to": "member-db", "text": "INSERT booking #1247", "status": "ready", "phase": "member-app" },
+                { "from": "booking-svc", "to": "notify-svc", "text": "Send booking confirmation", "status": "ready", "phase": "member-app" },
+                { "from": "notify-svc", "to": "mobile-app", "text": "\"Spin booked! Tue 6pm — QR code ready\"", "status": "ready", "phase": "member-app", "popUp": { "type": "amplify", "msg": "Guaranteed spot — no more overcrowding" } },
+                { "from": "member", "to": "mobile-app", "text": "Arrive at studio — show QR code", "status": "ready", "phase": "member-app" },
+                { "from": "mobile-app", "to": "api-gw", "text": "POST /checkin {qr: \"BK-1247\"}", "status": "ready", "phase": "member-app" },
+                { "from": "api-gw", "to": "checkin-fn", "text": "Validate QR + mark attendance", "status": "ready", "phase": "member-app" },
+                { "from": "checkin-fn", "to": "member-db", "text": "UPDATE booking SET checked_in = true", "status": "ready", "phase": "member-app", "popUp": { "type": "amplify", "msg": "Digital attendance — engagement data captured" } }
+            ]
+        },
+        {
+            "id": "smart-class",
+            "name": "Phase 2 — AI-Optimized Schedule",
+            "sequence": [
+                { "from": "member-db", "to": "demand-engine", "text": "Stream: 6 weeks of booking + attendance data", "status": "ready", "phase": "smart-scheduling" },
+                { "from": "demand-engine", "to": "demand-engine", "text": "Predict: Tue 6pm Yoga will overflow (38 want, 25 cap)", "status": "ready", "phase": "smart-scheduling" },
+                { "from": "demand-engine", "to": "schedule-optimizer", "text": "Request: add second Yoga session or expand room", "status": "ready", "phase": "smart-scheduling" },
+                { "from": "schedule-optimizer", "to": "schedule-optimizer", "text": "Check trainer availability + room slots", "status": "ready", "phase": "smart-scheduling" },
+                { "from": "schedule-optimizer", "to": "class-cache", "text": "Publish: Yoga 6pm + NEW Yoga 7:15pm (Trainer B)", "status": "ready", "phase": "smart-scheduling", "popUp": { "type": "amplify", "msg": "AI adds sessions to meet demand — no manual guessing" } },
+                { "from": "waitlist-queue", "to": "notify-svc", "text": "13 waitlisted members for original slot", "status": "ready", "phase": "smart-scheduling" },
+                { "from": "notify-svc", "to": "mobile-app", "text": "\"New Yoga 7:15pm just opened — book now!\"", "status": "ready", "phase": "smart-scheduling", "popUp": { "type": "amplify", "msg": "Waitlisted members auto-notified — utilization maximized" } }
+            ]
+        },
+        {
+            "id": "churn-prevention",
+            "name": "Phase 3 — Churn Prevention",
+            "sequence": [
+                { "from": "member-db", "to": "churn-predictor", "text": "Scan: member #312 — no check-in for 14 days", "status": "ready", "phase": "retention-ai" },
+                { "from": "churn-predictor", "to": "churn-predictor", "text": "Score: 78% churn probability (pattern: skip 2 wks → cancel)", "status": "ready", "phase": "retention-ai" },
+                { "from": "churn-predictor", "to": "nudge-engine", "text": "Flag member #312 as at-risk", "status": "ready", "phase": "retention-ai", "popUp": { "type": "alert", "msg": "Early warning — member still saveable" } },
+                { "from": "nudge-engine", "to": "engagement-db", "text": "Check history: loved HIIT, friend goes Wed 7pm", "status": "ready", "phase": "retention-ai" },
+                { "from": "nudge-engine", "to": "notify-svc", "text": "Generate personalized re-engagement offer", "status": "ready", "phase": "retention-ai" },
+                { "from": "notify-svc", "to": "mobile-app", "text": "\"Hey! Your friend just booked Wed HIIT — join free this week\"", "status": "ready", "phase": "retention-ai", "popUp": { "type": "amplify", "msg": "Personalized nudge — 3x more effective than generic email" } },
+                { "from": "member", "to": "mobile-app", "text": "Member rebooks Wednesday HIIT class", "status": "ready", "phase": "retention-ai" },
+                { "from": "nudge-engine", "to": "engagement-db", "text": "Log: nudge successful — reset churn timer", "status": "ready", "phase": "retention-ai" },
+                { "from": "engagement-db", "to": "analytics-dash", "text": "Update retention metrics: save rate 62%", "status": "ready", "phase": "retention-ai", "popUp": { "type": "amplify", "msg": "Churn averted — $1,200/yr lifetime value saved" } }
+            ]
+        }
+    ],
+
+    "story": {
+        "storyId": "ironcore-digital-2026",
+        "version": 1,
+        "createdAt": "2026-01-15T09:00:00Z",
+        "updatedAt": "2026-02-23T15:00:00Z",
+        "createdBy": "owner@ironcorefitness.com",
+
+        "problem": {
+            "headline": "We're losing 22% of members every month — and we can't even see it happening",
+            "description": "IronCore runs 12 classes/day with 3 trainers and ~400 members. Sign-in is a paper sheet at the front desk. Billing is a spreadsheet — one person spends 4 hours manually charging cards each month, and $800 in payments slip through the cracks. There's no class booking system: it's first-come-first-served, so popular classes hit unsafe overcrowding while others run near-empty. Members are leaving for the big-box gym down the street that has an app, online booking, and workout tracking. We have zero data on who's about to churn.",
+            "impactMetric": {
+                "kpiId": "monthly_churn",
+                "value": 22,
+                "unit": "%"
+            },
+            "evidence": [
+                { "label": "6-month membership cancellation analysis", "url": "cancellation-analysis-h2-2025.pdf", "addedAt": "2026-01-10T10:00:00Z", "addedBy": "gm@ironcorefitness.com" },
+                { "label": "Class headcount audit — overcrowding incidents (Dec 2025)", "url": "class-headcount-audit-dec2025.csv", "addedAt": "2026-01-12T08:00:00Z", "addedBy": "trainer-lead@ironcorefitness.com" },
+                { "label": "Billing discrepancy report — $800/mo average loss", "url": "billing-discrepancy-report-2025.xlsx", "addedAt": "2026-01-14T14:00:00Z", "addedBy": "finance@ironcorefitness.com" },
+                { "label": "Exit survey (n=87) — 61% cited 'no app' as top reason", "url": "member-exit-survey-2025.pdf", "addedAt": "2026-01-18T09:00:00Z", "addedBy": "owner@ironcorefitness.com" }
+            ],
+            "scope": ["front-desk", "paper-signin", "billing-spreadsheet", "wall-schedule"],
+            "risks": [
+                "Member churn: 22% monthly — losing 88 members/month with zero early warning",
+                "Revenue leakage: spreadsheet billing misses $800/month ($9,600/year) in failed charges",
+                "Safety risk: no booking means popular classes exceed room capacity (fire code)",
+                "Trainer waste: 30% of classes have fewer than 5 attendees — no demand signal",
+                "Competitive loss: big-box gym with app is stealing members who want digital experience"
+            ]
+        },
+
+        "vision": {
+            "summary": "Churn to 8%, class utilization to 80%, zero billing errors — $480K+ annual revenue",
+            "description": "Transform IronCore into a digital-first fitness community where members book classes from their phone, check in via QR code, and get personalized engagement. AI predicts class demand to optimize the schedule and balance trainer workloads. A churn prediction engine flags at-risk members before they cancel, and a nudge engine re-engages them with personalized offers. Billing is fully automated with zero manual intervention. Trainers focus on coaching, not admin.",
+            "kpiTargets": [
+                { "kpiId": "monthly_churn", "min": 6, "max": 10, "confidence": "high", "horizon": "12 months" },
+                { "kpiId": "class_utilization", "min": 75, "max": 85, "confidence": "high", "horizon": "9 months" },
+                { "kpiId": "billing_errors", "min": 0, "max": 50, "confidence": "high", "horizon": "3 months" },
+                { "kpiId": "noshow_rate", "min": 8, "max": 15, "confidence": "medium", "horizon": "6 months" },
+                { "kpiId": "annual_revenue", "min": 440000, "max": 520000, "confidence": "medium", "horizon": "12 months" },
+                { "kpiId": "member_satisfaction", "min": 55, "max": 70, "confidence": "medium", "horizon": "12 months" }
+            ],
+            "acceptanceCriteria": [
+                "Monthly churn rate sustained below 10% for 3 consecutive months",
+                "Average class utilization > 75% across all 12 daily classes for 30 days",
+                "Zero manual billing intervention required for 3 consecutive billing cycles",
+                "No-show rate below 15% with booking + cancellation policy enforced via app",
+                "Monthly revenue exceeds $40K for 3 consecutive months ($480K annualized)"
+            ]
+        },
+
+        "kpis": [
+            {
+                "id": "monthly_churn",
+                "label": "Monthly Churn Rate",
+                "unit": "%",
+                "direction": "lower_is_better",
+                "baseline": 22,
+                "current": 22,
+                "format": "0"
+            },
+            {
+                "id": "class_utilization",
+                "label": "Class Utilization",
+                "unit": "%",
+                "direction": "higher_is_better",
+                "baseline": 55,
+                "current": 55,
+                "format": "0"
+            },
+            {
+                "id": "billing_errors",
+                "label": "Billing Errors / Month",
+                "unit": "$",
+                "direction": "lower_is_better",
+                "baseline": 800,
+                "current": 800,
+                "format": "$0"
+            },
+            {
+                "id": "noshow_rate",
+                "label": "Class No-Show Rate",
+                "unit": "%",
+                "direction": "lower_is_better",
+                "baseline": 35,
+                "current": 35,
+                "format": "0"
+            },
+            {
+                "id": "annual_revenue",
+                "label": "Annual Revenue",
+                "unit": "$",
+                "direction": "higher_is_better",
+                "baseline": 290000,
+                "current": 290000,
+                "format": "$0,0"
+            },
+            {
+                "id": "member_satisfaction",
+                "label": "Member Satisfaction",
+                "unit": "NPS",
+                "direction": "higher_is_better",
+                "baseline": 24,
+                "current": 24,
+                "format": "0"
+            }
+        ],
+
+        "phases": [
+            {
+                "phaseRef": "legacy",
+                "label": "Legacy Baseline (Today)",
+                "owner": "gm@ironcorefitness.com",
+                "timebox": "Current State",
+                "status": "completed",
+                "description": "Paper sign-in, spreadsheet billing, printed wall schedule, first-come-first-served classes. 400 members, 22% monthly churn, 55% class utilization, $800/mo billing errors. This is where we are.",
+                "order": 0
+            },
+            {
+                "phaseRef": "member-app",
+                "label": "Member App + Digital Booking",
+                "owner": "cto@ironcorefitness.com",
+                "timebox": "2026 Q2 (10 weeks)",
+                "status": "active",
+                "description": "Launch mobile app with class schedule browsing, seat-limited booking, QR check-in, and automated recurring billing via Stripe. Eliminates paper sign-in, kills the billing spreadsheet, and gives members guaranteed class spots. Push notifications for confirmations and reminders.",
+                "order": 1
+            },
+            {
+                "phaseRef": "smart-scheduling",
+                "label": "AI-Powered Smart Scheduling",
+                "owner": "cto@ironcorefitness.com",
+                "timebox": "2026 Q3 (8 weeks)",
+                "status": "planned",
+                "description": "Demand prediction engine analyzes booking patterns to forecast class popularity. Schedule optimizer dynamically adds/removes sessions and balances trainer workloads. Waitlist queue auto-notifies members when new slots open. Eliminates the guess-work of fixed schedules.",
+                "order": 2
+            },
+            {
+                "phaseRef": "retention-ai",
+                "label": "Retention AI + Engagement",
+                "owner": "owner@ironcorefitness.com",
+                "timebox": "2026 Q4 (8 weeks)",
+                "status": "planned",
+                "description": "Churn prediction model scores every member weekly based on attendance patterns, booking behavior, and engagement signals. Nudge engine sends personalized re-engagement messages — class recommendations, friend-based invites, free trial offers. Analytics dashboard gives the owner a real-time view of retention, revenue, and member health.",
+                "order": 3
+            }
+        ],
+
+        "ideaCards": [
+            {
+                "id": "idea-member-app",
+                "title": "Member Mobile App",
+                "owner": "cto@ironcorefitness.com",
+                "hypothesis": "If members can view the schedule and book classes from their phone, we remove the walk-in uncertainty that drives 35% no-show rates. Members with guaranteed spots show up 85%+ of the time based on ClassPass industry data.",
+                "linkedNodes": ["mobile-app", "api-gw", "member-db"],
+                "linkedFlows": ["app-booking"],
+                "phases": ["member-app"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "noshow_rate", "delta": -18, "confidence": "high" },
+                    { "kpiId": "class_utilization", "delta": 15, "confidence": "high" },
+                    { "kpiId": "monthly_churn", "delta": -6, "confidence": "medium" },
+                    { "kpiId": "member_satisfaction", "delta": 15, "confidence": "medium" }
+                ],
+                "comments": [
+                    { "author": "owner@ironcorefitness.com", "text": "Exit survey says 61% left because we don't have an app. This is survival, not a nice-to-have.", "timestamp": "2026-01-20T10:00:00Z" },
+                    { "author": "trainer-lead@ironcorefitness.com", "text": "Need to see who's booked before class starts so I can set up the right number of stations.", "timestamp": "2026-01-21T09:00:00Z" }
+                ],
+                "evidenceLinks": [
+                    { "label": "ClassPass industry report — booking vs. no-show correlation", "url": "classpass-booking-noshow-study-2025.pdf", "addedAt": "2026-01-18T11:00:00Z", "addedBy": "cto@ironcorefitness.com" }
+                ]
+            },
+            {
+                "id": "idea-digital-booking",
+                "title": "Digital Class Booking System",
+                "owner": "cto@ironcorefitness.com",
+                "hypothesis": "Seat-limited booking with 2-hour cancellation policy will raise class utilization from 55% to 70%+ by ensuring popular classes fill to capacity and giving waitlisted members automatic backfill when cancellations happen.",
+                "linkedNodes": ["booking-svc", "checkin-fn"],
+                "linkedFlows": ["app-booking"],
+                "phases": ["member-app"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "class_utilization", "delta": 15, "confidence": "high" },
+                    { "kpiId": "noshow_rate", "delta": -10, "confidence": "high" },
+                    { "kpiId": "annual_revenue", "delta": 45000, "confidence": "medium" }
+                ],
+                "comments": [],
+                "evidenceLinks": []
+            },
+            {
+                "id": "idea-auto-billing",
+                "title": "Automated Recurring Billing",
+                "owner": "finance@ironcorefitness.com",
+                "hypothesis": "Replacing the manual spreadsheet with Stripe recurring subscriptions eliminates $800/mo in billing errors and recovers 90%+ of failed payments via automatic retry + dunning emails. Saves 4 hours of staff time per billing cycle.",
+                "linkedNodes": ["billing-svc", "payment-gw"],
+                "linkedFlows": ["app-booking"],
+                "phases": ["member-app"],
+                "status": "accepted",
+                "confidence": "high",
+                "expectedKpiImpacts": [
+                    { "kpiId": "billing_errors", "delta": -780, "confidence": "high" },
+                    { "kpiId": "annual_revenue", "delta": 9600, "confidence": "high" },
+                    { "kpiId": "monthly_churn", "delta": -2, "confidence": "medium" }
+                ],
+                "comments": [
+                    { "author": "finance@ironcorefitness.com", "text": "Stripe dunning alone would recover most of the $800. Plus I get my Fridays back.", "timestamp": "2026-01-22T14:00:00Z" }
+                ],
+                "evidenceLinks": []
+            },
+            {
+                "id": "idea-demand-scheduling",
+                "title": "AI Demand-Based Scheduling",
+                "owner": "cto@ironcorefitness.com",
+                "hypothesis": "An ML model trained on 3+ months of booking data can predict next-week demand within 10% accuracy, allowing the schedule optimizer to add high-demand sessions and drop low-demand ones. This raises average utilization from 70% to 80%+ and reduces trainer idle time by 25%.",
+                "linkedNodes": ["demand-engine", "schedule-optimizer", "class-cache"],
+                "linkedFlows": ["smart-class"],
+                "phases": ["smart-scheduling"],
+                "status": "proposed",
+                "confidence": "medium",
+                "expectedKpiImpacts": [
+                    { "kpiId": "class_utilization", "delta": 10, "confidence": "medium" },
+                    { "kpiId": "annual_revenue", "delta": 38000, "confidence": "medium" },
+                    { "kpiId": "member_satisfaction", "delta": 8, "confidence": "low" }
+                ],
+                "comments": [
+                    { "author": "cto@ironcorefitness.com", "text": "Start with simple heuristics (moving average + day-of-week). Graduate to ML once we have 6 months of data.", "timestamp": "2026-02-10T11:00:00Z" }
+                ],
+                "evidenceLinks": []
+            },
+            {
+                "id": "idea-churn-prediction",
+                "title": "Churn Prediction Model",
+                "owner": "owner@ironcorefitness.com",
+                "hypothesis": "Members who skip 2+ weeks have a 70% chance of canceling within 30 days. A weekly churn scoring model that flags at-risk members gives us a 2-week intervention window. Industry data shows proactive outreach saves 30-40% of flagged members.",
+                "linkedNodes": ["churn-predictor", "engagement-db"],
+                "linkedFlows": ["churn-prevention"],
+                "phases": ["retention-ai"],
+                "status": "proposed",
+                "confidence": "medium",
+                "expectedKpiImpacts": [
+                    { "kpiId": "monthly_churn", "delta": -8, "confidence": "medium" },
+                    { "kpiId": "annual_revenue", "delta": 72000, "confidence": "medium" },
+                    { "kpiId": "member_satisfaction", "delta": 10, "confidence": "low" }
+                ],
+                "comments": [
+                    { "author": "owner@ironcorefitness.com", "text": "Every saved member is worth $1,200/year. If we save even 6 per month that's $86K.", "timestamp": "2026-02-12T16:00:00Z" }
+                ],
+                "evidenceLinks": [
+                    { "label": "IHRSA gym retention benchmark report 2025", "url": "ihrsa-retention-benchmarks-2025.pdf", "addedAt": "2026-02-08T10:00:00Z", "addedBy": "owner@ironcorefitness.com" }
+                ]
+            },
+            {
+                "id": "idea-personalized-nudges",
+                "title": "Personalized Re-Engagement Nudges",
+                "owner": "owner@ironcorefitness.com",
+                "hypothesis": "Generic 'we miss you' emails have a 4% response rate. Personalized nudges (class recommendations based on history, friend-based invites, limited free class offers) achieve 12-18% response rates per industry benchmarks — 3-4x more effective at bringing members back.",
+                "linkedNodes": ["nudge-engine", "notify-svc"],
+                "linkedFlows": ["churn-prevention"],
+                "phases": ["retention-ai"],
+                "status": "proposed",
+                "confidence": "medium",
+                "expectedKpiImpacts": [
+                    { "kpiId": "monthly_churn", "delta": -4, "confidence": "medium" },
+                    { "kpiId": "member_satisfaction", "delta": 12, "confidence": "medium" },
+                    { "kpiId": "annual_revenue", "delta": 36000, "confidence": "low" }
+                ],
+                "comments": [],
+                "evidenceLinks": []
+            }
+        ],
+
+        "benefits": [
+            {
+                "id": "benefit-noshow",
+                "phaseId": "member-app",
+                "title": "No-show rate drops from 35% to under 15% with booking accountability",
+                "kpiId": "noshow_rate",
+                "baseline": 35,
+                "targetRange": { "min": 8, "max": 15 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["mobile-app", "booking-svc", "checkin-fn"],
+                "boundFlows": ["app-booking"]
+            },
+            {
+                "id": "benefit-billing-zero",
+                "phaseId": "member-app",
+                "title": "Billing errors eliminated — $800/mo recovered via automation",
+                "kpiId": "billing_errors",
+                "baseline": 800,
+                "targetRange": { "min": 0, "max": 50 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["billing-svc", "payment-gw"],
+                "boundFlows": ["app-booking"]
+            },
+            {
+                "id": "benefit-utilization-phase1",
+                "phaseId": "member-app",
+                "title": "Class utilization rises from 55% to 70% with booking system",
+                "kpiId": "class_utilization",
+                "baseline": 55,
+                "targetRange": { "min": 65, "max": 75 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["booking-svc", "mobile-app", "member-db"],
+                "boundFlows": ["app-booking"]
+            },
+            {
+                "id": "benefit-utilization-ai",
+                "phaseId": "smart-scheduling",
+                "title": "AI scheduling pushes utilization to 80%+ average",
+                "kpiId": "class_utilization",
+                "baseline": 70,
+                "targetRange": { "min": 78, "max": 88 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["demand-engine", "schedule-optimizer", "waitlist-queue"],
+                "boundFlows": ["smart-class"]
+            },
+            {
+                "id": "benefit-churn-drop",
+                "phaseId": "retention-ai",
+                "title": "Monthly churn drops from 22% to 8% via proactive retention",
+                "kpiId": "monthly_churn",
+                "baseline": 22,
+                "targetRange": { "min": 6, "max": 10 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["churn-predictor", "nudge-engine", "engagement-db"],
+                "boundFlows": ["churn-prevention"]
+            },
+            {
+                "id": "benefit-revenue-growth",
+                "phaseId": "retention-ai",
+                "title": "Annual revenue grows from $290K to $480K+",
+                "kpiId": "annual_revenue",
+                "baseline": 290000,
+                "targetRange": { "min": 440000, "max": 520000 },
+                "realized": false,
+                "realizedValue": null,
+                "realizedAt": null,
+                "boundNodes": ["analytics-dash", "churn-predictor", "billing-svc", "booking-svc"],
+                "boundFlows": ["app-booking", "smart-class", "churn-prevention"]
+            }
+        ],
+
+        "bindings": [
+            { "ideaId": "idea-member-app", "nodeId": "mobile-app", "benefitId": "benefit-noshow" },
+            { "ideaId": "idea-member-app", "nodeId": "api-gw", "benefitId": "benefit-utilization-phase1" },
+            { "ideaId": "idea-member-app", "nodeId": "mobile-app", "benefitId": "benefit-utilization-phase1" },
+            { "ideaId": "idea-digital-booking", "nodeId": "booking-svc", "benefitId": "benefit-noshow" },
+            { "ideaId": "idea-digital-booking", "nodeId": "booking-svc", "benefitId": "benefit-utilization-phase1" },
+            { "ideaId": "idea-digital-booking", "nodeId": "checkin-fn", "benefitId": "benefit-noshow" },
+            { "ideaId": "idea-auto-billing", "nodeId": "billing-svc", "benefitId": "benefit-billing-zero" },
+            { "ideaId": "idea-auto-billing", "nodeId": "payment-gw", "benefitId": "benefit-billing-zero" },
+            { "ideaId": "idea-auto-billing", "nodeId": "billing-svc", "benefitId": "benefit-revenue-growth" },
+            { "ideaId": "idea-demand-scheduling", "nodeId": "demand-engine", "benefitId": "benefit-utilization-ai" },
+            { "ideaId": "idea-demand-scheduling", "nodeId": "schedule-optimizer", "benefitId": "benefit-utilization-ai" },
+            { "ideaId": "idea-demand-scheduling", "nodeId": "demand-engine", "benefitId": "benefit-revenue-growth" },
+            { "ideaId": "idea-churn-prediction", "nodeId": "churn-predictor", "benefitId": "benefit-churn-drop" },
+            { "ideaId": "idea-churn-prediction", "nodeId": "churn-predictor", "benefitId": "benefit-revenue-growth" },
+            { "ideaId": "idea-personalized-nudges", "nodeId": "nudge-engine", "benefitId": "benefit-churn-drop" },
+            { "ideaId": "idea-personalized-nudges", "nodeId": "nudge-engine", "benefitId": "benefit-revenue-growth" }
+        ],
+
+        "auditLog": [
+            { "timestamp": "2026-01-15T09:00:00Z", "actor": "owner@ironcorefitness.com", "action": "story.created", "targetId": "ironcore-digital-2026", "from": null, "to": null, "evidenceUrl": null, "note": "Initiated digital transformation after losing 47 members to FitLife gym in Q4 2025" },
+            { "timestamp": "2026-01-20T10:30:00Z", "actor": "owner@ironcorefitness.com", "action": "idea.status_change", "targetId": "idea-member-app", "from": "proposed", "to": "accepted", "evidenceUrl": "member-exit-survey-2025.pdf", "note": "61% of exits cited no app — this is existential" },
+            { "timestamp": "2026-01-20T10:45:00Z", "actor": "cto@ironcorefitness.com", "action": "idea.status_change", "targetId": "idea-digital-booking", "from": "proposed", "to": "accepted", "evidenceUrl": null, "note": "Bundled with member app — same delivery phase" },
+            { "timestamp": "2026-01-22T14:30:00Z", "actor": "finance@ironcorefitness.com", "action": "idea.status_change", "targetId": "idea-auto-billing", "from": "proposed", "to": "accepted", "evidenceUrl": "billing-discrepancy-report-2025.xlsx", "note": "ROI is immediate — $9,600/year recovered from day one" },
+            { "timestamp": "2026-02-10T11:00:00Z", "actor": "cto@ironcorefitness.com", "action": "idea.created", "targetId": "idea-demand-scheduling", "from": null, "to": "proposed", "evidenceUrl": null, "note": "Phase 2 idea — needs 3+ months of booking data before viable" }
+        ],
+
+        "uiHints": {
+            "initialView": "narrative",
+            "initialPhase": "legacy",
+            "autoTransitionToCollab": true,
+            "narrativeLayout": "vertical",
+            "ideaOverlayDefault": false,
+            "benefitLanesDefault": false
+        }
+    }
+}

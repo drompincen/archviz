@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DROM: Architecture Viz</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="css/core.css">
+    <link rel="stylesheet" href="css/nodes-zones.css">
+    <link rel="stylesheet" href="css/sequence.css">
+    <link rel="stylesheet" href="css/widgets.css">
+    <link rel="stylesheet" href="css/benefits.css">
+    <link rel="stylesheet" href="css/narrative.css">
+</head>
+<body>
+
+<header>
+    <div class="brand"><span>DROM</span> Architecture Visualizer</div>
+
+    <div style="display:flex; flex-wrap:wrap; gap: 6px; align-items:center;">
+        <div class="controls-group">
+            <select id="json-selector" title="Load a diagram">
+                <option value="__default__">-- Built-in Demo --</option>
+            </select>
+            <button id="btn-play">&#9654; Play</button>
+            <button id="btn-next" disabled>Next &#9193;</button>
+            <button id="btn-ff" title="Fast Forward to end">&#9197; FF</button>
+        </div>
+
+        <div class="divider"></div>
+        <div class="controls-group phase-controls" id="phase-controls" style="display:none;">
+            <label style="font-size:0.8rem;">Phase:</label>
+            <div class="phase-dots" id="phase-dots"></div>
+            <span id="phase-label-display" style="font-size:0.8rem; min-width:60px;">All</span>
+        </div>
+
+        <div class="divider"></div>
+        <div class="controls-group" id="flow-controls" style="display:none;">
+            <select id="flow-selector">
+                <option value="__default__">-- Default Sequence --</option>
+            </select>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="controls-group">
+            <label class="toggle-label" style="color:var(--highlight); border:1px solid #333; padding:2px 6px; border-radius:4px;">
+                <input type="checkbox" id="chk-sequence-mode"> Sequence View
+            </label>
+        </div>
+
+        <div class="divider"></div>
+
+        <button id="btn-story-mode" title="Story Mode">&#128218; Story</button>
+
+        <div class="divider"></div>
+
+        <div class="options-wrapper">
+            <button id="btn-options">&#9881; Options &#9662;</button>
+            <div id="options-dropdown">
+                <div class="opt-item" id="opt-save"><span class="opt-icon">&#128190;</span><span class="opt-label">Save Diagram</span></div>
+                <div class="opt-item" id="opt-upload"><span class="opt-icon">&#128228;</span><span class="opt-label">Upload JSON</span></div>
+                <div class="opt-item" id="opt-download"><span class="opt-icon">&#128229;</span><span class="opt-label">Download JSON</span></div>
+                <div class="opt-item" id="opt-export-pdf"><span class="opt-icon">&#128196;</span><span class="opt-label">Export PDF</span></div>
+                <div class="opt-item" id="opt-download-spec"><span class="opt-icon">&#128203;</span><span class="opt-label">Download JSON Spec</span></div>
+                <div class="opt-divider"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#9193;</span><span class="opt-label">Pause/Step</span><input type="checkbox" id="chk-pause"></div>
+                <div class="opt-item"><span class="opt-icon">&#9201;</span><span class="opt-label">Delay</span><input type="number" id="inp-delay" value="1.5" step="0.5" min="0.5" class="opt-delay-input">s</div>
+                <div class="opt-divider"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#9998;</span><span class="opt-label">Edit Mode</span><input type="checkbox" id="chk-edit-mode"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">{}</span><span class="opt-label">JSON Editor</span><input type="checkbox" id="chk-show-editor"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#128221;</span><span class="opt-label">Notes</span><input type="checkbox" id="chk-show-notes" checked></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#128200;</span><span class="opt-label">KPI HUD</span><input type="checkbox" id="chk-show-kpis" checked></div>
+                <div class="opt-divider"></div>
+                <div class="opt-item opt-toggle"><span class="opt-icon">&#9728;</span><span class="opt-label">Light Theme</span><input type="checkbox" id="chk-light-mode"></div>
+                <div class="opt-divider"></div>
+                <div class="opt-item"><span class="opt-icon">A</span><span class="opt-label">Font Size</span><button id="btn-font-down" class="opt-btn-sm">A-</button><button id="btn-font-up" class="opt-btn-sm">A+</button></div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div id="left-sidebar" class="hidden">
+        <div class="editor-toolbar">
+            <button id="btn-update">Update Diagram</button>
+            <span id="error-msg"></span>
+        </div>
+        <textarea id="json-input" spellcheck="false" placeholder="Paste valid JSON here..."></textarea>
+    </div>
+
+    <div id="center-stage">
+
+        <div id="canvas-wrapper">
+
+            <div id="preview-canvas">
+                <div id="phase-display"></div>
+                <div id="zones-container"></div>
+                <svg class="connections-layer" id="connections-layer"></svg>
+                <div id="nodes-container"></div>
+                <div id="particle" class="message-particle"></div>
+                <div id="benefits-panel"></div>
+            </div>
+
+            <div id="narrative-view"></div>
+            <div id="kpi-hud"></div>
+
+            <div id="sequence-view"></div>
+
+            <div id="notebook-widget">
+                <div class="notebook-header">
+                    <span>Project Notes</span>
+                    <span style="opacity:0.6; font-size:0.75rem;">(From JSON)</span>
+                </div>
+                <div id="notebook-display" class="notebook-area"></div>
+            </div>
+        </div>
+
+        <div id="pane-resizer" title="Drag to resize logs"></div>
+
+        <div id="log-pane">
+            <div class="log-entry" style="color:#666; font-style:italic;">Ready...</div>
+        </div>
+
+    </div>
+</main>
+
+<div id="pdf-modal-overlay">
+    <div id="pdf-modal">
+        <h3>Export to PDF</h3>
+        <label><input type="radio" name="pdf-view" value="collab" checked> Collaboration (Spatial) View Only</label>
+        <label><input type="radio" name="pdf-view" value="sequence"> Sequence Diagram Only</label>
+        <label><input type="radio" name="pdf-view" value="both"> Both Views (Stacked)</label>
+        <div class="pdf-actions">
+            <button id="btn-pdf-cancel">Cancel</button>
+            <button id="btn-pdf-go">Export</button>
+        </div>
+    </div>
+</div>
+
+<div id="save-modal-overlay">
+    <div id="save-modal">
+        <h3 id="save-modal-title">Save Diagram</h3>
+        <label style="display:block;margin:10px 0;color:var(--text-main);font-size:0.9rem;">Title:
+            <input type="text" id="save-title" style="width:100%;padding:5px;border-radius:4px;border:1px solid #555;background:#333;color:#ccc;box-sizing:border-box;margin-top:4px;">
+        </label>
+        <label style="display:block;margin:10px 0;color:var(--text-main);font-size:0.9rem;">Description:
+            <textarea id="save-description" rows="2" style="width:100%;padding:5px;border-radius:4px;border:1px solid #555;background:#333;color:#ccc;box-sizing:border-box;margin-top:4px;resize:vertical;"></textarea>
+        </label>
+        <label style="display:block;margin:10px 0;color:var(--text-main);font-size:0.9rem;">Tags (comma-separated):
+            <input type="text" id="save-tags" style="width:100%;padding:5px;border-radius:4px;border:1px solid #555;background:#333;color:#ccc;box-sizing:border-box;margin-top:4px;" placeholder="e.g. dram, latency, agent">
+        </label>
+        <div class="pdf-actions">
+            <button id="btn-save-cancel">Cancel</button>
+            <button id="btn-save-confirm">Save</button>
+        </div>
+    </div>
+</div>
+
+<div id="export-render-area"></div>
+
+<script type="module" src="js/data-loading.js"></script>
+</body>
+</html>

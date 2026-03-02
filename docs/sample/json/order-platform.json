@@ -1,0 +1,106 @@
+{
+    "title": "Order Platform — Phased Architecture",
+    "notes": "Project: Order Platform\nTeam: Platform Engineering\n\nThis diagram shows a cloud-native order processing platform\nbuilt in three phases:\n\n  Phase 1 — Core skeleton (API + DB)\n  Phase 2 — Async processing (queues, caching, workers)\n  Phase 3 — Observability & CDN edge\n\nUse the Phase slider to reveal layers progressively.\nSwitch Flows to see different request paths.",
+    "phases": [
+        { "id": "skeleton", "label": "1 — Skeleton" },
+        { "id": "processing", "label": "2 — Processing" },
+        { "id": "observability", "label": "3 — Observability" }
+    ],
+    "zones": [
+        { "id": "edge", "type": "edge", "label": "Edge / CDN", "x": 10, "y": 10, "w": 220, "h": 680, "phase": "observability" },
+        { "id": "cloud", "type": "cloud", "label": "AWS Cloud", "x": 250, "y": 10, "w": 900, "h": 680 },
+        { "id": "vpc", "type": "vpc", "label": "VPC 10.0.0.0/16", "x": 270, "y": 45, "w": 860, "h": 630, "parent": "cloud" },
+        { "id": "public-subnet", "type": "subnet", "label": "Public Subnet", "x": 290, "y": 80, "w": 240, "h": 310, "parent": "vpc" },
+        { "id": "private-subnet", "type": "subnet", "label": "Private Subnet", "x": 550, "y": 80, "w": 560, "h": 580, "parent": "vpc" }
+    ],
+    "nodes": [
+        { "id": "user", "type": "human", "tag": "external", "label": "Customer", "x": 60, "y": 280, "w": 110, "h": 75 },
+        { "id": "cdn", "type": "cdn", "tag": "aws", "label": "CloudFront", "x": 55, "y": 100, "w": 120, "h": 80, "phase": "observability" },
+        { "id": "gw", "type": "gateway", "tag": "aws", "label": "API\nGateway", "x": 310, "y": 110, "w": 130, "h": 90, "status": "ready" },
+        { "id": "fw", "type": "firewall", "tag": "aws", "label": "WAF", "x": 320, "y": 260, "w": 110, "h": 70, "phase": "processing" },
+        { "id": "order-svc", "type": "fargate", "tag": "core", "label": "Order\nService", "x": 580, "y": 100, "w": 130, "h": 85, "status": "ready" },
+        { "id": "payment-svc", "type": "fargate", "tag": "core", "label": "Payment\nService", "x": 580, "y": 230, "w": 130, "h": 85, "status": "ready", "phase": "processing" },
+        { "id": "notify-fn", "type": "lambda", "tag": "aws", "label": "Notify\nLambda", "x": 580, "y": 370, "w": 130, "h": 85, "status": "wip", "phase": "processing" },
+        { "id": "queue", "type": "queue", "tag": "aws", "label": "SQS\nOrders", "x": 800, "y": 100, "w": 130, "h": 75, "phase": "processing" },
+        { "id": "cache", "type": "cache", "tag": "data", "label": "ElastiCache", "x": 800, "y": 230, "w": 130, "h": 75, "phase": "processing" },
+        { "id": "db", "type": "database", "tag": "data", "label": "Aurora\nPostgres", "x": 800, "y": 360, "w": 130, "h": 85, "status": "ready" },
+        { "id": "s3", "type": "storage", "tag": "aws", "label": "S3\nReceipts", "x": 800, "y": 500, "w": 130, "h": 75, "phase": "processing" },
+        { "id": "dashboard", "type": "dashboard", "tag": "observability", "label": "CloudWatch\nDashboard", "x": 580, "y": 510, "w": 140, "h": 85, "phase": "observability" },
+        { "id": "vpn", "type": "vpn", "tag": "internal", "label": "VPN\nAdmin", "x": 320, "y": 400, "w": 110, "h": 75, "phase": "observability" }
+    ],
+    "connections": [
+        { "from": "user", "to": "gw" },
+        { "from": "user", "to": "cdn", "phase": "observability" },
+        { "from": "cdn", "to": "gw", "phase": "observability" },
+        { "from": "gw", "to": "order-svc" },
+        { "from": "gw", "to": "fw", "phase": "processing" },
+        { "from": "fw", "to": "order-svc", "phase": "processing" },
+        { "from": "order-svc", "to": "db" },
+        { "from": "order-svc", "to": "queue", "phase": "processing" },
+        { "from": "order-svc", "to": "cache", "phase": "processing" },
+        { "from": "order-svc", "to": "payment-svc", "phase": "processing" },
+        { "from": "payment-svc", "to": "db", "phase": "processing" },
+        { "from": "payment-svc", "to": "notify-fn", "phase": "processing" },
+        { "from": "notify-fn", "to": "s3", "phase": "processing" },
+        { "from": "dashboard", "to": "order-svc", "phase": "observability" },
+        { "from": "dashboard", "to": "payment-svc", "phase": "observability" },
+        { "from": "vpn", "to": "dashboard", "phase": "observability" }
+    ],
+    "sequence": [
+        { "from": "user", "to": "gw", "text": "POST /orders {items, payment}", "status": "ready" },
+        { "from": "gw", "to": "order-svc", "text": "Forward authorized request", "status": "ready" },
+        { "from": "order-svc", "to": "db", "text": "INSERT order (status=pending)", "status": "ready" },
+        { "from": "db", "to": "order-svc", "text": "Return order_id=42", "status": "ready" },
+        { "from": "order-svc", "to": "payment-svc", "text": "Process payment $99.00", "status": "ready", "phase": "processing" },
+        { "from": "payment-svc", "to": "db", "text": "UPDATE order SET paid=true", "status": "ready", "phase": "processing" },
+        { "from": "payment-svc", "to": "notify-fn", "text": "Trigger confirmation email", "status": "wip", "phase": "processing" },
+        { "from": "notify-fn", "to": "s3", "text": "Store PDF receipt", "status": "wip", "phase": "processing" },
+        { "from": "order-svc", "to": "gw", "text": "200 OK {order_id: 42}", "status": "ready" },
+        { "from": "gw", "to": "user", "text": "Order confirmed!", "status": "ready", "popUp": { "type": "amplify", "msg": "Order #42 placed successfully" } }
+    ],
+    "flows": [
+        {
+            "id": "happy-path",
+            "name": "Happy Path — Place Order",
+            "sequence": [
+                { "from": "user", "to": "gw", "text": "POST /orders {items, payment}", "status": "ready" },
+                { "from": "gw", "to": "order-svc", "text": "Forward authorized request", "status": "ready" },
+                { "from": "order-svc", "to": "db", "text": "INSERT order (status=pending)", "status": "ready" },
+                { "from": "db", "to": "order-svc", "text": "Return order_id=42", "status": "ready" },
+                { "from": "order-svc", "to": "payment-svc", "text": "Process payment $99.00", "status": "ready", "phase": "processing" },
+                { "from": "payment-svc", "to": "db", "text": "UPDATE order SET paid=true", "status": "ready", "phase": "processing" },
+                { "from": "payment-svc", "to": "notify-fn", "text": "Trigger confirmation email", "status": "wip", "phase": "processing" },
+                { "from": "notify-fn", "to": "s3", "text": "Store PDF receipt", "status": "wip", "phase": "processing" },
+                { "from": "order-svc", "to": "gw", "text": "200 OK {order_id: 42}", "status": "ready" },
+                { "from": "gw", "to": "user", "text": "Order confirmed!", "status": "ready", "popUp": { "type": "amplify", "msg": "Order #42 placed successfully" } }
+            ]
+        },
+        {
+            "id": "cache-hit",
+            "name": "Cache Hit — Product Lookup",
+            "sequence": [
+                { "from": "user", "to": "cdn", "text": "GET /products/42", "status": "ready", "phase": "observability" },
+                { "from": "cdn", "to": "gw", "text": "Cache MISS, forward", "status": "ready", "phase": "observability" },
+                { "from": "gw", "to": "order-svc", "text": "GET product details", "status": "ready" },
+                { "from": "order-svc", "to": "cache", "text": "Check ElastiCache", "status": "ready", "phase": "processing" },
+                { "from": "cache", "to": "order-svc", "text": "Cache HIT — return product", "status": "ready", "phase": "processing" },
+                { "from": "order-svc", "to": "gw", "text": "200 OK {product data}", "status": "ready" },
+                { "from": "gw", "to": "user", "text": "Product details returned", "status": "ready" }
+            ]
+        },
+        {
+            "id": "payment-fail",
+            "name": "Payment Failure",
+            "sequence": [
+                { "from": "user", "to": "gw", "text": "POST /orders {bad card}", "status": "ready" },
+                { "from": "gw", "to": "order-svc", "text": "Forward request", "status": "ready" },
+                { "from": "order-svc", "to": "db", "text": "INSERT order (status=pending)", "status": "ready" },
+                { "from": "order-svc", "to": "payment-svc", "text": "Process payment", "status": "ready", "phase": "processing" },
+                { "from": "payment-svc", "to": "order-svc", "text": "DECLINED — insufficient funds", "status": "wip", "phase": "processing", "popUp": { "type": "issue", "msg": "Payment declined by processor" } },
+                { "from": "order-svc", "to": "db", "text": "UPDATE order SET status=failed", "status": "wip" },
+                { "from": "order-svc", "to": "gw", "text": "402 Payment Required", "status": "wip" },
+                { "from": "gw", "to": "user", "text": "Payment failed, please retry", "status": "wip", "popUp": { "type": "alert", "msg": "Card declined — try another method" } }
+            ]
+        }
+    ]
+}

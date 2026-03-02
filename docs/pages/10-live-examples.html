@@ -1,7 +1,7 @@
   <h2><span class="sn">10</span> Live Examples</h2>
   <p class="sub">15 interactive diagrams &mdash; click to open in the visualizer</p>
 
-  <div class="hl warn" style="margin-bottom:14px"><strong>Note:</strong> These links open <code>docs/sample/</code> which requires a local HTTP server for ES modules. Run <code>python3 -m http.server 9000</code> from the <code>docs/</code> directory, then visit <code>http://localhost:9000/wizard/</code>.</div>
+  <div class="hl" style="margin-bottom:14px"><strong>Tip:</strong> These examples open directly in the browser via GitHub Pages. If running locally, use an HTTP server (<code>python3 -m http.server</code>) since ES modules require it.</div>
 
   <h3>Story Mode Examples</h3>
   <div class="g3" style="margin-bottom:14px">
@@ -90,4 +90,4 @@
     </a>
   </div>
 
-  <div class="hl"><strong>To serve locally:</strong> Run <code>mvn package -DskipTests</code> to populate <code>docs/sample/</code>, then <code>cd docs &amp;&amp; python3 -m http.server 9000</code> and open <code>http://localhost:9000/wizard/</code></div>
+  <div class="hl"><strong>Local dev:</strong> Run <code>mvn package -DskipTests</code> to refresh <code>docs/sample/</code> after JSON changes, then commit.</div>

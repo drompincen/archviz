@@ -1,0 +1,272 @@
+{
+    "title": "Travel Booking \u2014 With Checkpoint Fabric",
+    "notes": "Scenario: Corporate Travel Booking (Agent Runtime Fabric on AWS)\n\nSame trip: NYC \u2192 London, 3 nights, rental car.\nSame agents, same payment gateway crash.\nDifferent outcome \u2014 powered by the Two-Lane Strategy (Lane 1: Opinionated Template):\n\n- EventBridge: Signals agent tasks as events, decouples producers from consumers\n- Step Functions: Orchestrates workflow with built-in durable checkpoints \u2014 every state transition is automatically persisted\n- SQS FIFO + Task Token: Agents are long-running AI processes (not millisecond Lambdas). Step Functions pauses, sends a Task Token via SQS, and resumes when the agent calls back. SQS also provides rate limiting to govern MCP tool usage and backpressure when multiple workflows compete for agents.\n- SQS DLQ: Messages that exhaust retries land in the Dead Letter Queue for alerting, tracing, and manual re-drive\n- Work Item Envelope: Standardized metadata (who, what, when, idempotency key) travels with every message\n\nWhy SQS and not direct invocation?\nThese are AI agents, not simple Lambda functions. They may run for minutes, hit rate-limited LLM/MCP APIs, and multiple workflows may compete for the same agent pool. SQS provides the async callback pattern, backpressure, and deduplication that direct invocation cannot.\n\nResult: Same crash, zero data loss, no duplicates, full explainability.",
+    "nodes": [
+        {
+            "id": "employee",
+            "type": "user",
+            "tag": "external",
+            "label": "Employee\n(Traveler)",
+            "x": 30,
+            "y": 240,
+            "w": 110,
+            "h": 70
+        },
+        {
+            "id": "eventbridge",
+            "type": "service",
+            "tag": "core",
+            "label": "EventBridge\n(Signaling)",
+            "x": 200,
+            "y": 240,
+            "w": 130,
+            "h": 70
+        },
+        {
+            "id": "envelope",
+            "type": "service",
+            "tag": "new",
+            "label": "Work Item\nEnvelope",
+            "x": 200,
+            "y": 390,
+            "w": 130,
+            "h": 60
+        },
+        {
+            "id": "stepfn",
+            "type": "service",
+            "tag": "core",
+            "label": "Step Functions\n(State & Checkpoints)",
+            "x": 410,
+            "y": 100,
+            "w": 160,
+            "h": 70
+        },
+        {
+            "id": "sqs",
+            "type": "service",
+            "tag": "core",
+            "label": "SQS FIFO\n(Task Token + Buffer)",
+            "x": 550,
+            "y": 260,
+            "w": 140,
+            "h": 70
+        },
+        {
+            "id": "dlq",
+            "type": "database",
+            "tag": "new",
+            "label": "SQS DLQ\n(Failed Messages)",
+            "x": 570,
+            "y": 400,
+            "w": 140,
+            "h": 60,
+            "skipSequence": true
+        },
+        {
+            "id": "flight",
+            "type": "agent",
+            "tag": "agent",
+            "label": "Flight\nAgent",
+            "x": 840,
+            "y": 100,
+            "w": 120,
+            "h": 70
+        },
+        {
+            "id": "hotel",
+            "type": "agent",
+            "tag": "agent",
+            "label": "Hotel\nAgent",
+            "x": 840,
+            "y": 240,
+            "w": 120,
+            "h": 70
+        },
+        {
+            "id": "payment",
+            "type": "agent",
+            "tag": "agent",
+            "label": "Payment\nAgent",
+            "x": 840,
+            "y": 380,
+            "w": 120,
+            "h": 70
+        },
+        {
+            "id": "notify",
+            "type": "service",
+            "tag": "core",
+            "label": "Notification\nService",
+            "x": 680,
+            "y": 60,
+            "w": 120,
+            "h": 70
+        }
+    ],
+    "connections": [
+        {
+            "from": "employee",
+            "to": "eventbridge"
+        },
+        {
+            "from": "eventbridge",
+            "to": "envelope"
+        },
+        {
+            "from": "envelope",
+            "to": "stepfn"
+        },
+        {
+            "from": "eventbridge",
+            "to": "stepfn"
+        },
+        {
+            "from": "stepfn",
+            "to": "sqs"
+        },
+        {
+            "from": "sqs",
+            "to": "dlq"
+        },
+        {
+            "from": "sqs",
+            "to": "flight"
+        },
+        {
+            "from": "sqs",
+            "to": "hotel"
+        },
+        {
+            "from": "sqs",
+            "to": "payment"
+        },
+        {
+            "from": "stepfn",
+            "to": "notify"
+        }
+    ],
+    "sequence": [
+        {
+            "from": "employee",
+            "to": "eventbridge",
+            "text": "Book trip: NYC \u2192 London, 3 nights, rental car",
+            "popUp": {
+                "type": "amplify",
+                "msg": "EventBridge receives the booking event. It decouples the employee from the agents \u2014 no direct calls, no tight coupling, no emergent spaghetti."
+            }
+        },
+        {
+            "from": "eventbridge",
+            "to": "envelope",
+            "text": "Create Work Item Envelope (WI-4821)"
+        },
+        {
+            "from": "envelope",
+            "to": "stepfn",
+            "text": "Trigger workflow with envelope metadata",
+            "popUp": {
+                "type": "amplify",
+                "msg": "Step Functions takes over as the state machine. Every state transition is automatically checkpointed. The workflow definition is the contract \u2014 testable, versioned, and auditable."
+            }
+        },
+        {
+            "from": "stepfn",
+            "to": "sqs",
+            "text": "Queue Step 1 + Task Token: book flight",
+            "popUp": {
+                "type": "amplify",
+                "msg": "WHY SQS? These are AI agents, not millisecond Lambdas. Step Functions pauses and sends a Task Token via SQS. The Flight Agent may take minutes calling airline APIs and LLMs. SQS also rate-limits \u2014 if 50 workflows are running, agents aren't overwhelmed."
+            }
+        },
+        {
+            "from": "sqs",
+            "to": "flight",
+            "text": "Deliver: Book flight NYC \u2192 LHR (with Task Token)"
+        },
+        {
+            "from": "flight",
+            "to": "stepfn",
+            "text": "Callback: flight=BOOKED (BA117, Seat 14A)",
+            "popUp": {
+                "type": "amplify",
+                "msg": "Flight Agent calls back with the Task Token. Step Functions resumes and persists this state transition. flight=DONE is now durable \u2014 it survives crashes, restarts, and re-deployments."
+            }
+        },
+        {
+            "from": "stepfn",
+            "to": "sqs",
+            "text": "Queue Step 2 + Task Token: book hotel"
+        },
+        {
+            "from": "sqs",
+            "to": "hotel",
+            "text": "Deliver: Book 3 nights Marriott London (with Task Token)"
+        },
+        {
+            "from": "hotel",
+            "to": "stepfn",
+            "text": "Callback: hotel=BOOKED (M-7829, \u00a3540)",
+            "popUp": {
+                "type": "amplify",
+                "msg": "Step Functions now knows flight=DONE, hotel=DONE. Two transitions checkpointed, one step remaining. Full state is queryable at any time via the execution history API."
+            }
+        },
+        {
+            "from": "stepfn",
+            "to": "sqs",
+            "text": "Queue Step 3 + Task Token: charge payment"
+        },
+        {
+            "from": "sqs",
+            "to": "payment",
+            "text": "Deliver: Charge corporate card \u00a31,240 (with Task Token)"
+        },
+        {
+            "from": "payment",
+            "to": "stepfn",
+            "text": "Task Token timeout: Payment gateway unreachable",
+            "popUp": {
+                "type": "alert",
+                "msg": "Same crash as before! Payment Agent can't reach the gateway and the Task Token times out. Step Functions catches this as a failed state transition. State is clear: flight=DONE, hotel=DONE, payment=FAILED."
+            }
+        },
+        {
+            "from": "stepfn",
+            "to": "sqs",
+            "text": "Re-drive Step 3: new Task Token, same idempotency key",
+            "popUp": {
+                "type": "amplify",
+                "msg": "RE-DRIVE: Step Functions retries with backoff. A new Task Token is issued but the SQS FIFO deduplication ID is the same \u2014 preventing duplicate messages. Flight and hotel are untouched. If all retries exhaust, the message lands in the DLQ for ops alerting and manual re-drive."
+            }
+        },
+        {
+            "from": "sqs",
+            "to": "payment",
+            "text": "Deliver: Retry charge (same dedup ID, new Task Token)",
+            "popUp": {
+                "type": "amplify",
+                "msg": "IDEMPOTENCY: SQS FIFO deduplication ensures this message is processed exactly once. Even if a delayed original overlaps with this retry, only one charge processes. The Task Token ties the result back to the correct Step Functions execution."
+            }
+        },
+        {
+            "from": "payment",
+            "to": "stepfn",
+            "text": "Callback: payment=COMPLETE (\u00a31,240)"
+        },
+        {
+            "from": "stepfn",
+            "to": "notify",
+            "text": "All steps done \u2014 send single confirmation"
+        },
+        {
+            "from": "notify",
+            "to": "employee",
+            "text": "Confirmation: BA117 + Marriott M-7829",
+            "popUp": {
+                "type": "amplify",
+                "msg": "One email. One flight. One hotel. One charge. Full audit trail in Step Functions execution history. SQS DLQ captures any exhausted retries for ops review. Testable, explainable, and debuggable."
+            }
+        }
+    ]
+}

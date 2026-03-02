@@ -1,0 +1,30 @@
+{
+    "title": "CI/CD Deployment Pipeline",
+    "notes": "Project: DevOps Automation\nTeam: Platform Engineering\n\nPipeline:\n1. Developer pushes code to Git\n2. CI server builds & tests\n3. Artifacts deployed to staging\n4. AI agent validates & promotes to prod\n\nStatus: Active",
+    "nodes": [
+        { "id": "dev", "type": "user", "tag": "external", "label": "Developer", "x": 50, "y": 220, "w": 100, "h": 70 },
+        { "id": "git", "type": "service", "tag": "core", "label": "Git\nRepo", "x": 230, "y": 220, "w": 110, "h": 80, "status": "ready" },
+        { "id": "ci", "type": "agent", "tag": "agent", "label": "CI\nServer", "x": 430, "y": 120, "w": 120, "h": 80, "status": "ready" },
+        { "id": "registry", "type": "database", "tag": "core", "label": "Artifact\nRegistry", "x": 430, "y": 320, "w": 120, "h": 70, "status": "ready", "skipSequence": true },
+        { "id": "staging", "type": "service", "tag": "new", "label": "Staging\nEnv", "x": 650, "y": 220, "w": 120, "h": 80, "status": "ready" },
+        { "id": "qa_agent", "type": "agent", "tag": "agent", "label": "QA\nAgent", "x": 650, "y": 80, "w": 110, "h": 70, "status": "wip" },
+        { "id": "prod", "type": "service", "tag": "core", "label": "Production", "x": 870, "y": 220, "w": 120, "h": 80, "status": "ready" }
+    ],
+    "connections": [
+        { "from": "dev", "to": "git" },
+        { "from": "git", "to": "ci" },
+        { "from": "ci", "to": "registry" },
+        { "from": "ci", "to": "staging" },
+        { "from": "qa_agent", "to": "staging" },
+        { "from": "staging", "to": "prod" }
+    ],
+    "sequence": [
+        { "from": "dev", "to": "git", "text": "Push feature branch", "status": "ready" },
+        { "from": "git", "to": "ci", "text": "Webhook triggers build", "status": "ready" },
+        { "from": "ci", "to": "registry", "text": "Publish Docker image", "status": "ready" },
+        { "from": "ci", "to": "staging", "text": "Deploy to staging", "status": "ready" },
+        { "from": "qa_agent", "to": "staging", "text": "Run automated tests", "status": "wip" },
+        { "from": "staging", "to": "prod", "text": "Promote to production", "status": "ready" },
+        { "from": "prod", "to": "dev", "text": "Deploy notification", "status": "ready" }
+    ]
+}
