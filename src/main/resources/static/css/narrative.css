@@ -244,7 +244,7 @@ body.light-theme .narr-idea-card:hover { border-color: #bbb; }
 }
 .narr-idea-status-icon { font-size: 1em; flex-shrink: 0; }
 .narr-idea-title {
-    font-size: 1.12em; font-weight: 700; color: var(--text-main); flex: 1;
+    font-size: 1.22em; font-weight: 700; color: var(--text-main); flex: 1;
 }
 .narr-idea-confidence {
     font-size: 0.7em; font-weight: 600; text-transform: uppercase;
@@ -253,7 +253,7 @@ body.light-theme .narr-idea-card:hover { border-color: #bbb; }
 body.light-theme .narr-idea-confidence { background: #e0e0e0; color: #666; }
 
 .narr-idea-hypothesis {
-    font-size: 1.02em; line-height: 1.6; color: #bbb; margin-bottom: 10px;
+    font-size: 1.12em; line-height: 1.6; color: #bbb; margin-bottom: 10px;
 }
 body.light-theme .narr-idea-hypothesis { color: #666; }
 

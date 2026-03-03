@@ -437,6 +437,43 @@ class StoryModeIT {
     }
 
     @Test
+    void fontSizeButtons_scaleNarrativeInitiatives() {
+        // Navigate to Phase 1 (mobile) which has idea cards
+        // Slides: Problem(0) → Vision(1) → Phase 0/legacy(2) → Phase 1/mobile(3)
+        page.locator(".narr-dot").nth(3).click();
+        page.waitForFunction("document.querySelectorAll('.narr-idea-title').length >= 1");
+
+        // Capture initial font size of an initiative title
+        String initialSize = (String) page.evaluate(
+                "getComputedStyle(document.querySelector('.narr-idea-title')).fontSize");
+        double initialPx = Double.parseDouble(initialSize.replace("px", ""));
+
+        // Click A+ three times using dispatchEvent (buttons hidden in story mode)
+        page.locator("#btn-font-up").dispatchEvent("click");
+        page.locator("#btn-font-up").dispatchEvent("click");
+        page.locator("#btn-font-up").dispatchEvent("click");
+
+        // Re-read the initiative title font size — should be larger
+        String biggerSize = (String) page.evaluate(
+                "getComputedStyle(document.querySelector('.narr-idea-title')).fontSize");
+        double biggerPx = Double.parseDouble(biggerSize.replace("px", ""));
+        assertTrue(biggerPx > initialPx,
+                "Initiative title font should be larger after A+ clicks: " + biggerPx + " > " + initialPx);
+
+        // Click A- four times (net = -1 from original)
+        page.locator("#btn-font-down").dispatchEvent("click");
+        page.locator("#btn-font-down").dispatchEvent("click");
+        page.locator("#btn-font-down").dispatchEvent("click");
+        page.locator("#btn-font-down").dispatchEvent("click");
+
+        String smallerSize = (String) page.evaluate(
+                "getComputedStyle(document.querySelector('.narr-idea-title')).fontSize");
+        double smallerPx = Double.parseDouble(smallerSize.replace("px", ""));
+        assertTrue(smallerPx < initialPx,
+                "Initiative title font should be smaller after net -1 scale: " + smallerPx + " < " + initialPx);
+    }
+
+    @Test
     void headerMinimal_inStoryMode() {
         // In story mode, body should have story-active class
         assertTrue(page.locator("body").evaluate("el => el.classList.contains('story-active')").toString().equals("true"),
