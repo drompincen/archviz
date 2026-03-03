@@ -146,19 +146,19 @@ export function initUIInteractions() {
         });
     }
 
-    // Font size +/- buttons
+    // Font size +/- buttons and keyboard shortcuts
     function applyNarrativeFontScale() {
         var nv = document.getElementById('narrative-view');
         if (nv) nv.style.fontSize = (1 + state.nodeFontScale * 0.1) + 'rem';
     }
-    dom.btnFontUp.addEventListener('click', function(e) {
-        e.stopPropagation();
+    function fontUp() {
         if (state.nodeFontScale < 5) { state.nodeFontScale++; render(); applyNarrativeFontScale(); }
-    });
-    dom.btnFontDown.addEventListener('click', function(e) {
-        e.stopPropagation();
+    }
+    function fontDown() {
         if (state.nodeFontScale > -3) { state.nodeFontScale--; render(); applyNarrativeFontScale(); }
-    });
+    }
+    dom.btnFontUp.addEventListener('click', function(e) { e.stopPropagation(); fontUp(); });
+    dom.btnFontDown.addEventListener('click', function(e) { e.stopPropagation(); fontDown(); });
 
     // Light mode
     dom.chkLightMode.addEventListener('change', function(e) {
@@ -271,5 +271,8 @@ export function initUIInteractions() {
         if (e.key === 'F12') { e.preventDefault(); return false; }
         if (e.ctrlKey && e.key === 'u') { e.preventDefault(); return false; }
         if (e.ctrlKey && e.shiftKey && e.key === 'I') { e.preventDefault(); return false; }
+        // Ctrl+= / Ctrl++ to increase font, Ctrl+- to decrease font
+        if (e.ctrlKey && (e.key === '=' || e.key === '+')) { e.preventDefault(); fontUp(); }
+        if (e.ctrlKey && e.key === '-') { e.preventDefault(); fontDown(); }
     });
 }
