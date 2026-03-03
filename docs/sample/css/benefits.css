@@ -18,7 +18,7 @@
     box-shadow: 0 2px 8px rgba(46,204,113,0.12);
     transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     cursor: pointer;
-    font-size: 0.72rem;
+    font-size: 0.82rem;
 }
 .benefit-card:hover {
     transform: translateY(-1px);
@@ -33,11 +33,11 @@
     background: linear-gradient(135deg, #2a2010 0%, #1f1a0d 100%);
 }
 .benefit-card .benefit-title {
-    font-weight: 500; font-size: 0.74rem; margin-bottom: 3px;
+    font-weight: 500; font-size: 0.84rem; margin-bottom: 3px;
     display: flex; align-items: center; gap: 4px;
 }
 .benefit-card .benefit-title .benefit-icon {
-    font-size: 0.82rem;
+    font-size: 0.92rem;
 }
 .benefit-card .benefit-kpi-bar {
     background: #333; border-radius: 3px; height: 4px;
@@ -54,11 +54,11 @@
     background: linear-gradient(90deg, #e74c3c, #c0392b);
 }
 .benefit-card .benefit-detail {
-    font-size: 0.68rem; color: #aaa; margin-top: 1px;
+    font-size: 0.78rem; color: #aaa; margin-top: 1px;
     display: flex; justify-content: space-between;
 }
 .benefit-card .benefit-nodes {
-    font-size: 0.64rem; color: #888; margin-top: 3px;
+    font-size: 0.74rem; color: #888; margin-top: 3px;
 }
 .benefit-card .benefit-nodes span {
     background: #333; padding: 1px 4px; border-radius: 3px;
@@ -67,7 +67,7 @@
 
 .benefit-phase-header {
     pointer-events: auto;
-    font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+    font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
     letter-spacing: 1px; color: #2ecc71; padding: 2px 0;
     border-bottom: 1px solid rgba(46,204,113,0.3);
 }

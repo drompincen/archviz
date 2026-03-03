@@ -441,13 +441,13 @@ body.light-theme .kpi-hud-card {
 }
 body.light-theme .kpi-hud-label { color: #999; }
 .kpi-hud-value {
-    font-size: 1.3em; font-weight: 800; color: var(--text-main);
+    font-size: 1.05em; font-weight: 800; color: var(--text-main);
     transition: color 0.3s;
 }
 .kpi-hud-value.improving { color: #2ecc71; }
 .kpi-hud-value.declining { color: #e74c3c; }
 .kpi-hud-value.kpi-qualitative {
-    font-size: 1em; font-weight: 700;
+    font-size: 0.85em; font-weight: 700;
 }
 .kpi-hud-unit {
     font-size: 0.75em; font-weight: 400; color: #888;
